@@ -1,6 +1,6 @@
 [submodule "ursadb"]
 	path = ursadb
-	url = git@github.com:CERT-Polska/ursadb.git
+	url = https://github.com/CERT-Polska/ursadb.git
 [submodule "ursadb-cli"]
 	path = ursadb-cli
-	url = git@github.com:CERT-Polska/ursadb-cli.git
+	url = https://github.com/CERT-Polska/ursadb-cli.git
