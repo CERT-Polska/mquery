@@ -1,0 +1,6 @@
+FROM tiangolo/uwsgi-nginx-flask:python2.7
+COPY . /app
+COPY uwsgi-docker.ini /app/uwsgi.ini
+
+RUN pip install -r /app/requirements.txt
+RUN python /app/docker-mkconf.py

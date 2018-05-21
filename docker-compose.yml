@@ -1,0 +1,29 @@
+version: '3'
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile-webapp
+    ports:
+    - "80:80"
+    links:
+    - redis
+    volumes:
+    - samples:/mnt/samples
+  daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile-daemon
+    links:
+    - redis
+    - ursadb
+    volumes:
+    - samples:/mnt/samples
+  ursadb:
+    image: ursadb
+    volumes:
+    - samples:/mnt/samples
+  redis:
+    image: redis
+volumes:
+  samples: {}

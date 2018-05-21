@@ -1,0 +1,9 @@
+FROM python:2.7
+COPY . /app
+
+RUN pip install -r /app/requirements.txt
+RUN python /app/docker-mkconf.py
+
+RUN chmod +x /app/daemon.py
+
+ENTRYPOINT [ "/app/daemon.py" ]
