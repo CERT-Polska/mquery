@@ -1,0 +1,7 @@
+flask
+plyara
+yara-python
+pyzmq
+pyparsing
+redis
+
