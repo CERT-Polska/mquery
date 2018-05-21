@@ -20,7 +20,9 @@ services:
     volumes:
     - samples:/mnt/samples
   ursadb:
-    image: ursadb
+    build:
+      context: ursadb/
+      dockerfile: Dockerfile
     volumes:
     - samples:/mnt/samples
   redis:
