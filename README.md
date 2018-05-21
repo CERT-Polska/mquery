@@ -51,3 +51,10 @@ rule emotet4_basic: trojan
         all of them
 }
 ```
+
+Maintainers
+-----------
+
+Questions/comments/pull requests are welcome.
+
+* Michał Leszczyński (monk@cert.pl)
