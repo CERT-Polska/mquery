@@ -24,8 +24,9 @@ Installation (manual)
 1. Run `ursadb` database (see `ursadb` project for further instructions on that topic).
 2. Install `redis-server` and `python2`.
 3. Install requirements: `pip install -r requirements.txt`
-4. Setup a flask application originating from `webapp.py` in your favourite web server.
-5. Run `daemon.py` - a standalone script which should work constantly, consider putting it in systemd.
+5. Copy `config.example.py` to `config.py`, remember to adjust the settings and set unique `SECRET_KEY`.
+6. Setup a flask application originating from `webapp.py` in your favourite web server.
+7. Run `daemon.py` - a standalone script which should work constantly, consider putting it in systemd.
 
 
 How to use this thing
