@@ -19,4 +19,4 @@ def make_redis():
 
 
 def make_serializer():
-    return Signer('secret-key')
+    return Signer(config.SECRET_KEY)
