@@ -1,8 +1,21 @@
-mquery: Yara malware queries accelerator
-=========================================
+mquery: Blazingly fast Yara queries for malware analyssts
+=========================================================
 
-mquery is a malware query accelerator developed at CERT Polska. This project provides full instrumentation around
-UrsaDB suitable for performing fast YARA queries.
+Ever had trouble searching for particular malware samples? Our project is an analyst-friendly web GUI to look through your digital warehouse.
+
+mquery can be used to search through terabytes of malware in a blink of an eye:
+
+![mquery web GUI](docs/mquery-web-ui.gif?raw=1)
+
+Thanks to our [UrsaDB database](https://github.com/CERT-Polska/ursadb), queries on large datasets can be extremely fast.
+
+
+How does it work?
+-----------------
+
+YARA is pretty fast, but searching through large dataset for given signature can take a lot of time. To countermeasure this, we have implemented a custom database called UrsaDB. It is able to pre-filter the results, so it is only necessary to run YARA against a small fraction of binaries:
+
+![mquery flowchart](docs/mquery-flowchart.png?raw=1)
 
 
 Installation (Docker)
@@ -15,7 +28,9 @@ git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 docker-compose up --scale daemon=3
 ```
 
-where `--scale daemon=...` refers to the number of workers which will execute select/index tasks.
+where `--scale daemon=...` refers to the number of workers which will simultaneously process select/index jobs.
+
+Hint: Your `docker-compose` must support v3 syntax of `docker-compose.yml`. Update your software if you have any problems.
 
 
 Installation (manual)
@@ -59,3 +74,4 @@ Maintainers
 Questions/comments/pull requests are welcome.
 
 * Michał Leszczyński (monk@cert.pl)
+
