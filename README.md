@@ -1,5 +1,5 @@
-mquery: Blazingly fast Yara queries for malware analyssts
-=========================================================
+mquery: Blazingly fast Yara queries for malware analysts
+========================================================
 
 Ever had trouble searching for particular malware samples? Our project is an analyst-friendly web GUI to look through your digital warehouse.
 
