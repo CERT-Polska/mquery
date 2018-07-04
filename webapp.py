@@ -152,7 +152,8 @@ def status(hash):
 @app.route('/api/matches/<hash>')
 def matches(hash):
     matches = redis.smembers('matches:' + hash)
-    signed_matches = [url_for('sample', name=s.sign(m), _external=True) + ' # ' + get_binary_hash(m) for m in matches]
+    signed_matches = [url_for('sample', name=s.sign(m), _external=True)
+                      + ' # ' + get_analysis_meta(m).get('binary_hash') for m in matches]
 
     return Response('\n'.join(signed_matches), content_type='text/plain')
 
