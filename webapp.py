@@ -134,9 +134,12 @@ def status(hash):
     job = redis.hgetall('job:' + hash)
     error = job.get('error')
 
-    signed_matches = [{
-        "matched_dump": s.sign(m),
-    }.update(get_analysis_meta(m)) for m in matches]
+    signed_matches = []
+
+    for m in matches:
+        obj = {"matched_dump": s.sign(m)}
+        obj.update(get_analysis_meta(m))
+        signed_matches.append(obj)
 
     return jsonify({
         "matches": sorted(signed_matches, key=lambda o: o.get('analysis_id'), reverse=True),
