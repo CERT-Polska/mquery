@@ -29,7 +29,7 @@ function updateStatusCol(hash, repoUrl) {
                             .attr('href', '/sample?name=' + m.matched_dump)
                             .text(m.matched_dump.split('.').slice(0, -1).join('.')))
                         .append($('<a />')
-                            .attr('href', repoUrl.replace('{hash}', m.analysis_hash))
+                            .attr('href', repoUrl.replace('{hash}', m.binary_hash))
                             .attr('class', 'label label-info pull-right')
                             .text('analysis')
                         )))
