@@ -30,20 +30,24 @@ def get_saved_rules():
     return sorted(saved_rules, key=lambda x: x['name'])
 
 
-def get_binary_hash(dump_fname):
+def get_analysis_meta(dump_fname):
+    blank = {'analysis_id': None, 'binary_hash': None}
     m = re.search(r'analyses/([0-9]+)/', dump_fname)
 
     if not m:
-        return ''
+        return blank
 
     analysis_id = int(m.group(1))
 
     try:
         target = os.readlink('/share/storage/analyses/{}/binary'.format(analysis_id))
     except OSError:
-        return ''
+        return blank
 
-    return target.split('/')[-1]
+    return {
+        'analysis_id': analysis_id,
+        'binary_hash': target.split('/')[-1],
+    }
 
 
 @app.route('/')
@@ -132,11 +136,10 @@ def status(hash):
 
     signed_matches = [{
         "matched_dump": s.sign(m),
-        "analysis_hash": get_binary_hash(m)
-    } for m in matches]
+    }.update(get_analysis_meta(m)) for m in matches]
 
     return jsonify({
-        "matches": list(signed_matches),
+        "matches": sorted(signed_matches, key=lambda o: o.get('analysis_id'), reverse=True),
         "false_positives": list(false_positives),
         "job": job,
         "error": error
