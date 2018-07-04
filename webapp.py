@@ -127,13 +127,7 @@ def error_page(yara, message):
     return render_template('index.html', yara=yara, errors=message, saved_rules=get_saved_rules())
 
 
-@app.route('/api/status/<hash>')
-def status(hash):
-    matches = redis.smembers('matches:' + hash)
-    false_positives = redis.smembers('false_positives:' + hash)
-    job = redis.hgetall('job:' + hash)
-    error = job.get('error')
-
+def generate_match_objs(matches):
     signed_matches = []
 
     for m in matches:
@@ -141,8 +135,18 @@ def status(hash):
         obj.update(get_analysis_meta(m))
         signed_matches.append(obj)
 
+    return sorted(signed_matches, key=lambda o: o.get('analysis_id'), reverse=True)
+
+
+@app.route('/api/status/<hash>')
+def status(hash):
+    matches = redis.smembers('matches:' + hash)
+    false_positives = redis.smembers('false_positives:' + hash)
+    job = redis.hgetall('job:' + hash)
+    error = job.get('error')
+
     return jsonify({
-        "matches": sorted(signed_matches, key=lambda o: o.get('analysis_id'), reverse=True),
+        "matches": generate_match_objs(matches),
         "false_positives": list(false_positives),
         "job": job,
         "error": error
@@ -152,8 +156,9 @@ def status(hash):
 @app.route('/api/matches/<hash>')
 def matches(hash):
     matches = redis.smembers('matches:' + hash)
-    signed_matches = [url_for('sample', name=s.sign(m), _external=True)
-                      + ' # ' + get_analysis_meta(m).get('binary_hash') for m in matches]
+    mobjs = generate_match_objs(matches)
+    signed_matches = [url_for('sample', name=m["matched_dump"], _external=True)
+                      + ' # ' + m["binary_hash"] for m in mobjs]
 
     return Response('\n'.join(signed_matches), content_type='text/plain')
 
