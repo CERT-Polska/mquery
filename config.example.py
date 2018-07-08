@@ -4,3 +4,4 @@ REDIS_PORT = 6379
 SECRET_KEY = 'secret-key'
 REPO_URL = 'https://database/analysis?hash={hash}'
 INDEXABLE_PATHS = ['/mnt/samples']
+INDEX_TYPE = '[gram3, text4, hash4, wide8]'
