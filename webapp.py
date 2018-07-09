@@ -9,7 +9,7 @@ from zmq import Again
 
 from lib.ursadb import UrsaDb
 from lib.yaraparse import YaraParser
-import plyara.interp as interp
+import plyara
 
 from util import make_redis, make_serializer
 import config
@@ -176,7 +176,7 @@ def query_by_hash(qhash):
     yara = redis.get('query:' + qhash)
 
     try:
-        rules = interp.parseString(yara)
+        rules = plyara.Plyara().parse_string(yara)
     except Exception as e:
         return error_page(yara, 'PLYara failed (not my fault): ' + str(e))
 

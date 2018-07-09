@@ -3,7 +3,7 @@ import logging
 import time
 
 import yara
-from plyara import interp
+import plyara
 from yara import SyntaxError
 
 import config
@@ -51,7 +51,7 @@ def execute_job(job_id, hash, yara_rule):
     })
 
     try:
-        rules = interp.parseString(yara_rule)
+        rules = plyara.Plyara().parse_string(yara_rule)
         parser = YaraParser(rules[0])
         parsed = parser.parse()
     except Exception as e:
