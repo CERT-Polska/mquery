@@ -49,7 +49,8 @@ class UrsaDb(object):
 
     def index(self, path):
         socket = self.make_socket(recv_timeout=-1)
-        socket.send('index "{path}" with {index_type};'.format(path=path,index_type=INDEX_TYPE))
+        socket.send('index "{path}" with [{index_type}];'.format(
+            path=path, index_type=', '.join(INDEX_TYPE)))
         response = socket.recv_string()
         socket.close()
 
