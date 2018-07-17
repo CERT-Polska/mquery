@@ -43,6 +43,11 @@ function updateStatusCol(hash, repoUrl) {
 
         if (data.job.status == 'failed') {
             $('#jobStatus').addClass('label-danger');
+
+            $('#runtime-errors').text(data.error);
+            $('#runtime-errors').removeClass('hidden');
+            $('#matches').addClass('hidden');
+            $('#queryPlan').addClass('hidden');
         } else if (data.job.status == 'done') {
             $('#jobStatus').addClass('label-success');
         } else {
@@ -63,8 +68,10 @@ function updateStatusCol(hash, repoUrl) {
             $('#progressBar').addClass('progress-bar-info');
         }
 
-        $('#matches').removeClass('hidden');
-        $('#queryPlan').addClass('hidden');
+        if (data.job.status != 'failed') {
+            $('#matches').removeClass('hidden');
+            $('#queryPlan').addClass('hidden');
+        }
 
         if (data.job.status != 'done') {
             setTimeout(updateStatusCol, 1000, hash, repoUrl);

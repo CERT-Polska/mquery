@@ -66,7 +66,7 @@
             </form>
             <div class="col-md-6 mq-topmargin" id="status-col">
                 {% if errors %}
-                    <div class="alert alert-danger" class="mq-nmargin">
+                    <div class="alert alert-danger mq-nmargin">
                         {{ errors }}
                     </div>
                 {% else %}
@@ -116,6 +116,8 @@
 
                                 </tbody>
                             </table>
+
+                            <div class="alert alert-danger mq-nmargin hidden" id="runtime-errors"></div>
                         </div>
                     </div>
                     {% endif %}
