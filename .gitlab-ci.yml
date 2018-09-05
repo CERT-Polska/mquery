@@ -55,12 +55,12 @@ test_mquery:
     - docker pull $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
-    - docker tag $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID mquerygh_web:latest
-    - docker tag $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID mquerygh_daemon:latest
-    - docker tag $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID mquerygh_ursadb:latest
-    - docker tag $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID mquerygh_tests:latest
+    - docker tag $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID mquery_web:latest
+    - docker tag $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID mquery_daemon:latest
+    - docker tag $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID mquery_ursadb:latest
+    - docker tag $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID mquery_tests:latest
     - docker-compose up -d
-    - docker run --net mquerygh_default -v mquerygh_samples:/mnt/samples mquerygh_tests
+    - docker run --net mquery_default -v mquery_samples:/mnt/samples mquery_tests
   artifacts:
     name: "$CI_JOB_NAME"
     paths:
