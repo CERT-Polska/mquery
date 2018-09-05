@@ -1,0 +1,13 @@
+.mquery-yara-input {
+    height: calc(100vh - 150px) !important;
+    font-family: monospace;
+}
+
+.mquery-scroll-matches {
+    height: calc(100vh - 95px);
+    overflow-y: scroll
+}
+
+.mquery-scroll-matches td {
+    word-break: break-all;
+}

@@ -7,6 +7,11 @@ function updateStatusCol(hash, repoUrl) {
             return;
         }
 
+        if (data.job.status == 'parsed') {
+            $('#jobStatus').text('parsed');
+            return;
+        }
+
         var total_volume = data.job.total_files;
 
         if (data.job.max_files != -1 && data.job.max_files < data.job.total_files) {
@@ -21,18 +26,33 @@ function updateStatusCol(hash, repoUrl) {
 
         $('#matches').find('tbody').empty();
 
+        var count_meta = 0;
+
         data.matches.forEach(function (m) {
-            $('#matches').find('tbody')
-                .append($('<tr />')
-                    .append($('<td />')
-                        .append($('<a />')
-                            .attr('href', '/sample?name=' + m.matched_dump)
-                            .text(m.matched_dump.split('.').slice(0, -1).join('.')))
-                        .append($('<a />')
-                            .attr('href', repoUrl.replace('{hash}', m.binary_hash))
-                            .attr('class', 'label label-info pull-right')
-                            .text('analysis')
-                        )))
+            var new_td = $('<td />');
+            var m_add = $('#matches').find('tbody').append($('<tr />').append(new_td));
+
+            new_td.append($('<a />')
+                            .attr('href', '/sample?name=' + m.file)
+                            .text(m.file.split('.').slice(0, -1).join('.')));
+
+            if (!m.meta) {
+                return;
+            }
+
+            count_meta += 1;
+
+            Object.keys(m.meta).forEach(function (meta_key) {
+                var obj = m.meta[meta_key];
+
+                if (obj.display_text) {
+                    new_td.append($('<a />')
+                        .attr('href', obj.url)
+                        .attr('class', 'label label-info pull-right')
+                        .text(obj.display_text)
+                    );
+                }
+            });
         });
 
         $('#progressBar').css('width', progress + '%');
@@ -73,7 +93,7 @@ function updateStatusCol(hash, repoUrl) {
             $('#queryPlan').addClass('hidden');
         }
 
-        if (data.job.status != 'done') {
+        if (data.job.status != 'done' || count_meta < data.matches.length) {
             setTimeout(updateStatusCol, 1000, hash, repoUrl);
         }
     });

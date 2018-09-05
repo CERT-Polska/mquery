@@ -81,7 +81,7 @@ class YaraParser(object):
         atom = Forward()
         expression = Forward()
 
-        variable = Word(string.lowercase + string.uppercase + string.digits + "[]._#*$").setParseAction(
+        variable = Word(string.ascii_lowercase + string.ascii_uppercase + string.digits + "[]._#*$").setParseAction(
             self.act_variable)
         variable_list = Or([
             Literal('(').suppress()

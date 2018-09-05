@@ -1,6 +1,6 @@
 import logging
 
-from itsdangerous import Signer
+from itsdangerous import JSONWebSignatureSerializer
 from redis import StrictRedis
 
 import config
@@ -15,8 +15,8 @@ def setup_logging():
 
 
 def make_redis():
-    return StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT)
+    return StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True)
 
 
 def make_serializer():
-    return Signer(config.SECRET_KEY)
+    return JSONWebSignatureSerializer(config.SECRET_KEY)

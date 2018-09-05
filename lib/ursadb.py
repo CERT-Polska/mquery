@@ -27,7 +27,7 @@ class UrsaDb(object):
 
         start = time.clock()
         query = 'select {};'.format(query)
-        socket.send(query)
+        socket.send_string(query)
 
         response = socket.recv_string()
         socket.close()
@@ -49,14 +49,14 @@ class UrsaDb(object):
 
     def index(self, path):
         socket = self.make_socket(recv_timeout=-1)
-        socket.send('index "{path}" with [{index_type}];'.format(
+        socket.send_string('index "{path}" with [{index_type}];'.format(
             path=path, index_type=', '.join(INDEX_TYPE)))
         response = socket.recv_string()
         socket.close()
 
     def status(self):
         socket = self.make_socket()
-        socket.send('status;')
+        socket.send_string('status;')
         response = socket.recv_string()
         socket.close()
 

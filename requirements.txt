@@ -4,4 +4,4 @@ yara-python
 pyzmq
 pyparsing
 redis
-
+requests
