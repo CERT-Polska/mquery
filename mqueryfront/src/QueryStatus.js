@@ -116,9 +116,12 @@ class QueryStatus extends Component {
         }
 
         let progress = Math.floor(this.state.status.files_processed * 100 / this.state.status.job.total_files);
+        let processed = this.state.status.files_processed + ' / ' + this.state.status.job.total_files;
+        let cancel = <button className="btn btn-danger btn-sm" onClick={this.handleCancelJob}>cancel</button>;
 
-        if (this.state.status.job.total_files <= 0) {
-            progress = 100;
+        if (!this.state.status.job.total_files) {
+            progress = 0;
+            processed = '-';
         }
 
         const matches = this.state.status.matches.map((match) =>
@@ -129,6 +132,10 @@ class QueryStatus extends Component {
 
         if (this.state.status.job.status === 'done') {
             progressBg = 'bg-success';
+            cancel = <span />;
+        } else if (this.state.status.job.status === 'cancelled') {
+            progressBg = 'bg-danger';
+            cancel = <span />;
         }
 
         const lenMatches = this.state.status.matches.length;
@@ -148,10 +155,10 @@ class QueryStatus extends Component {
                         Status: <span className="badge badge-dark">{this.state.status.job.status}</span>
                     </div>
                     <div className="col-md-5">
-                        Processed: <span>{this.state.status.files_processed} / {this.state.status.job.total_files}</span>
+                        Processed: <span>{processed}</span>
                     </div>
                     <div className="col-md-2">
-                        <button className="btn btn-danger btn-sm" onClick={this.handleCancelJob}>cancel</button>
+                        {cancel}
                     </div>
                 </div>
                 <table className={"table table-striped table-bordered"}>
