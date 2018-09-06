@@ -37,8 +37,11 @@ Installation (manual)
 ---------------------
 
 1. Run `ursadb` database (see `ursadb` project for further instructions on that topic).
-2. Install `redis-server` and `python2`.
-3. Install requirements: `pip install -r requirements.txt`
+2. Install `redis-server`, `python3` and `npm`.
+3. Install requirements: `pip install -r requirements.txt`.
+4. Run `cp mqueryfront/src/config.dist.js mqueryfront/src/config.js`
+5. Adjust settings in `mqueryfront/src/config.js` accordingly.
+4. Run `cd mqueryfront && npm install && npm run build`
 5. Copy `config.example.py` to `config.py`, remember to adjust the settings and set unique `SECRET_KEY`.
 6. Setup a flask application originating from `webapp.py` in your favourite web server.
 7. Run `daemon.py` - a standalone script which should work constantly, consider putting it in systemd.
@@ -74,4 +77,3 @@ Maintainers
 Questions/comments/pull requests are welcome.
 
 * Michał Leszczyński (monk@cert.pl)
-
