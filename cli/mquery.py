@@ -4,10 +4,16 @@ import json
 import os
 import sys
 import time
+import urllib3
 
 import requests
 from tabulate import tabulate
 from tqdm import tqdm
+
+MQUERY_SSL_VERIFY = os.environ.get('MQUERY_SSL_VERIFY', '1') == '1'
+
+if not MQUERY_SSL_VERIFY:
+    urllib3.disable_warnings()
 
 try:
     MQUERY_SERVER = os.environ['MQUERY_SERVER']
@@ -37,7 +43,7 @@ def print_matches(results):
 with open(args.yara_file, 'rb') as f:
     yara_rule = f.read()
 
-res = requests.post(MQUERY_SERVER + '/query', json={'method': 'query', 'rawYara': yara_rule.decode('utf-8')})
+res = requests.post(MQUERY_SERVER + '/query', json={'method': 'query', 'rawYara': yara_rule.decode('utf-8')}, verify=MQUERY_SSL_VERIFY)
 
 out = res.json()
 
@@ -54,7 +60,7 @@ with tqdm(total=0) as pbar:
         if out:
             time.sleep(1.0)
 
-        res = requests.get(MQUERY_SERVER + '/status/{}'.format(query_hash))
+        res = requests.get(MQUERY_SERVER + '/status/{}'.format(query_hash), verify=MQUERY_SSL_VERIFY)
         out = res.json()
 
         diff = int(out['job'].get('files_processed', 0)) - last_reported
