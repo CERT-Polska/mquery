@@ -84,6 +84,7 @@ if out['job']['status'] == 'done':
     print_matches(out['matches'])
 
     with open(args.result_file, 'w') as f:
-        f.write(json.dumps(out['matches'], indent=4, sort_keys=True))
+        json_out = {'matches': out['matches'], 'job_id': query_hash, 'rule_name': out['job']['rule_name']}
+        f.write(json.dumps(json_out, indent=4, sort_keys=True))
 else:
     sys.stderr.write(out['job']['error'])
