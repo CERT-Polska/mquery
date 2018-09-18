@@ -223,6 +223,12 @@ def admin_indexable_paths():
     })
 
 
+@app.route('/admin', defaults={'path': ''})
+@app.route('/query', defaults={'path': ''})
+@app.route('/query/<path:path>')
+def serve_index(path):
+    return send_from_directory('mqueryfront/build', 'index.html')
+
 @app.route('/', defaults={'path': 'index.html'})
 @app.route('/favicon.ico', defaults={'path': 'favicon.ico'})
 @app.route('/manifest.json', defaults={'path': 'manifest.json'})
