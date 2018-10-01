@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mquery-nfs
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadOnlyMany
+  nfs:
+    server: 188.165.235.78
+    path: "/opt/nfs"
+    readOnly: true

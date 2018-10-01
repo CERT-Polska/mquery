@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: mquery-web-ingress
+spec:
+  rules:
+  - host: mquery.kube.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: mquery-web-service
+          servicePort: 80
+
