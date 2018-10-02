@@ -53,8 +53,8 @@ spec:
     spec:
       containers:
         - name: ursadb
-          image: "localhost:5000/ursadb:latest"
-          imagePullPolicy: "IfNotPresent"
+          image: "docker-registry.local/ursadb:latest"
+          imagePullPolicy: Always
           ports:
             - containerPort: 9281
           volumeMounts:

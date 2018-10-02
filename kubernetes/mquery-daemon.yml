@@ -22,12 +22,15 @@ spec:
         app: mquery-daemon
     spec:
       containers:
-        - image: "localhost:5000/mquery-daemon:latest"
+        - image: "docker-registry.local/mquery-daemon:latest"
           imagePullPolicy: Always
           name: mquery-daemon-container
           env:
             - name: SECRET_KEY
-              value: test123
+              valueFrom:
+              secretKeyRef:
+                name: mquery
+                key: SECRET_KEY
           volumeMounts:
             - name: mquery-nfs
               mountPath: /mnt/samples

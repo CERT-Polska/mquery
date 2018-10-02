@@ -8,6 +8,6 @@ spec:
   accessModes:
     - ReadOnlyMany
   nfs:
-    server: 188.165.235.78
+    server: nfs-server.local
     path: "/opt/nfs"
     readOnly: true
