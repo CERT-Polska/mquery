@@ -28,9 +28,9 @@ spec:
           env:
             - name: SECRET_KEY
               valueFrom:
-              secretKeyRef:
-                name: mquery
-                key: SECRET_KEY
+                secretKeyRef:
+                  name: mquery
+                  key: SECRET_KEY
           volumeMounts:
             - name: mquery-nfs
               mountPath: /mnt/samples
