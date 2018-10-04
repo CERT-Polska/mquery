@@ -26,9 +26,9 @@ spec:
           env:
           - name: SECRET_KEY
             valueFrom:
-            secretKeyRef:
-              name: mquery-secret
-              key: SECRET_KEY
+              secretKeyRef:
+                name: mquery-secret
+                key: SECRET_KEY
           imagePullPolicy: Always
           name: mquery-web-container
           livenessProbe:
