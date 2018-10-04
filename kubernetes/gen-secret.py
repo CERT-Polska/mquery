@@ -26,7 +26,7 @@ def gen_kube_secret():
         }
     }
 
-    return yaml.dump(kube_def, default_flow_style=False)
+    return yaml.safe_dump(kube_def, default_flow_style=False)
 
 
 print(gen_kube_secret())
