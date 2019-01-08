@@ -51,8 +51,9 @@ class YaraParser(object):
         elif am[0] == 'all':
             return '(' + ' & '.join(am[2]) + ')'
         elif am[0].isdigit():
-            return '(' + ' | '.join(
-                '(' + ' & '.join(opt) + ')' for opt in itertools.combinations(am[2], int(am[0]))) + ')'
+            cutoff = int(am[0])
+            expressions = ' , '.join(am[2])
+            return '(min ' + str(cutoff) + ' of ( ' + expressions + ' ))'
         else:
             raise Exception('what')
 
