@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile-webapp
     environment:
       - SECRET_KEY
+      - INDEXABLE_PATHS=/mnt/samples
     ports:
     - "80:80"
     links:
