@@ -27,7 +27,7 @@ class YaraParser(object):
                     consecutive.append('')
             return '(' + ' & '.join('{' + c + '}' for c in consecutive if len(c) >= 6) + ')'
         elif value[0] == '"' and value[-1] == '"':
-            return "\"" + value[1:-1] + "\""
+            return "\"" + value[1:-1].replace("\\", "\\\\") + "\""
         elif value[0] == "\"" and value[-1] == "\"":
             return value
         else:
