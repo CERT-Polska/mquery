@@ -26,10 +26,8 @@ class YaraParser(object):
                 else:
                     consecutive.append('')
             return '(' + ' & '.join('{' + c + '}' for c in consecutive if len(c) >= 6) + ')'
-        elif value[0] == '"' and value[-1] == '"':
-            return "\"" + value[1:-1].replace("\\", "\\\\") + "\""
         elif value[0] == "\"" and value[-1] == "\"":
-            return value
+            return "\"" + value[1:-1] + "\""
         else:
             assert False
 
@@ -128,7 +126,8 @@ class YaraParser(object):
             if 'modifiers' in string and 'wide' in string['modifiers']:
                 str_q = 'w' + str_q
 
-            cond = re.sub(name, str_q, cond)
+            # lambda is used to make re.sub avoid parsing replacement string
+            cond = re.sub(name, lambda x: str_q, cond)
             cond = cond.replace('()', '""')  # "always true"
 
         return cond
