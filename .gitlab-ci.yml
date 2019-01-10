@@ -1,7 +1,6 @@
-image: naskpl/docker-compose
+image: certpl/docker-ci-base:latest
 
 variables:
-  GIT_SUBMODULE_STRATEGY: recursive
   DOCKER_DRIVER: overlay2
 
 services:
@@ -10,6 +9,7 @@ services:
 stages:
   - build
   - test
+  - deploy
 
 before_script:
   - echo "Start job $CI_BUILD_NAME" at `date +%Y-%m-%d-%H-%M-%S`
@@ -21,26 +21,26 @@ before_script:
 build_images:
   stage: build
   script:
-    - docker pull $DOCKER_REGISTRY/mquery_ursadb_build:latest || true
-    - docker pull $DOCKER_REGISTRY/mquery_ursadb:latest || true
     - docker pull $DOCKER_REGISTRY/mquery_web:latest || true
     - docker pull $DOCKER_REGISTRY/mquery_daemon:latest || true
     - docker pull $DOCKER_REGISTRY/mquery_tests:latest || true
-    - docker build --target build --cache-from $DOCKER_REGISTRY/mquery_ursadb_build:latest -t $DOCKER_REGISTRY/mquery_ursadb_build:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_ursadb_build:latest ursadb
-    - docker build --cache-from $DOCKER_REGISTRY/mquery_ursadb_build:latest --cache-from $DOCKER_REGISTRY/mquery_ursadb:latest -t $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_ursadb:latest ursadb
-    - docker build --cache-from $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_web:latest -f Dockerfile-webapp .
-    - docker build --cache-from $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_daemon:latest -f Dockerfile-daemon .
-    - docker build --cache-from $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_tests:latest tests
+    
+    - docker build --cache-from $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:build-$CI_COMMIT_SHA -f Dockerfile-webapp .
+    - docker build --cache-from $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:build-$CI_COMMIT_SHA -f Dockerfile-daemon .
+    - docker build --cache-from $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:build-$CI_COMMIT_SHA tests
+    
     - docker images
+    
     - docker push $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID
-    - docker push $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
-    - docker push $DOCKER_REGISTRY/mquery_ursadb_build:$CI_PIPELINE_ID
-    - docker push $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID
-    - docker push $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
+    - docker push $DOCKER_REGISTRY/mquery_web:build-$CI_COMMIT_SHA
     - docker push $DOCKER_REGISTRY/mquery_web:latest
+    
+    - docker push $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
+    - docker push $DOCKER_REGISTRY/mquery_daemon:build-$CI_COMMIT_SHA
     - docker push $DOCKER_REGISTRY/mquery_daemon:latest
-    - docker push $DOCKER_REGISTRY/mquery_ursadb_build:latest
-    - docker push $DOCKER_REGISTRY/mquery_ursadb:latest
+    
+    - docker push $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
+    - docker push $DOCKER_REGISTRY/mquery_tests:build-$CI_COMMIT_SHA
     - docker push $DOCKER_REGISTRY/mquery_tests:latest
   after_script:
     - docker-compose down | true
@@ -48,17 +48,25 @@ build_images:
 test_mquery:
   stage: test
   script:
+    - git submodule update --init --recursive
+  
+    - URSADB_VERSION=$(git ls-tree $CI_COMMIT_SHA ursadb | cut -f3 "-d " | cut -f1)
+    - echo "URSADB_VERSION=$URSADB_VERSION"
+    
     - SECRET_KEY=$(date +%s | sha256sum | base64 | head -c 32)
     - echo "SECRET_KEY=$SECRET_KEY" >> .env
+    
     - docker pull redis
     - docker pull $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
-    - docker pull $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
+    - docker pull $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION
+    
     - docker tag $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID mquery_web:latest
     - docker tag $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID mquery_daemon:latest
-    - docker tag $DOCKER_REGISTRY/mquery_ursadb:$CI_PIPELINE_ID mquery_ursadb:latest
     - docker tag $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID mquery_tests:latest
+    - docker tag $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION mquery_ursadb:latest
+    
     - docker-compose up -d
     - docker run --net mquery_default -v mquery_samples:/mnt/samples mquery_tests
   artifacts:
@@ -71,3 +79,20 @@ test_mquery:
     - docker-compose logs -t
     - docker-compose logs -t > artifacts/test/startup.log
     - docker-compose down | true
+
+deploy_mquery:
+  stage: deploy
+  when: manual
+  only:
+    - master
+  environment:
+    name: prod
+  script:
+    - eval $(ssh-agent -s)
+    - echo "$GIT_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$VCS_SSH_KEYS" >> ~/.ssh/known_hosts
+    - git clone "$VCS_DEPLOY_REPO_URL"
+    - cd "$VCS_DEPLOY_REPO_NAME"
+    - sh deploy_mquery.sh
