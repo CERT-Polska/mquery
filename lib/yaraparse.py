@@ -18,7 +18,9 @@ class YaraParser(object):
             consecutive = ['']
             value = value[1:-1].strip()
             hexdigs = 'ABCDEFabcdef0123456789'
-            for c in value.split(' '):
+            value = value.replace(" ", "")
+
+            for c in [value[i:i+2] for i in range(0, len(value), 2)]:
                 if len(c) == 2 and c != '??' and (c[0] == '?' or c[1] == '?'):
                     consecutive[-1] += c
                 elif len(c) == 2 and c[0] in hexdigs and c[1] in hexdigs:
