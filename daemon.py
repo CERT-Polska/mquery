@@ -34,7 +34,7 @@ def job_daemon():
                 execute_search(job_hash)
             except Exception as e:
                 logging.exception('Failed to execute job.')
-                redis.hmset(job_hash, {
+                redis.hmset('job:' + job_hash, {
                     'status': 'failed',
                     'error': str(e),
                 })
@@ -172,13 +172,16 @@ def execute_search(job_hash):
         'total_files': len(files)
     })
 
-    pipe = redis.pipeline()
+    if files:
+        pipe = redis.pipeline()
 
-    for file in files:
-        pipe.rpush('queue-yara', '{}:{}'.format(job_hash, file))
+        for file in files:
+            pipe.rpush('queue-yara', '{}:{}'.format(job_hash, file))
 
-    pipe.execute()
-    logging.info('Done uploading yara jobs.')
+        pipe.execute()
+        logging.info('Done uploading yara jobs.')
+    else:
+        redis.hset('job:{}'.format(job_hash), 'status', 'done')
 
 
 if __name__ == '__main__':
