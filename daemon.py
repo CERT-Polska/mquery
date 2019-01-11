@@ -40,7 +40,14 @@ def job_daemon():
                 })
         elif queue == 'queue-yara':
             job_hash, file_path = data.split(':', 1)
-            execute_yara(job_hash, file_path)
+            try:
+                execute_yara(job_hash, file_path)
+            except Exception as e:
+                logging.exception('Failed to execute yara match.')
+                redis.hmset('job:' + job_hash, {
+                    'status': 'failed',
+                    'error': str(e),
+                })
         elif queue == 'queue-index':
             path = data
             db.index(path)
