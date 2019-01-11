@@ -17,6 +17,11 @@ before_script:
   - mkdir -p artifacts/test
   - docker info
   - docker login -u $DOCKER_REGISTRY_LOGIN -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY
+  - eval $(ssh-agent -s)
+  - (if [ ! -z "$GIT_DEPLOY_KEY" ] ; then echo "$GIT_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null ; fi)
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - echo "$VCS_SSH_KEYS" >> ~/.ssh/known_hosts
 
 build_images:
   stage: build
@@ -24,7 +29,9 @@ build_images:
     - docker pull $DOCKER_REGISTRY/mquery_web:latest || true
     - docker pull $DOCKER_REGISTRY/mquery_daemon:latest || true
     - docker pull $DOCKER_REGISTRY/mquery_tests:latest || true
-    
+
+    - (if [ ! -z "$GIT_DEPLOY_KEY" ] ; then git clone git@vcs.cert.pl:cert/mquery-plugins.git ; cat mquery-plugins/aux-config.py >> config.docker.py ; rm mquery-plugins/aux-config.py ; mv mquery-plugins/*.py metadata/ ; rm -rf mquery-plugins ; fi)
+
     - docker build --cache-from $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:build-$CI_COMMIT_SHA -f Dockerfile-webapp .
     - docker build --cache-from $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:build-$CI_COMMIT_SHA -f Dockerfile-daemon .
     - docker build --cache-from $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:build-$CI_COMMIT_SHA tests
@@ -55,7 +62,7 @@ test_mquery:
     
     - SECRET_KEY=$(date +%s | sha256sum | base64 | head -c 32)
     - echo "SECRET_KEY=$SECRET_KEY" >> .env
-    
+
     - docker pull redis
     - docker pull $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
@@ -88,11 +95,6 @@ deploy_mquery:
   environment:
     name: prod
   script:
-    - eval $(ssh-agent -s)
-    - echo "$GIT_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$VCS_SSH_KEYS" >> ~/.ssh/known_hosts
     - git clone "$VCS_DEPLOY_REPO_URL"
     - cd "$VCS_DEPLOY_REPO_NAME"
     - sh deploy_mquery.sh
