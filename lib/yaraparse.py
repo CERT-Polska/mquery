@@ -2,6 +2,7 @@ from pyparsing import *
 import re
 import itertools
 import string
+import codecs
 
 
 class YaraParser(object):
@@ -14,22 +15,36 @@ class YaraParser(object):
 
     def string_to_query(self, value):
         value = value.strip()
+        
         if value[0] == '{' and value[-1] == '}':
             consecutive = ['']
             value = value[1:-1].strip()
             hexdigs = 'ABCDEFabcdef0123456789'
             value = value.replace(" ", "")
+            vals = re.split('\[.*?\]', value)
 
-            for c in [value[i:i+2] for i in range(0, len(value), 2)]:
-                if len(c) == 2 and c != '??' and (c[0] == '?' or c[1] == '?'):
-                    consecutive[-1] += c
-                elif len(c) == 2 and c[0] in hexdigs and c[1] in hexdigs:
-                    consecutive[-1] += c
-                else:
-                    consecutive.append('')
-            return '(' + ' & '.join('{' + c + '}' for c in consecutive if len(c) >= 6) + ')'
+            for value in vals:
+                value = value.strip()
+                consecutive.append('')
+
+                for c in [value[i:i+2] for i in range(0, len(value), 2)]:
+                    if len(c) == 2 and c != '??' and (c[0] == '?' or c[1] == '?'):
+                        consecutive[-1] += c
+                    elif len(c) == 2 and c[0] in hexdigs and c[1] in hexdigs:
+                        consecutive[-1] += c
+                    else:
+                        consecutive.append('')
+
+            qs = ' & '.join('{' + c + '}' for c in consecutive if len(c) >= 6)
+            
+            if not qs:
+                qs = '""'
+            
+            return '(' + qs + ')'
         elif value[0] == "\"" and value[-1] == "\"":
-            return "\"" + value[1:-1] + "\""
+            # this will encode non-ascii characters into \x entities, so UrsaDB could parse them
+            inner_val = codecs.escape_encode(value[1:-1].encode('utf-8'))[0].decode('ascii').replace('\\\\', '\\')
+            return "\"" + inner_val + "\""
         else:
             assert False
 
@@ -52,8 +67,8 @@ class YaraParser(object):
             return '(' + ' & '.join(am[2]) + ')'
         elif am[0].isdigit():
             cutoff = int(am[0])
-            expressions = ' , '.join(am[2])
-            return '(min ' + str(cutoff) + ' of ( ' + expressions + ' ))'
+            expressions = ', '.join(am[2])
+            return '(min ' + str(cutoff) + ' of (' + expressions + '))'
         else:
             raise Exception('what')
 
@@ -76,7 +91,7 @@ class YaraParser(object):
 
     def act_variable(self, a, d, am):
         if not am[0].startswith('$'):
-            return "()"
+            return '""'
 
     def get_grammar(self):
         atom = Forward()
@@ -119,7 +134,7 @@ class YaraParser(object):
 
     def replace_strings(self, cond):
         for string in self.strings:
-            name = '(?<=[() ])' + re.escape(string['name']) + '(?=[() ])'
+            name = '(?<=[(), ])' + re.escape(string['name']) + '(?=[(), ])'
 
             value = string['value']
 
@@ -129,8 +144,7 @@ class YaraParser(object):
                 str_q = 'w' + str_q
 
             # lambda is used to make re.sub avoid parsing replacement string
-            cond = re.sub(name, lambda x: str_q, cond)
-            cond = cond.replace('()', '""')  # "always true"
+            cond = re.sub(name, lambda x: str_q, ' ' + cond + ' ').strip()
 
         return cond
 
