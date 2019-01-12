@@ -43,7 +43,8 @@ class YaraParser(object):
             return '(' + qs + ')'
         elif value[0] == "\"" and value[-1] == "\"":
             # this will encode non-ascii characters into \x entities, so UrsaDB could parse them
-            inner_val = codecs.escape_encode(value[1:-1].encode('utf-8'))[0].decode('ascii').replace('\\\\', '\\')
+            inner_val = codecs.escape_encode(value[1:-1].encode('utf-8'))[0]
+            inner_val = inner_val.decode('ascii').replace('\\\\', '\\').replace('\\\'', '\'')
             return "\"" + inner_val + "\""
         else:
             assert False
