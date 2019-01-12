@@ -57,7 +57,7 @@ def job_daemon():
 
 
 def execute_metadata(job_hash, file_path):
-    if redis.hget('job:' + job_hash, 'status') == 'cancelled':
+    if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
     current_meta = {}
@@ -96,7 +96,7 @@ def execute_metadata(job_hash, file_path):
 
 
 def execute_yara(job_hash, file):
-    if redis.hget('job:' + job_hash, 'status') == 'cancelled':
+    if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
     job = redis.hgetall('job:' + job_hash)

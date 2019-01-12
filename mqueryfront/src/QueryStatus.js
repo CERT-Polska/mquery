@@ -84,10 +84,18 @@ class QueryStatus extends Component {
     }
 
     render() {
+        let error = null;
+        
         if (this.state.queryError) {
+            error = this.state.queryError;
+        } else if (this.state.status && this.state.status.job && this.state.status.job.error) {
+            error = this.state.status.job.error;
+        }
+        
+        if (error) {
             return <div className="alert alert-danger">
                 <h2>Error occurred</h2>
-                {this.state.queryError}
+                {error}
             </div>;
         }
 
