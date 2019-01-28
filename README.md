@@ -77,3 +77,4 @@ Maintainers
 Questions/comments/pull requests are welcome.
 
 * Michał Leszczyński (monk@cert.pl)
+* Jarosław Jedynak (msm@tailcall.net)

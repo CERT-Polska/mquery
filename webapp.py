@@ -5,9 +5,8 @@ import random
 import string
 import time
 
-from flask import Flask, request, redirect, url_for, Response, jsonify, send_file, send_from_directory
-from itsdangerous import BadSignature
-from werkzeug.exceptions import Forbidden, NotFound
+from flask import Flask, request, redirect, url_for, jsonify, send_file, send_from_directory
+from werkzeug.exceptions import NotFound
 from zmq import Again
 
 from lib.ursadb import UrsaDb
@@ -31,18 +30,7 @@ def add_header(response):
     return response
 
 
-@app.route('/saved-rules')
-def get_saved_rules():
-    named_queries = redis.keys('named_query:*')
-    saved_rules = []
-    for query in named_queries:
-        qid = query.split(':')[1]
-        name = redis.get(query)
-        saved_rules.append({'id': qid, 'name': name})
-    return jsonify({"saved_rules": sorted(saved_rules, key=lambda x: x['name'])})
-
-
-@app.route('/admin/index', methods=['POST'])
+@app.route('/api/admin/index', methods=['POST'])
 def admin_index():
     path = request.get_json()['path']
 
@@ -58,12 +46,15 @@ def admin_index():
     return jsonify({"status": "queued"})
 
 
-@app.route('/download')
+@app.route('/api/download')
 def download():
     job_id = request.args['job_id']
     file_path = request.args['file_path']
+    ordinal = request.args['ordinal']
 
-    if not redis.sismember('matches:' + job_id, file_path):
+    file_list = redis.lrange('meta:' + job_id, ordinal, ordinal)
+
+    if not file_list or file_path != json.loads(file_list[0])['file']:
         raise NotFound('No such file in result set.')
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
@@ -72,7 +63,7 @@ def download():
     return send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)
 
 
-@app.route('/query', methods=['POST'])
+@app.route('/api/query', methods=['POST'])
 def query():
     req = request.get_json()
 
@@ -120,70 +111,29 @@ def query():
     return jsonify({'query_hash': job_hash})
 
 
-def generate_match_objs(hash, matches):
-    meta_set = redis.smembers("meta:{}".format(hash))
-    signed_matches = []
+@app.route('/api/matches/<hash>')
+def matches(hash):
+    offset = int(request.args['offset'])
+    limit = int(request.args['limit'])
 
-    meta_dict = {}
-
-    for m in meta_set:
-        m_obj = json.loads(m)
-        meta_dict[m_obj['file']] = m_obj['meta']
-
-    for m in matches:
-        obj = {
-            "matched_path": m,
-            "metadata_available": False,
-            "metadata": {}
-        }
-
-        if m in meta_dict:
-            obj.update({
-                "metadata_available": True,
-                "metadata": meta_dict[m]
-            })
-
-        signed_matches.append(obj)
-
-    return signed_matches
-
-
-@app.route('/status/<hash>')
-def status(hash):
-    fetch_matches = not request.args.get('skipMatches', False)
-
-    if fetch_matches:
-        matches = redis.smembers('matches:' + hash)
-    else:
-        matches = []
-
-    job = redis.hgetall('job:' + hash)
-    error = job.get('error')
-
-    fp_count = redis.scard('false_positives:{}'.format(hash))
-    tp_count = redis.scard('meta:{}'.format(hash))
-
-    if not tp_count:
-        tp_count = 0
+    p = redis.pipeline(transaction=False)
+    p.hgetall('job:' + hash)
+    p.lrange('meta:' + hash, offset, offset + limit - 1)
+    job, meta = p.execute()
 
     return jsonify({
-        "files_processed": int(tp_count) + int(fp_count),
-        "matches": generate_match_objs(hash, matches),
         "job": job,
-        "error": error
+        "matches": [json.loads(m) for m in meta]
     })
 
 
-@app.route('/save', methods=['POST'])
-def save():
-    qhash = request.form.get('hash')
-    rule_name = request.form.get('rule_name')
-    redis.set('named_query:{}'.format(qhash), rule_name)
-    return redirect(url_for('query_by_hash', qhash=qhash))
+@app.route('/api/job/<hash>')
+def job_info(hash):
+    return jsonify(redis.hgetall('job:' + hash))
 
 
-@app.route('/job/<job_id>', methods=['DELETE'])
-def admin_cancel(job_id):
+@app.route('/api/job/<job_id>', methods=['DELETE'])
+def job_cancel(job_id):
     redis.hmset('job:' + job_id, {
         'status': 'cancelled',
     })
@@ -191,8 +141,8 @@ def admin_cancel(job_id):
     return jsonify({"status": "ok"})
 
 
-@app.route('/status/jobs')
-def status_jobs():
+@app.route('/api/job')
+def job_statuses():
     jobs = redis.keys('job:*')
     jobs = sorted([dict({'id': job[4:]}, **redis.hgetall(job)) for job in jobs],
                   key=lambda o: o.get('submitted'), reverse=True)
@@ -200,8 +150,8 @@ def status_jobs():
     return jsonify({"jobs": jobs})
 
 
-@app.route('/status/backend')
-def status_backend():
+@app.route('/api/backend')
+def backend_status():
     db_alive = True
 
     try:
@@ -216,7 +166,7 @@ def status_backend():
     })
 
 
-@app.route('/admin/indexable_paths')
+@app.route('/api/indexable_paths')
 def admin_indexable_paths():
     return jsonify({
         "indexable_paths": config.INDEXABLE_PATHS

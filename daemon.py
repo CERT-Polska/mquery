@@ -86,7 +86,7 @@ def execute_metadata(job_hash, file_path):
     logging.info('Fetched metadata: ' + file_path)
 
     pipe = redis.pipeline()
-    pipe.sadd('meta:{}'.format(job_hash), json.dumps({"file": file_path, "meta": flat_meta}))
+    pipe.rpush('meta:{}'.format(job_hash), json.dumps({"file": file_path, "meta": flat_meta}))
     pipe.hget('job:{}'.format(job_hash), 'total_files')
     pipe.hincrby('job:{}'.format(job_hash), 'files_processed')
     _, total_files, files_processed = pipe.execute()
@@ -121,13 +121,12 @@ def execute_yara(job_hash, file):
 
     if matches:
         logging.info('Processed (match): {}'.format(file))
-        redis.sadd('matches:' + job_hash, file)
         redis.rpush('queue-metadata', '{}:{}'.format(job_hash, file))
     else:
         logging.info('Processed (nope ): {}'.format(file))
 
         pipe = redis.pipeline()
-        pipe.sadd('false_positives:' + job_hash, file)
+        pipe.rpush('false_positives:' + job_hash, file)
         pipe.hget('job:{}'.format(job_hash), 'total_files')
         pipe.hincrby('job:{}'.format(job_hash), 'files_processed')
         _, total_files, files_processed = pipe.execute()

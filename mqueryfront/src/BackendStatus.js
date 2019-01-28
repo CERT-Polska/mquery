@@ -29,7 +29,7 @@ class BackendStatus extends Component {
 
     componentDidMount() {
         axios
-            .get(API_URL + "/status/backend")
+            .get(API_URL + "/backend")
             .then(response => {
                 this.setState({"jobs": response.data.tasks});
             })

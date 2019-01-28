@@ -17,7 +17,7 @@ class SearchJobRow extends Component {
     }
 
     handleCancelJob() {
-        axios.delete(API_URL + "/job/" + this.props.id)
+        axios.delete(API_URL + "/api/job/" + this.props.id)
             .then(response => {
                 this.setState({"cancelled": true});
             })
@@ -78,7 +78,7 @@ class SearchJobs extends Component {
 
     componentDidMount() {
         axios
-            .get(API_URL + "/status/jobs")
+            .get(API_URL + "/job")
             .then(response => {
                 this.setState({"jobs": response.data.jobs});
             })

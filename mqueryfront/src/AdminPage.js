@@ -18,7 +18,7 @@ class AdminPage extends Component {
 
     handleIndex(path) {
         return () => {
-            axios.post(API_URL + '/admin/index', {path: path})
+            axios.post(API_URL + '/index', {path: path})
                 .then(response => {
                     alert('Re-index operation was queued.');
                 }, error => {
@@ -28,7 +28,7 @@ class AdminPage extends Component {
     }
 
     componentDidMount() {
-        axios.get(API_URL + '/admin/indexable_paths')
+        axios.get(API_URL + '/indexable_paths')
             .then(response => {
                 this.setState({"paths": response.data.indexable_paths});
             });
