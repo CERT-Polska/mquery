@@ -4,22 +4,18 @@ import {API_URL} from "./config";
 
 
 function MatchItem(props) {
-    let metadata = <span className="badge badge-dark">not yet loaded</span>;
-
-    if (props.metadata_available) {
-        metadata = Object.keys(props.metadata).map(
-            (m) => <a href={props.metadata[m].url}>
-                <span className="badge badge-info">{props.metadata[m].display_text}</span>
-            </a>
-        );
-    }
+    const metadata = Object.keys(props.meta).map(
+        (m) => <a href={props.meta[m].url}>
+            <span className="badge badge-info">{props.meta[m].display_text}</span>
+        </a>
+    );
 
     const download_url = API_URL + '/download?job_id=' + encodeURIComponent(props.qhash)
-        + '&file_path=' + encodeURIComponent(props.matched_path);
+        + '&ordinal=' + encodeURIComponent(props.ordinal) + '&file_path=' + encodeURIComponent(props.file);
 
     return (
         <tr>
-            <td><a href={download_url}>{props.matched_path}</a></td>
+            <td><a href={download_url}>{props.file}</a></td>
             <td>{metadata}</td>
         </tr>
     );
@@ -31,7 +27,8 @@ class QueryStatus extends Component {
 
         this.state = {
             qhash: props.qhash,
-            status: null,
+            job: null,
+            matches: [],
             queryPlan: null,
             queryError: null
         };
@@ -55,24 +52,37 @@ class QueryStatus extends Component {
     componentWillReceiveProps(newProps) {
         if (this.state.qhash !== newProps.qhash) {
             this.setState({
-                status: null
+                job: null
             });
         }
 
         this.setState({
             qhash: newProps.qhash,
             queryPlan: newProps.queryPlan,
-            queryError: newProps.queryError
+            queryError: newProps.queryError,
+            matches: []
         });
     }
 
     reloadStatus() {
-        if (this.state.qhash) {
+        const LIMIT = 50;
+
+        let shouldRequest = !!this.state.qhash;
+
+        if (this.state.job) {
+            if (['done', 'cancelled', 'failed'].indexOf(this.state.job.status) !== -1
+                    && this.state.matches.length >= this.state.job.files_processed) {
+                shouldRequest = false;
+            }
+        }
+
+        if (shouldRequest) {
             axios
-                .get(API_URL + "/status/" + this.state.qhash)
+                .get(API_URL + "/matches/" + this.state.qhash + "?offset=" + this.state.matches.length + "&limit=" + LIMIT)
                 .then(response => {
-                    this.setState({"status": response.data});
-                    this.timeout = setTimeout(() => this.reloadStatus(), 1000);
+                    this.setState({"matches": [...this.state.matches, ...response.data.matches], "job": response.data.job});
+                    let nextTimeout = response.data.matches.length >= LIMIT ? 50 : 1000;
+                    this.timeout = setTimeout(() => this.reloadStatus(), nextTimeout);
                 });
         } else {
             this.timeout = setTimeout(() => this.reloadStatus(), 1000);
@@ -88,8 +98,8 @@ class QueryStatus extends Component {
         
         if (this.state.queryError) {
             error = this.state.queryError;
-        } else if (this.state.status && this.state.status.job && this.state.status.job.error) {
-            error = this.state.status.job.error;
+        } else if (this.state.status && this.state.job && this.state.job.error) {
+            error = this.state.job.error;
         }
         
         if (error) {
@@ -117,36 +127,36 @@ class QueryStatus extends Component {
             return <div />;
         }
 
-        if (!this.state.status) {
+        if (!this.state.job) {
             return <div>
                 <h2><i className="fa fa-spinner fa-spin spin-big" /> Loading...</h2>
             </div>;
         }
 
-        let progress = Math.floor(this.state.status.files_processed * 100 / this.state.status.job.total_files);
-        let processed = this.state.status.files_processed + ' / ' + this.state.status.job.total_files;
+        let progress = Math.floor(this.state.job.files_processed * 100 / this.state.job.total_files);
+        let processed = this.state.job.files_processed + ' / ' + this.state.job.total_files;
         let cancel = <button className="btn btn-danger btn-sm" onClick={this.handleCancelJob}>cancel</button>;
 
-        if (!this.state.status.job.total_files) {
+        if (!this.state.job.total_files) {
             progress = 0;
             processed = '-';
         }
 
-        const matches = this.state.status.matches.map((match) =>
-            <MatchItem {...match} qhash={this.state.qhash} key={match.matched_path}/>
+        const matches = this.state.matches.map((match, index) =>
+            <MatchItem {...match} qhash={this.state.qhash} key={match.file} ordinal={index}/>
         );
 
         let progressBg = 'bg-info';
 
-        if (this.state.status.job.status === 'done') {
+        if (this.state.job.status === 'done') {
             progressBg = 'bg-success';
             cancel = <span />;
-        } else if (this.state.status.job.status === 'cancelled') {
+        } else if (this.state.job.status === 'cancelled') {
             progressBg = 'bg-danger';
             cancel = <span />;
         }
 
-        const lenMatches = this.state.status.matches.length;
+        const lenMatches = this.state.matches.length;
 
         return (
             <div className="mquery-scroll-matches">
@@ -160,7 +170,7 @@ class QueryStatus extends Component {
                         <p>Matches: <span>{lenMatches}</span></p>
                     </div>
                     <div className="col-md-3">
-                        Status: <span className="badge badge-dark">{this.state.status.job.status}</span>
+                        Status: <span className="badge badge-dark">{this.state.job.status}</span>
                     </div>
                     <div className="col-md-5">
                         Processed: <span>{processed}</span>

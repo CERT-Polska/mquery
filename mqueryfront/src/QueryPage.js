@@ -30,9 +30,9 @@ class QueryPage extends Component {
     componentDidMount() {
         if (this.state.qhash) {
             axios
-                .get(API_URL + "/status/" + this.state.qhash + "?skipMatches=true")
+                .get(API_URL + "/job/" + this.state.qhash)
                 .then(response => {
-                    this.setState({"rawYara": response.data.job.raw_yara});
+                    this.setState({"rawYara": response.data.raw_yara});
                 });
         }
     }

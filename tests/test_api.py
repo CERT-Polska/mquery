@@ -30,11 +30,11 @@ def test_sth():
     with open('/mnt/samples/foo.txt', 'w') as f:
         f.write('lolwtf123')
 
-    res = requests.post('http://web/admin/index', json={'path': '/mnt/samples'})
+    res = requests.post('http://web/api/admin/index', json={'path': '/mnt/samples'})
     res.raise_for_status()
 
     for _ in range(60):
-        res = requests.get('http://web/status/backend', timeout=1)
+        res = requests.get('http://web/api/backend', timeout=1)
         res.raise_for_status()
 
         # indexing process finished
@@ -52,16 +52,16 @@ rule nymaim {
 }    
 '''
 
-    res = requests.post('http://web/query', json={'method': 'query', 'rawYara': test_yara})
+    res = requests.post('http://web/api/query', json={'method': 'query', 'rawYara': test_yara})
     res.raise_for_status()
 
     query_hash = res.json()['query_hash']
     
     while True:
-        res = requests.get('http://web/status/{}'.format(query_hash))
+        res = requests.get('http://web/api/matches/{}?offset=0&limit=50'.format(query_hash))
         if res.json()['job']['status'] == 'done':
             break
 
     m = res.json()['matches']
     assert len(m) == 1
-    assert m[0]['matched_path'] == '/mnt/samples/foo.txt'
+    assert m[0]['file'] == '/mnt/samples/foo.txt'
