@@ -30,7 +30,8 @@ class QueryStatus extends Component {
             job: null,
             matches: [],
             queryPlan: null,
-            queryError: null
+            queryError: null,
+            shouldRequest: true
         };
 
         this.timeout = null;
@@ -60,27 +61,32 @@ class QueryStatus extends Component {
             qhash: newProps.qhash,
             queryPlan: newProps.queryPlan,
             queryError: newProps.queryError,
-            matches: []
+            matches: [],
+            shouldRequest: true
         });
     }
 
     reloadStatus() {
         const LIMIT = 50;
 
-        let shouldRequest = !!this.state.qhash;
-
-        if (this.state.job) {
-            if (['done', 'cancelled', 'failed'].indexOf(this.state.job.status) !== -1
-                    && this.state.matches.length >= this.state.job.files_processed) {
-                shouldRequest = false;
-            }
-        }
-
-        if (shouldRequest) {
+        if (this.state.shouldRequest) {
             axios
                 .get(API_URL + "/matches/" + this.state.qhash + "?offset=" + this.state.matches.length + "&limit=" + LIMIT)
                 .then(response => {
-                    this.setState({"matches": [...this.state.matches, ...response.data.matches], "job": response.data.job});
+                    let newShouldRequest = true;
+
+                    if (['done', 'cancelled', 'failed'].indexOf(response.data.job.status) !== -1) {
+                        if (!response.data.matches.length) {
+                            newShouldRequest = false;
+                        }
+                    }
+
+                    this.setState({
+                        "matches": [...this.state.matches, ...response.data.matches],
+                        "job": response.data.job,
+                        "shouldRequest": newShouldRequest
+                    });
+
                     let nextTimeout = response.data.matches.length >= LIMIT ? 50 : 1000;
                     this.timeout = setTimeout(() => this.reloadStatus(), nextTimeout);
                 });
