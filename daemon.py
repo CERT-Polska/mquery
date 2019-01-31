@@ -4,6 +4,8 @@ import logging
 import time
 
 import yara
+from functools import lru_cache
+
 import plyara
 from yara import SyntaxError
 
@@ -14,6 +16,20 @@ from util import make_redis, setup_logging
 
 redis = make_redis()
 db = UrsaDb(config.BACKEND)
+
+
+@lru_cache(maxsize=8)
+def compile_yara(job_hash):
+    yara_rule = redis.hget('job:' + job_hash, 'raw_yara')
+
+    logging.info('Compiling Yara')
+    try:
+        rule = yara.compile(source=yara_rule)
+    except SyntaxError as e:
+        logging.exception('Yara parse error')
+        raise e
+
+    return rule
 
 
 def job_daemon():
@@ -99,16 +115,7 @@ def execute_yara(job_hash, file):
     if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
-    job = redis.hgetall('job:' + job_hash)
-
-    logging.info('Compiling Yara')
-    yara_rule = job['raw_yara']
-
-    try:
-        rule = yara.compile(source=yara_rule)
-    except SyntaxError as e:
-        logging.exception('Yara parse error')
-        raise e
+    rule = compile_yara(job_hash)
 
     try:
         matches = rule.match(data=open(file, 'rb').read())
