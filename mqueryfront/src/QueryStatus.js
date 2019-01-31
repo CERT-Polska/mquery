@@ -96,7 +96,7 @@ class QueryStatus extends Component {
     }
 
     handleCancelJob() {
-        axios.delete(API_URL + "/job/" + this.state.qhash);
+        axios.delete(API_URL + "/api/job/" + this.state.qhash);
     }
 
     render() {
