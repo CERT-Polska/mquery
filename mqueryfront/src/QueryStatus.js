@@ -31,7 +31,7 @@ class QueryStatus extends Component {
             matches: [],
             queryPlan: null,
             queryError: null,
-            shouldRequest: true
+            shouldRequest: false
         };
 
         this.timeout = null;
@@ -62,7 +62,7 @@ class QueryStatus extends Component {
             queryPlan: newProps.queryPlan,
             queryError: newProps.queryError,
             matches: [],
-            shouldRequest: true
+            shouldRequest: !!newProps.qhash
         });
     }
 
@@ -91,7 +91,7 @@ class QueryStatus extends Component {
                     this.timeout = setTimeout(() => this.reloadStatus(), nextTimeout);
                 });
         } else {
-            this.timeout = setTimeout(() => this.reloadStatus(), 1000);
+            this.timeout = setTimeout(() => this.reloadStatus(), 100);
         }
     }
 

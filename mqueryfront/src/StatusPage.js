@@ -1,11 +1,11 @@
 import React, {Component} from 'react';
 import BackendStatus from './BackendStatus';
-import SearchJobs from './SearchJobs';
+import DatabaseTopology from './DatabaseTopology';
 import axios from 'axios';
 import {API_URL} from "./config";
 
 
-class AdminPage extends Component {
+class StatusPage extends Component {
     constructor(props) {
         super(props);
 
@@ -18,7 +18,7 @@ class AdminPage extends Component {
 
     handleIndex(path) {
         return () => {
-            axios.post(API_URL + '/index', {path: path})
+            axios.post(API_URL + '/admin/index', {path: path})
                 .then(response => {
                     alert('Re-index operation was queued.');
                 }, error => {
@@ -41,18 +41,17 @@ class AdminPage extends Component {
 
         return (
             <div className="container-fluid">
-                <h1 className="text-center mq-bottom">dashboard</h1>
+                <h1 className="text-center mq-bottom">Status</h1>
                 <div className="row">
                     <div className="col-md-6">
-                        <h2 className="text-center mq-bottom">backend</h2>
+                        <h2 className="text-center mq-bottom">connections</h2>
                         <BackendStatus />
-
-                        {indexButtons}
-
                     </div>
                     <div className="col-md-6">
-                        <h2 className="text-center mq-bottom">jobs/queries</h2>
-                        <SearchJobs />
+                        <h2 className="text-center mq-bottom">topology</h2>
+                        <DatabaseTopology />
+
+                        {indexButtons}
                     </div>
                 </div>
             </div>
@@ -60,4 +59,4 @@ class AdminPage extends Component {
     }
 }
 
-export default AdminPage;
+export default StatusPage;

@@ -25,7 +25,10 @@ class Navigation extends Component {
                             <Link className="nav-link" to={'/'}>Query</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className="nav-link" to={'/admin'}>Admin</Link>
+                            <Link className="nav-link" to={'/recent'}>Recent jobs</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link" to={'/status'}>Status</Link>
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link" to={'/help'}>Help</Link>

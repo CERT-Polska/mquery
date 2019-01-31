@@ -5,44 +5,39 @@ class HelpPage extends Component {
     render() {
         return (
             <div className="container" style={{width: "80%"}}>
-                <h1 className="text-center" style={{marginBottom: "40px"}}>help me?</h1>
-                <h2>Ogólnie</h2>
+                <h1 className="text-center" style={{marginBottom: "40px"}}>Help me?</h1>
+                <h2>General information</h2>
                 <p>
-                    System mquery służy do wydajnego wyszukiwania próbek malware wśród naszych zbiorów.
-                    Informacją wejściową jest reguła YARA, którą spełniają pożądane próbki. W wyniku działania systemu
-                    użytkownik
-                    otrzymuje listę pasujących próbek.
+                    The mquery system is used to efficiently search for malware samples among our collections.
+                    The input information is the YARA rule, which should match the desired samples.
+                    As a result of the system's operation user receives a list of matching files.
                 </p>
 
                 <div className="alert alert-warning">
-                    Przy korzystaniu z systemu, przydatna będzie umiejętność pisania reguł
-                    <a href="http://yara.readthedocs.io/en/v3.4.0/writingrules.html">YARA</a>.
+                    When using the system, it is worth to
+                    know <a href="http://yara.readthedocs.io/en/v3.4.0/writingrules.html">YARA</a> syntax.
                 </div>
 
                 <p>
-                    Proces przetwarzania reguły YARA na wyniki składa się z kilku etapów. Najpierw następuje parsowanie
-                    wprowadzonych reguł YARA, a później generowane są odpowiednie zapytania do UrsaDB. Baza danych
-                    wykorzystywana
-                    jest do wstępnego przesiewania próbek - jest to proces szybki, ale generujący false-positive.
-                    Ostatecznie, wyniki zwrócone przez bazę danych są weryfikowane narzędziem YARA.
+                    The process of result generation is divided into two stages.
+                    First, the YARA rules are parsed, and then the corresponding queries to UrsaDB are generated.
+                    The database is used for preliminary screening of samples - it is a fast process, but it
+                    generates false-positives. Finally, the results returned by the database are verified by
+                    the YARA tool.
                 </p>
 
                 <p>
-                    Przesiewanie pomaga ograniczyć zbiór próbek przeznaczonych do sprawdzenia narzędziem YARA o kilka
-                    rzędów
-                    wielkości. Ten dodatkowy krok jest konieczny ze względu na to, że naiwne przeszukiwanie całego
-                    zbioru
-                    próbek, tzn. uruchomienie YARA na wszystkich plikach, ze względu na ich liczbę mogłoby zajęć nawet
-                    kilka tygodni.
+                    Such filtering helps reduce the set of samples to be checked with the YARA tool by several
+                    orders of magnitude. This additional step is necessary due to the naive search of the
+                    entire set of samples, i.e. the launch of YARA on all files, due to their number
+                    could take a few weeks to complete.
                 </p>
 
-                <h2>Korzystanie z systemu</h2>
+                <h2>Usage</h2>
                 <p>
-                    Regułę YARA można napisać wpisać ręcznie w polu tekstowym na stronie głównej serwisu. Po uczynieniu
-                    tego,
-                    należy nacisnąć zielony przycisk "Query", aby rozpocząć wyszukiwanie. Do debugowania systemu służy
-                    przycisk
-                    "Parse", który zaprezentuje zapytania UrsaDB wygenerowane na podstawie wprowadzonej reguły YARA.
+                    The YARA rule may be entered in a large text field which is on the "Query" page. After doing that,
+                    one should press "Query" in order to start the search. The "Parse" button is there to present
+                    what UrsaDB queries will be generated out of YARA and thus allow for some debugging and fine tuning.
                 </p>
 
                 <p>
@@ -54,22 +49,21 @@ class HelpPage extends Component {
                 </p>
 
                 <div className="alert alert-danger">
-                    <strong>Uwaga!</strong> W zależności od sposobu działania wewnętrznego optymalizatora oraz jakości
-                    wprowadzonych reguł YARA, niektóre wyszukiwania mogą wykonywać się bardzo długo. Jeżeli czas
-                    wyszukiwania jest nieakceptowalny (np. liczba dopasowań przekracza kilkaset tysięcy), należy
-                    anulować
-                    zadanie i spróbować ponownie z inną regułą.
+                    <strong>Warning!</strong> Depending on the internal optimizer and the quality of the provided YARA
+                    rules, some search jobs may take very long time to complete. If the job execution time is
+                    unacceptable (e.g. the number of preliminary matches exceeds several hundred thousand), one should
+                    cancel the task and try again with a different rule.
                 </div>
 
                 <p>
-                    Wprowadzoną regułę wraz z wynikami wyszukiwania można zapisać korzystając z przycisku "Save as".
-                    Dzięki temu, będzie ona widoczna dla innych użytkowników pod przyjazną nazwą z poziomu menu "Load".
+                    The entered rule together with the search results is saved in "Recent jobs" tab. Due to that,
+                    it is possible to refer to the historical searches.
                 </p>
 
-                <h2>Kontakt</h2>
+                <h2>Contact</h2>
                 <p>
-                    Pomysłodawcą projektu oraz autorem pierwszego PoCa jest <a href="https://tailcall.net/">msm</a>.
-                    Obecnie, po stronie CERTu rozwojem i utrzymaniem systemu zajmuje się <a
+                    The originator of the project and the author of the first proof-of-concept is <a href="https://tailcall.net/">msm</a>.
+                    At the moment, the system is being developed and maintained at CERT.PL by <a
                     href="mailto:monk@cert.pl">monk</a>.
                 </p>
             </div>

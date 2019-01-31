@@ -62,5 +62,13 @@ class UrsaDb(object):
 
         return json.loads(response)
 
+    def topology(self):
+        socket = self.make_socket()
+        socket.send_string('topology;')
+        response = socket.recv_string()
+        socket.close()
+
+        return json.loads(response)
+
     def close(self):
         pass

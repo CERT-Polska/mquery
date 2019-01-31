@@ -74,10 +74,14 @@ def query():
     except Exception as e:
         return jsonify({'error': 'PLYara failed (not my fault): ' + str(e)}), 400
 
+    if not rules:
+        return jsonify({'error': 'No rule was specified.'}), 400
+
     if len(rules) > 1:
         return jsonify({'error': 'More than one rule specified!'}), 400
 
     rule_name = rules[0].get('rule_name')
+    rule_author = rules[0].get('metadata', {}).get('author', '')
 
     try:
         parser = YaraParser(rules[0])
@@ -96,6 +100,7 @@ def query():
         'status': 'new',
         'max_files': -1,
         'rule_name': rule_name,
+        'rule_author': rule_author,
         'parsed': parsed,
         'pre_parsed': pre_parsed,
         'raw_yara': raw_yara,
@@ -163,6 +168,22 @@ def backend_status():
     return jsonify({
         "db_alive": db_alive,
         "tasks": tasks,
+    })
+
+
+@app.route('/api/backend/datasets')
+def backend_status_datasets():
+    db_alive = True
+
+    try:
+        datasets = db.topology().get('result', {}).get('datasets', [])
+    except Again:
+        db_alive = False
+        datasets = []
+
+    return jsonify({
+        "db_alive": db_alive,
+        "datasets": datasets
     })
 
 
