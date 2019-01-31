@@ -48,10 +48,12 @@ class SearchJobRow extends Component {
             cancelBtn = "";
         }
 
+        let rule_author = this.props.rule_author ? this.props.rule_author : "(no author)";
+
         return <tr className={rowClass}>
             <td>
                 <Link to={'/query/' + this.props.id} style={{fontFamily: "monospace"}}>{this.props.rule_name} ({shortId})</Link>
-                <p style={{fontSize: "9px"}}>{submittedDate}</p>
+                <p style={{fontSize: "11px"}}>[{rule_author}] {submittedDate}</p>
             </td>
             <td>
                 {status}
