@@ -199,7 +199,8 @@ def serve_index(path):
     return send_file('mqueryfront/build/index.html')
 
 
-@app.route('/admin')
+@app.route('/recent')
+@app.route('/status')
 @app.route('/help')
 @app.route('/query')
 def serve_index_sub():
