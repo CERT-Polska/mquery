@@ -29,7 +29,7 @@ class QueryField extends Component {
 
     handleQuery(event, method) {
         axios.create()
-            .post(API_URL + "/query", {"rawYara": this.state.rawYara, "method": method})
+            .post(API_URL + "/query", {"raw_yara": this.state.rawYara, "method": method})
             .then(response => {
                 if (method === 'query') {
                     this.props.updateQhash(response.data.query_hash, this.state.rawYara);

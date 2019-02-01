@@ -67,7 +67,7 @@ def download():
 def query():
     req = request.get_json()
 
-    raw_yara = req['rawYara']
+    raw_yara = req['raw_yara']
 
     try:
         rules = plyara.Plyara().parse_string(raw_yara)

@@ -43,7 +43,7 @@ def print_matches(results):
 with open(args.yara_file, 'rb') as f:
     yara_rule = f.read()
 
-res = requests.post(MQUERY_SERVER + '/query', json={'method': 'query', 'rawYara': yara_rule.decode('utf-8')}, verify=MQUERY_SSL_VERIFY)
+res = requests.post(MQUERY_SERVER + '/query', json={'method': 'query', 'raw_yara': yara_rule.decode('utf-8')}, verify=MQUERY_SSL_VERIFY)
 
 out = res.json()
 
