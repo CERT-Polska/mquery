@@ -6,13 +6,12 @@ services:
       dockerfile: Dockerfile-webapp
     environment:
       - SECRET_KEY
-      - INDEXABLE_PATHS=/mnt/samples
     ports:
     - "80:80"
     links:
     - redis
     volumes:
-    - samples:/mnt/samples
+    - ./samples:/mnt/samples
   daemon:
     build:
       context: .
@@ -23,14 +22,19 @@ services:
     - redis
     - ursadb
     volumes:
-    - samples:/mnt/samples
+    - ./samples:/mnt/samples
   ursadb:
     build:
       context: ursadb/
       dockerfile: Dockerfile
     volumes:
-    - samples:/mnt/samples
+    - ./samples:/mnt/samples
+  ursadb-cli:
+    build:
+      context: ursadb-cli/
+      dockerfile: Dockerfile
+    volumes:
+    - ./samples:/mnt/samples
+    command: tcp://ursadb:9281 --cmd "ping;"
   redis:
     image: redis
-volumes:
-  samples: {}

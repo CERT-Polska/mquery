@@ -64,9 +64,6 @@ def job_daemon():
                     'status': 'failed',
                     'error': str(e),
                 })
-        elif queue == 'queue-index':
-            path = data
-            db.index(path)
         elif queue == 'queue-metadata':
             job_hash, file_path = data.split(':', 1)
             execute_metadata(job_hash, file_path)

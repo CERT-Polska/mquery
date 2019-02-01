@@ -1,8 +1,8 @@
-from pyparsing import *
-import re
-import itertools
-import string
 import codecs
+import re
+import string
+
+from pyparsing import *
 
 
 class YaraParser(object):

@@ -1,6 +1,8 @@
+import json
 import logging
 import time
 
+import zmq
 import pytest
 import requests
 
@@ -9,7 +11,7 @@ import requests
 def check_operational(request):
     for attempt in range(300):
         try:
-            res = requests.get('http://web/status/backend', timeout=1)
+            res = requests.get('http://web/api/backend', timeout=1)
             res.raise_for_status()
 
             if res.json()['db_alive']:
@@ -30,18 +32,12 @@ def test_sth():
     with open('/mnt/samples/foo.txt', 'w') as f:
         f.write('lolwtf123')
 
-    res = requests.post('http://web/api/admin/index', json={'path': '/mnt/samples'})
-    res.raise_for_status()
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect('tcp://ursadb:9281')
 
-    for _ in range(60):
-        res = requests.get('http://web/api/backend', timeout=1)
-        res.raise_for_status()
-
-        # indexing process finished
-        if len(res.json()['tasks']) <= 1:
-            break
-
-        time.sleep(1)
+    socket.send_string('index "/mnt/samples" with [gram3, text4, hash4, wide8];')
+    assert json.loads(socket.recv_string()).get('result').get('status') == 'ok'
 
     test_yara = '''
 rule nymaim {

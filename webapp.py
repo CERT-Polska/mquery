@@ -5,7 +5,7 @@ import random
 import string
 import time
 
-from flask import Flask, request, redirect, url_for, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from werkzeug.exceptions import NotFound
 from zmq import Again
 
@@ -24,26 +24,11 @@ db = UrsaDb(config.BACKEND)
 
 @app.after_request
 def add_header(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['X-Frame-Options'] = 'deny'
+    response.headers['Access-Control-Allow-Origin'] = request.host
     response.headers['Access-Control-Allow-Headers'] = 'cache-control,x-requested-with,content-type,authorization'
     response.headers['Access-Control-Allow-Methods'] = 'POST, PUT, GET, OPTIONS, DELETE'
     return response
-
-
-@app.route('/api/admin/index', methods=['POST'])
-def admin_index():
-    path = request.get_json()['path']
-
-    if path not in config.INDEXABLE_PATHS:
-        return jsonify({"error": "location denied"}), 403
-
-    tasks = db.status().get('result', {}).get('tasks', [])
-
-    if any(task['request'].startswith('index ') for task in tasks):
-        return jsonify({"error": "index already queued"}), 400
-
-    redis.rpush('queue-index', path)
-    return jsonify({"status": "queued"})
 
 
 @app.route('/api/download')
@@ -184,13 +169,6 @@ def backend_status_datasets():
     return jsonify({
         "db_alive": db_alive,
         "datasets": datasets
-    })
-
-
-@app.route('/api/indexable_paths')
-def admin_indexable_paths():
-    return jsonify({
-        "indexable_paths": config.INDEXABLE_PATHS
     })
 
 
