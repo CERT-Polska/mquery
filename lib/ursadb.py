@@ -1,13 +1,7 @@
-import time
 import json
+import time
+
 import zmq
-import os,sys,inspect
-
-current_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parent_dir = os.path.dirname(current_dir)
-sys.path.insert(0, parent_dir)
-
-from config import INDEX_TYPE
 
 
 class UrsaDb(object):
@@ -46,13 +40,6 @@ class UrsaDb(object):
             'time': (end - start)*1000,
             'files': files
         }
-
-    def index(self, path):
-        socket = self.make_socket(recv_timeout=-1)
-        socket.send_string('index "{path}" with [{index_type}];'.format(
-            path=path, index_type=', '.join(INDEX_TYPE)))
-        response = socket.recv_string()
-        socket.close()
 
     def status(self):
         socket = self.make_socket()

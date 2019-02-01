@@ -75,7 +75,7 @@ test_mquery:
     - docker tag $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION mquery_ursadb:latest
     
     - docker-compose up -d
-    - docker run --net mquery_default -v mquery_samples:/mnt/samples mquery_tests
+    - docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
   artifacts:
     name: "$CI_JOB_NAME"
     paths:

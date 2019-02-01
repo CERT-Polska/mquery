@@ -33,29 +33,15 @@ where `--scale daemon=...` refers to the number of workers which will simultaneo
 Hint: Your `docker-compose` must support v3 syntax of `docker-compose.yml`. Update your software if you have any problems.
 
 
-Installation (manual)
----------------------
+Quick start
+-----------
 
-1. Run `ursadb` database (see `ursadb` project for further instructions on that topic).
-2. Install `redis-server`, `python3` and `npm`.
-3. Install requirements: `pip install -r requirements.txt`.
-4. Run `cp mqueryfront/src/config.dist.js mqueryfront/src/config.js`
-5. Adjust settings in `mqueryfront/src/config.js` accordingly.
-4. Run `cd mqueryfront && npm install && npm run build`
-5. Copy `config.example.py` to `config.py`, remember to adjust the settings and set unique `SECRET_KEY`.
-6. Setup a flask application originating from `webapp.py` in your favourite web server.
-7. Run `daemon.py` - a standalone script which should work constantly, consider putting it in systemd.
-
-
-How to use this thing
----------------------
-
-1. Start up the whole system (see "Installation").
-2. Web interface (by default) should be available on http://localhost:80/
-3. Upload files to be indexed to the `mquery_samples` volume. From the host it should be visible at `/var/lib/docker/volumes/mquery_samples/_data`. If in doubt, debug using `docker image inspect mquery_samples` command.
-4. Open web interface, choose "admin" tab and click "Index /mnt/samples".
-5. While indexing, the current progress will be displayed in the "backend" section of "admin" tab (no auto refresh), ursadb will also periodically report something on the console.
-6. After successful indexing, your files should be searchable. Go to the main tab and upload some Yara, e.g.:
+1. Start up the whole system (see `Installation (Docker)`).
+2. Web interface (by default) should be available on `http://localhost:80/`
+3. Upload files to be indexed to the `samples` directory, which is bind-mounted to all containers at `/mnt/samples`.
+4. Execute `sudo docker-compose run ursadb-cli tcp://ursadb:9281 --cmd 'index "/mnt/samples";'`. This will tell the database to index all the files.
+5. The command should output the progress. Wait until the task is finished.
+6. After successful indexing, your files should be searchable. Open the web interface and upload some YARA rule, e.g.:
 
 ```
 rule emotet4_basic: trojan
@@ -70,6 +56,9 @@ rule emotet4_basic: trojan
         all of them
 }
 ```
+
+Note: Any administrative tasks are to be performed as in the step #4. See [CERT-Polska/ursadb](https://github.com/CERT-Polska/ursadb#queries) for a complete list of supported commands.
+
 
 Maintainers
 -----------
