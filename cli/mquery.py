@@ -33,8 +33,8 @@ def print_matches(results):
     row = []
 
     for r in results:
-        file = r['matched_path']
-        meta = ', '.join(filter(lambda o: o, list(map(lambda o: r['metadata'][o].get('display_text'), r['metadata'].keys()))))
+        file = r['file']
+        meta = ', '.join(filter(lambda o: o, list(map(lambda o: r['meta'][o].get('display_text'), r['meta'].keys()))))
         row.append([file, meta])
 
     print(tabulate(row))
@@ -43,8 +43,7 @@ def print_matches(results):
 with open(args.yara_file, 'rb') as f:
     yara_rule = f.read()
 
-res = requests.post(MQUERY_SERVER + '/query', json={'method': 'query', 'raw_yara': yara_rule.decode('utf-8')}, verify=MQUERY_SSL_VERIFY)
-
+res = requests.post(MQUERY_SERVER + '/api/query', json={'method': 'query', 'raw_yara': yara_rule.decode('utf-8')}, verify=MQUERY_SSL_VERIFY)
 out = res.json()
 
 if 'error' in out:
@@ -52,15 +51,17 @@ if 'error' in out:
     sys.exit(1)
 
 query_hash = res.json()['query_hash']
-out = None
+out = {"job": {"status": "processing"}, "matches": []}
 last_reported = 0
+offset = 0
 
 with tqdm(total=0) as pbar:
-    while not out or out['job']['status'] not in ['cancelled', 'failed']:
+    with open(args.result_file, 'w') as f:
+      while out['job']['status'] not in ['cancelled', 'failed', 'done'] or out['matches']:
         if out:
             time.sleep(1.0)
 
-        res = requests.get(MQUERY_SERVER + '/status/{}'.format(query_hash), verify=MQUERY_SSL_VERIFY)
+        res = requests.get(MQUERY_SERVER + '/api/matches/{}?offset={}&limit=50'.format(query_hash, offset), verify=MQUERY_SSL_VERIFY)
         out = res.json()
 
         diff = int(out['job'].get('files_processed', 0)) - last_reported
@@ -69,22 +70,16 @@ with tqdm(total=0) as pbar:
         last_reported += diff
         pbar.set_description(out['job']['status'])
 
-        if out['job']['status'] == 'done':
-            tagged = sum(map(lambda m: 1 if m['metadata_available'] else 0, out['matches']))
-            pbar.total = len(out['matches'])
-            pbar.n = tagged
-            pbar.refresh()
-            pbar.set_description('tagging')
+        if out['matches']:
+            offset += len(out['matches'])
+            print_matches(out['matches'])
+            for match in out['matches']:
+                f.write(json.dumps(match) + "\n")
 
-            if tagged >= len(out['matches']):
-                break
-
+            f.flush()
 
 if out['job']['status'] == 'done':
-    print_matches(out['matches'])
-
-    with open(args.result_file, 'w') as f:
-        json_out = {'matches': out['matches'], 'job_id': query_hash, 'rule_name': out['job']['rule_name']}
-        f.write(json.dumps(json_out, indent=4, sort_keys=True))
+    sys.exit(0)
 else:
-    sys.stderr.write(out['job']['error'])
+    sys.stderr.write(out['job']['error'] + "\n")
+    sys.exit(1)
