@@ -74,6 +74,7 @@ Easy way to install the software is to build it from sources using `docker-compo
 
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
+cd mquery
 docker-compose up --scale daemon=3
 ```
 
