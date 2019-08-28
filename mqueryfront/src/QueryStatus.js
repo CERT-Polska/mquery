@@ -185,6 +185,7 @@ class QueryStatus extends Component {
                         {cancel}
                     </div>
                 </div>
+		{this.state.job.error ? <div className="alert alert-danger">{this.state.job.error}</div> : <div />}
                 <table className={"table table-striped table-bordered"}>
                     <thead>
                         <tr>
