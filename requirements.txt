@@ -14,5 +14,5 @@ redis==3.0.1
 requests==2.21.0
 urllib3==1.24.1
 uWSGI==2.0.17.1
-Werkzeug==0.14.1
+Werkzeug==0.15.3
 yara-python==3.8.1
