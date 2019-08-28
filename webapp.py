@@ -13,12 +13,11 @@ from lib.ursadb import UrsaDb
 from lib.yaraparse import YaraParser
 import plyara
 
-from util import make_redis, make_serializer
+from util import make_redis
 import config
 
 redis = make_redis()
 app = Flask(__name__)
-s = make_serializer()
 db = UrsaDb(config.BACKEND)
 
 

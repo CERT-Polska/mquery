@@ -23,12 +23,6 @@ spec:
     spec:
       containers:
         - image: "docker-registry.local/mquery-web:latest"
-          env:
-          - name: SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: mquery-secret
-                key: SECRET_KEY
           imagePullPolicy: Always
           name: mquery-web-container
           livenessProbe:

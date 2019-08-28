@@ -4,8 +4,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-webapp
-    environment:
-      - SECRET_KEY
     ports:
     - "80:80"
     links:
@@ -16,8 +14,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-daemon
-    environment:
-      - SECRET_KEY
     links:
     - redis
     - ursadb
