@@ -1,10 +1,7 @@
 image: certpl/docker-ci-base:latest
 
-variables:
-  DOCKER_DRIVER: overlay2
-
 services:
-  - naskpl/dind
+  - docker:dind
 
 stages:
   - build
