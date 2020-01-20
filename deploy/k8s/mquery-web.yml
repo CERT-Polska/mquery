@@ -1,0 +1,73 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: mquery-web
+  name: mquery-web
+  namespace: mquery-prod
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mquery-web
+  template:
+    metadata:
+      labels:
+        app: mquery-web
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: mquery-config
+        - secretRef:
+            name: mquery-secret
+        image: dr.cert.pl/mquery/mquery_web:latest
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: mquery-web-container
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /mnt/samples
+          name: mquery-nfs-volume-prod
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: dr-auth
+      nodeSelector:
+        kubernetes.io/hostname: mquery-node.cert.pl
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: mquery-nfs-volume-prod
+        persistentVolumeClaim:
+          claimName: mquery-nfs-claim-prod
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mquery-web-service
+  namespace: mquery-prod
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+  - name: http
+    nodePort: 30111
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: mquery-web
+  sessionAffinity: None
+  type: NodePort

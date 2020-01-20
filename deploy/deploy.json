@@ -1,0 +1,36 @@
+{
+    "daemon": {
+        "docker": {
+            "image": "dr.cert.pl/mquery/mquery_daemon",
+            "dockerfile": "deploy/docker/daemon.Dockerfile",
+            "dir": "."
+        },
+        "k8s": {
+            "namespace": "mquery-prod",
+            "deployment": "mquery-daemon",
+            "container": "mquery-daemon-container"
+        },
+        "k8s-staging": {
+            "namespace": "mquery-st",
+            "deployment": "mquery-daemon",
+            "container": "mquery-daemon-container"
+        }
+    },
+    "web": {
+        "docker": {
+            "image": "dr.cert.pl/mquery/mquery_web",
+            "dockerfile": "deploy/docker/web.Dockerfile",
+            "dir": "."
+        },
+        "k8s": {
+            "namespace": "mquery-prod",
+            "deployment": "mquery-web",
+            "container": "mquery-web-container"
+        },
+        "k8s-staging": {
+            "namespace": "mquery-st",
+            "deployment": "mquery-web",
+            "container": "mquery-web-container"
+        }
+    }
+}
