@@ -1,154 +1,210 @@
-import codecs
+from yaramod import Yaramod, AndExpression, StringCountExpression,\
+    IntLiteralExpression, ParenthesesExpression, GtExpression, EqExpression, \
+    OrExpression, StringExpression, OfExpression, \
+    StringWildcardExpression, StringAtExpression
+from yaramod import ThemExpression, SetExpression
+import sys
+from typing import Optional, List
 import re
-import string
-
-from pyparsing import *
 
 
-class YaraParser(object):
-    def __init__(self, parsed_yara):
-        self.strings = parsed_yara['strings']
-        self.condition = ' '.join(parsed_yara['condition_terms'])
+class YaraParseError(Exception):
+    pass
 
-    def get_string_names(self):
-        return [s['name'] for s in self.strings]
 
-    def string_to_query(self, value):
-        value = value.strip()
-        
-        if value[0] == '{' and value[-1] == '}':
-            consecutive = ['']
-            value = value[1:-1].strip()
-            hexdigs = 'ABCDEFabcdef0123456789'
-            value = value.replace(" ", "")
-            vals = re.split('\[.*?\]', value)
+def ursify_hex(hex_str: str) -> str:
+    # easier to manage
+    hex_str = hex_str.replace(' ', '')
 
-            for value in vals:
-                value = value.strip()
-                consecutive.append('')
+    # alternatives, are nested alternatives a thing?
+    hex_parts = re.split(r'\(.*?\)', hex_str)
+    hex_parts = [x for y in hex_parts for x in re.split(r'\[[\d-]+\]', y)]
 
-                for c in [value[i:i+2] for i in range(0, len(value), 2)]:
-                    if len(c) == 2 and c != '??' and (c[0] == '?' or c[1] == '?'):
-                        consecutive[-1] += c
-                    elif len(c) == 2 and c[0] in hexdigs and c[1] in hexdigs:
-                        consecutive[-1] += c
-                    else:
-                        consecutive.append('')
+    output: List[str] = []
 
-            qs = ' & '.join('{' + c + '}' for c in consecutive if len(c) >= 6)
-            
-            if not qs:
-                qs = '""'
-            
-            return '(' + qs + ')'
-        elif value[0] == "\"" and value[-1] == "\"":
-            # this will encode non-ascii characters into \x entities, so UrsaDB could parse them
-            inner_val = codecs.escape_encode(value[1:-1].encode('utf-8'))[0]
-            inner_val = inner_val.decode('ascii').replace('\\\\', '\\').replace('\\\'', '\'')
-            return "\"" + inner_val + "\""
-        else:
-            assert False
+    for part in hex_parts:
+        last_end = None
 
-    def act_expression(self, a, d, am):
-        if len(am) == 3:
-            op = am[1]
+        # iterate over nibbles
+        for i in range(0, len(part), 2):
 
-            if op == 'and':
-                op = '&'
-            elif op == 'or':
-                op = '|'
+            if part[i] == '?' or part[i+1] == '?':
+                if last_end is not None:
+                    output.append(part[last_end:i])
+                last_end = None
+            elif last_end is None:
+                last_end = i
 
-            return '({} {} {})'.format(am[0], op, am[2])
-        return am
+        if last_end is not None:
+            output.append(part[last_end:])
 
-    def act_multiselector(self, a, d, am):
-        if am[0] == 'any':
-            return '(' + ' | '.join(am[2]) + ')'
-        elif am[0] == 'all':
-            return '(' + ' & '.join(am[2]) + ')'
-        elif am[0].isdigit():
-            cutoff = int(am[0])
-            expressions = ', '.join(am[2])
-            return '(min ' + str(cutoff) + ' of (' + expressions + '))'
-        else:
-            raise Exception('what')
+    core = '} & {'.join(output)
+    return f'{{{core}}}'
 
-    def act_list(self, a, d, am):
-        l = am[0]
-        out = []
-        for i in range(len(l)):
-            reg = re.escape(l[i])
-            reg = reg.replace('\\*', '.*')
-            for s in self.get_string_names():
-                if re.search(reg, s):
-                    out.append(s)
-        return [out]
+def ursify_string(string) -> Optional[str]:
+    if string.is_xor or string.is_nocase:
+        return None
 
-    def act_them(self, a, d, am):
-        return [self.get_string_names()]
+    if string.is_plain:
+        text = string.pure_text
+        if string.is_wide:
+            text = bytes(x for y in text for x in [y, 0])
+        value_safe = text.hex()
+        return f"{{{value_safe}}}"
+    elif string.is_hex:
+        value_safe = string.pure_text.decode()
+        return ursify_hex(value_safe)
+    elif string.is_regexp:
+        # Not supported at this moment
+        return None
 
-    def act_ignore(self, a, d, am):
-        return []
 
-    def act_variable(self, a, d, am):
-        if not am[0].startswith('$'):
-            return '""'
+def and_expr(condition, rule_strings) -> Optional[str]:
+    left = yara_traverse(condition.left_operand, rule_strings)
+    right = yara_traverse(condition.right_operand, rule_strings)
 
-    def get_grammar(self):
-        atom = Forward()
-        expression = Forward()
+    if left and right:
+        return f"({left} & {right})"
+    elif not left and not right:
+        return None
+    else:
+        return left or right
 
-        variable = Word(string.ascii_lowercase + string.ascii_uppercase + string.digits + "[]._#*$").setParseAction(
-            self.act_variable)
-        variable_list = Or([
-            Literal('(').suppress()
-            + Group(variable + ZeroOrMore(Literal(',').suppress() + variable)).setParseAction(self.act_list)
-            + Literal(")").suppress(),
-            Literal('them').setParseAction(self.act_them)
-        ])
-        count_specifier = Or([
-            Literal('any'),
-            Literal('all'),
-            Word('0123456789'),
-        ])
-        bracketed_atom = (Literal('(').suppress() + expression + Literal(')').suppress())
-        ignoreme_expr = (variable + '==' + Word(string.digits)).setParseAction(self.act_ignore)
-        atom << Or([
-            variable,
-            ignoreme_expr,
-            bracketed_atom,
-            (count_specifier + 'of' + variable_list).setParseAction(self.act_multiselector),
-        ])
-        expression << (atom + Optional(
-            Or([
-                'and' + expression,
-                'or' + expression,
-            ]),
-        )).setParseAction(self.act_expression)
 
-        return expression + Literal(';').suppress()
+def or_expr(condition, rule_strings) -> Optional[str]:
+    left = yara_traverse(condition.left_operand, rule_strings)
+    right = yara_traverse(condition.right_operand, rule_strings)
 
-    def pre_parse(self):
-        grammar = self.get_grammar()
-        result = grammar.parseString(self.condition + ';')
-        return result.asList()[0]
+    if left and right:
+        return f"({left} | {right})"
+    elif not left and not right:
+        return None
+    else:
+        return left or right
 
-    def replace_strings(self, cond):
-        for string in self.strings:
-            name = '(?<=[(), ])' + re.escape(string['name']) + '(?=[(), ])'
 
-            value = string['value']
+def pare_expr(condition, rule_strings) -> Optional[str]:
+    inner = yara_traverse(condition.enclosed_expr, rule_strings)
+    if inner:
+        return f"({inner})"
+    else:
+        return None
 
-            str_q = self.string_to_query(value)
 
-            if 'modifiers' in string and 'wide' in string['modifiers']:
-                str_q = 'w' + str_q
+def str_expr(condition, rule_strings) -> Optional[str]:
+    return ursify_string(rule_strings[condition.id])
 
-            # lambda is used to make re.sub avoid parsing replacement string
-            cond = re.sub(name, lambda x: str_q, ' ' + cond + ' ').strip()
 
-        return cond
+def str_wild_expr(condition, rule_strings) -> Optional[str]:
+    condition_regex = re.escape(condition.text)
+    condition_regex = condition_regex.replace('\\*', '.*')
+    filtered_strings = [v for k, v in rule_strings.items() if re.match(condition_regex, k)]
+    strings = [ursify_string(x) for x in filtered_strings]
+    if strings:
+        return ', '.join(strings)
+    return None
 
-    def parse(self):
-        pre_parsed = self.pre_parse()
-        return self.replace_strings(pre_parsed)
+
+def of_expr(condition, rule_strings) -> Optional[str]:
+    how_many = condition.text[:condition.text.find('of')].strip()
+    counter = None
+
+    children = condition.iterated_set
+    parsed_elements = []
+
+    if type(children) is SetExpression:
+        elements = condition.iterated_set.elements
+        parsed_elements = list(filter(None, [yara_traverse(e, rule_strings) for e in elements]))
+    elif type(children) is ThemExpression:
+        parsed_elements = list(filter(None, [ursify_string(k) for k in rule_strings.values()]))
+    else:
+        raise YaraParseError(f"Unsupported of_expr type: {type(children)}")
+
+    if how_many == 'all':
+        counter = len(parsed_elements)
+    elif how_many == 'any':
+        counter = 1
+    else:
+        counter = int(how_many)
+
+    if parsed_elements:
+        core = f', '.join(parsed_elements)
+        return f"min {counter} of ({core})"
+    else:
+        return None
+
+
+def gt_expr(condition, rule_strings) -> Optional[str]:
+    left = yara_traverse(condition.left_operand, rule_strings)
+    right = yara_traverse(condition.right_operand, rule_strings)
+    return left or right
+
+
+def eq_expr(condition, rule_strings) -> Optional[str]:
+    left = yara_traverse(condition.left_operand, rule_strings)
+    right = yara_traverse(condition.right_operand, rule_strings)
+    return left or right
+
+
+def str_count_expr(condition, rule_strings) -> Optional[str]:
+    fixed_id = '$' + condition.id[1:]
+    return ursify_string(rule_strings[fixed_id])
+
+
+def int_lit_expr(condition, rule_strings) -> Optional[str]:
+    # nothing to be done here
+    return None
+
+
+def str_at_expr(condition, rule_strings) -> Optional[str]:
+    return ursify_string(rule_strings[condition.id])
+
+
+CONDITION_HANDLERS = {
+    AndExpression: and_expr,
+    OrExpression: or_expr,
+    ParenthesesExpression: pare_expr,
+    StringExpression: str_expr,
+    StringWildcardExpression: str_wild_expr,
+    OfExpression: of_expr,
+    GtExpression: gt_expr,
+    EqExpression: eq_expr,
+    StringCountExpression: str_count_expr,
+    IntLiteralExpression: int_lit_expr,
+    StringAtExpression: str_at_expr,
+}
+
+
+def yara_traverse(condition, rule_strings) -> Optional[str]:
+    if type(condition) in CONDITION_HANDLERS:
+        return CONDITION_HANDLERS[type(condition)](condition, rule_strings)
+    else:
+        print(f"unsupported expression: {type(condition)}")
+        return None
+
+
+def parse_string(yara_string: str) -> str:
+    yar = Yaramod()
+    rules = yar.parse_string(yara_string)
+
+    assert len(rules.rules) == 1
+
+    rule = rules.rules[0]
+
+    rule_strings = {}
+    for string in rule.strings:
+        rule_strings[string.identifier] = string
+
+    return yara_traverse(rule.condition, rule_strings)
+
+
+def main() -> None:
+    with open(sys.argv[1], 'r') as f:
+        data = f.read()
+
+    ursa_query = parse_string(data)
+    print(ursa_query)
+
+
+if __name__ == '__main__':
+    main()

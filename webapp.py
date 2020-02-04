@@ -10,8 +10,8 @@ from werkzeug.exceptions import NotFound
 from zmq import Again
 
 from lib.ursadb import UrsaDb
-from lib.yaraparse import YaraParser
-import plyara
+from lib.yaraparse import yara_traverse
+from yaramod import Yaramod
 
 from util import make_redis
 import config
@@ -54,9 +54,9 @@ def query():
     raw_yara = req['raw_yara']
 
     try:
-        rules = plyara.Plyara().parse_string(raw_yara)
+        rules = Yaramod().parse_string(raw_yara).rules
     except Exception as e:
-        return jsonify({'error': 'PLYara failed (not my fault): ' + str(e)}), 400
+        return jsonify({'error': f'Yara rule parsing failed{e}'}), 400
 
     if not rules:
         return jsonify({'error': 'No rule was specified.'}), 400
@@ -64,16 +64,25 @@ def query():
     if len(rules) > 1:
         return jsonify({'error': 'More than one rule specified!'}), 400
 
-    rule_name = rules[0].get('rule_name')
-    rule_author = rules[0].get('metadata', {}).get('author', '')
+    rule = rules[0]
+
+    author_meta = rule.get_meta_with_name('author')
+    if author_meta:
+        rule_author = author_meta.value.pure_text
+    else:
+        rule_author = ''
+
+    rule_name = rule.name
 
     try:
-        parser = YaraParser(rules[0])
-        pre_parsed = parser.pre_parse()
-        parsed = parser.parse()
+        rule_strings = {}
+        for r_string in rule.strings:
+            rule_strings[r_string.identifier] = r_string
+        parsed = yara_traverse(rule.condition, rule_strings)
+
     except Exception as e:
         logging.exception('YaraParser failed')
-        return jsonify({'error': 'YaraParser failed (msm\'s fault): {}'.format(str(e))}), 400
+        return jsonify({'error': f'Yara rule conversion failed: {e}'}), 400
 
     if req['method'] == 'parse':
         return jsonify({'rule_name': rule_name, "parsed": parsed})
@@ -86,7 +95,6 @@ def query():
         'rule_name': rule_name,
         'rule_author': rule_author,
         'parsed': parsed,
-        'pre_parsed': pre_parsed,
         'raw_yara': raw_yara,
         'submitted': int(time.time())
     }

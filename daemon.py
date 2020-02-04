@@ -6,13 +6,13 @@ import time
 import yara
 from functools import lru_cache
 
-import plyara
 from yara import SyntaxError
 
 import config
 from lib.ursadb import UrsaDb
-from lib.yaraparse import YaraParser
+from lib.yaraparse import parse_string
 from util import make_redis, setup_logging
+
 
 redis = make_redis()
 db = UrsaDb(config.BACKEND)
@@ -151,9 +151,7 @@ def execute_search(job_hash):
     })
 
     try:
-        rules = plyara.Plyara().parse_string(yara_rule)
-        parser = YaraParser(rules[0])
-        parsed = parser.parse()
+        parsed = parse_string(yara_rule)
     except Exception as e:
         logging.exception(e)
         raise RuntimeError('Failed to parse Yara')
