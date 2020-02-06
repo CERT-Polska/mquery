@@ -14,6 +14,6 @@ RUN apt update; apt install -y cmake
 COPY src/requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY "src/." "."
-COPY --from=build /app/build ./mqueryfront/build
+COPY --from=build "/app/build/static" "./static"
 COPY "src/config.docker.py" "config.py"
 CMD ["flask", "run", "--host", "0.0.0.0"]
