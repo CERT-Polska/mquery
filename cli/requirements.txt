@@ -1,3 +1,0 @@
-tabulate
-tqdm
-requests
