@@ -29,7 +29,7 @@ spec:
           name: redis-pv-volume-prod
       dnsPolicy: ClusterFirst
       nodeSelector:
-        kubernetes.io/hostname: mquery-node.cert.pl
+        kubernetes.io/hostname: mquery-supernode.cert.pl
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30

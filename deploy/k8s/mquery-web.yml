@@ -44,7 +44,7 @@ spec:
       imagePullSecrets:
       - name: dr-auth
       nodeSelector:
-        kubernetes.io/hostname: mquery-node.cert.pl
+        kubernetes.io/hostname: mquery-supernode.cert.pl
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
