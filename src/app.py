@@ -17,7 +17,7 @@ from util import make_redis
 import config
 
 redis = make_redis()
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='')
 db = UrsaDb(config.BACKEND)
 
 
@@ -190,6 +190,11 @@ def serve_index(path):
 @app.route('/query')
 def serve_index_sub():
     return send_file('mqueryfront/build/index.html')
+
+
+@app.route('/static/<path:path>')
+def serve_static(path):
+    return send_from_directory('mqueryfront/build/static', path)
 
 
 @app.route('/', defaults={'path': 'index.html'})
