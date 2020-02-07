@@ -31,7 +31,7 @@ build_images:
 
     - docker build --cache-from $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_web:latest -t $DOCKER_REGISTRY/mquery_web:build-$CI_COMMIT_SHA -f deploy/docker/web.Dockerfile .
     - docker build --cache-from $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_daemon:latest -t $DOCKER_REGISTRY/mquery_daemon:build-$CI_COMMIT_SHA -f deploy/docker/daemon.Dockerfile .
-    - docker build --cache-from $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:build-$CI_COMMIT_SHA tests
+    - docker build --cache-from $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID -t $DOCKER_REGISTRY/mquery_tests:latest -t $DOCKER_REGISTRY/mquery_tests:build-$CI_COMMIT_SHA src/tests
     
     - docker images
     
