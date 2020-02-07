@@ -3,7 +3,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: Dockerfile-webapp
+      dockerfile: deploy/docker/web.Dockerfile
     ports:
     - "80:80"
     links:
@@ -13,7 +13,7 @@ services:
   daemon:
     build:
       context: .
-      dockerfile: Dockerfile-daemon
+      dockerfile: deploy/docker/daemon.Dockerfile
     links:
     - redis
     - ursadb
