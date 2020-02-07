@@ -17,7 +17,7 @@ from util import make_redis
 import config
 
 redis = make_redis()
-app = Flask(__name__)
+app = Flask(__name__, static_folder='mqueryfront/build/static')
 db = UrsaDb(config.BACKEND)
 
 

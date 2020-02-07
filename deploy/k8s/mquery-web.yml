@@ -28,7 +28,7 @@ spec:
           failureThreshold: 3
           httpGet:
             path: /
-            port: 80
+            port: 5000
             scheme: HTTP
           periodSeconds: 10
           successThreshold: 1
@@ -44,7 +44,7 @@ spec:
       imagePullSecrets:
       - name: dr-auth
       nodeSelector:
-        kubernetes.io/hostname: mquery-node.cert.pl
+        kubernetes.io/hostname: mquery-supernode.cert.pl
       restartPolicy: Always
       schedulerName: default-scheduler
       securityContext: {}
@@ -66,7 +66,7 @@ spec:
     nodePort: 30111
     port: 80
     protocol: TCP
-    targetPort: 80
+    targetPort: 5000
   selector:
     app: mquery-web
   sessionAffinity: None

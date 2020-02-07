@@ -1,9 +1,10 @@
-FROM python:3.6
+FROM python:3.7
 
-COPY requirements.txt /tmp/requirements.txt
+RUN apt update; apt install -y cmake
+COPY "src/requirements.txt" "/tmp/requirements.txt"
 RUN pip install -r /tmp/requirements.txt
-COPY . /app
-RUN chmod +x /app/daemon.py
-COPY config.docker.py /app/config.py
+COPY "src/" "/app"
+RUN chmod +x "/app/daemon.py"
+COPY "src/config.docker.py" "/app/config.py"
 
 ENTRYPOINT ["/app/daemon.py"]

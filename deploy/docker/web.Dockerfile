@@ -1,17 +1,19 @@
 FROM node:8 AS build
 
 RUN npm install -g serve
-COPY mqueryfront /app
-COPY mqueryfront/src/config.dist.js /app/src/config.js
+COPY src/mqueryfront /app
+COPY src/mqueryfront/src/config.dist.js /app/src/config.js
 WORKDIR /app
 RUN npm install && npm run build
 
-FROM tiangolo/uwsgi-nginx-flask:python3.6
+FROM python:3.7
 
-ENV STATIC_PATH /app/mqueryfront/build/static
-COPY requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt
-COPY . /app
-COPY --from=build /app/build /app/mqueryfront/build
-COPY config.docker.py /app/config.py
-COPY uwsgi-docker.ini /app/uwsgi.ini
+WORKDIR /usr/src/app/src
+
+RUN apt update; apt install -y cmake
+COPY src/requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+COPY "src/." "."
+COPY --from=build "/app/build" "./mqueryfront/build"
+COPY "src/config.docker.py" "config.py"
+CMD ["flask", "run", "--host", "0.0.0.0"]
