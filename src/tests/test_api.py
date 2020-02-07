@@ -11,7 +11,7 @@ import requests
 def check_operational(request):
     for attempt in range(300):
         try:
-            res = requests.get('http://web/api/backend', timeout=1)
+            res = requests.get('http://web:5000/api/backend', timeout=1)
             res.raise_for_status()
 
             if res.json()['db_alive']:
@@ -48,13 +48,13 @@ rule nymaim {
 }    
 '''
 
-    res = requests.post('http://web/api/query', json={'method': 'query', 'raw_yara': test_yara})
+    res = requests.post('http://web:5000/api/query', json={'method': 'query', 'raw_yara': test_yara})
     res.raise_for_status()
 
     query_hash = res.json()['query_hash']
     
     while True:
-        res = requests.get('http://web/api/matches/{}?offset=0&limit=50'.format(query_hash))
+        res = requests.get('http://web:5000/api/matches/{}?offset=0&limit=50'.format(query_hash))
         if res.json()['job']['status'] == 'done':
             break
 
