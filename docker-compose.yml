@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: deploy/docker/web.Dockerfile
     ports:
-    - "80:80"
+    - "80:5000"
     links:
     - redis
     volumes:
