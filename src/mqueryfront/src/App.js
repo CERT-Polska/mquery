@@ -4,7 +4,6 @@ import Navigation from './Navigation';
 import QueryPage from './QueryPage';
 import RecentPage from './RecentPage';
 import StatusPage from './StatusPage';
-import HelpPage from './HelpPage';
 import './App.css';
 
 class App extends Component {
