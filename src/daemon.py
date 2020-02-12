@@ -139,7 +139,7 @@ def execute_yara(job_hash, file):
             redis.hset('job:{}'.format(job_hash), 'status', 'done')
 
 
-def execute_search(job_hash):
+def execute_search(job_hash: str) -> None:
     logging.info('Parsing...')
 
     job = redis.hgetall('job:' + job_hash)
