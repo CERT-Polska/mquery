@@ -18,7 +18,6 @@ class App extends Component {
                     <Route path='/query/:hash' component={QueryPage} />
                     <Route exact path='/recent' component={RecentPage} />
                     <Route exact path='/status' component={StatusPage} />
-                    <Route exact path='/help' component={HelpPage} />
                 </Switch>
             </div>
         );
