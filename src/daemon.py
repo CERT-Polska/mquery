@@ -19,7 +19,7 @@ db = UrsaDb(config.BACKEND)
 
 
 @lru_cache(maxsize=8)
-def compile_yara(job_hash):
+def compile_yara(job_hash: str) -> yara.Rules:
     yara_rule = redis.hget('job:' + job_hash, 'raw_yara')
 
     logging.info('Compiling Yara')
