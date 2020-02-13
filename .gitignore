@@ -2,3 +2,5 @@
 venv/
 config.py
 .vscode
+.mypy_cache
+samples/
