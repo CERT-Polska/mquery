@@ -3,16 +3,16 @@ import json
 import logging
 import time
 
-import yara
+import yara #  type: ignore
 from functools import lru_cache
 
 from yara import SyntaxError
 
-import config
+import config #  type: ignore
 from lib.ursadb import UrsaDb
 from lib.yaraparse import parse_string
 from util import make_redis, setup_logging
-
+from typing import Any, Dict
 
 redis = make_redis()
 db = UrsaDb(config.BACKEND)
@@ -32,7 +32,7 @@ def compile_yara(job_hash: str) -> yara.Rules:
     return rule
 
 
-def job_daemon():
+def job_daemon() -> None:
     setup_logging()
     logging.info('Daemon running...')
 
@@ -69,15 +69,15 @@ def job_daemon():
             execute_metadata(job_hash, file_path)
 
 
-def execute_metadata(job_hash, file_path):
+def execute_metadata(job_hash: str, file_path: str) -> None:
     if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
-    current_meta = {}
+    current_meta: Dict = {}
 
     for extractor in config.METADATA_EXTRACTORS:
         extr_name = extractor.__class__.__name__
-        local_meta = {}
+        local_meta: Dict = {}
         deps = extractor.__depends_on__
 
         for dep in deps:
@@ -91,7 +91,7 @@ def execute_metadata(job_hash, file_path):
         current_meta[extr_name] = extractor.extract(file_path, local_meta)
 
     # flatten
-    flat_meta = {}
+    flat_meta: Dict = {}
 
     for v in current_meta.values():
         flat_meta.update(v)
@@ -108,7 +108,7 @@ def execute_metadata(job_hash, file_path):
         redis.hset('job:{}'.format(job_hash), 'status', 'done')
 
 
-def execute_yara(job_hash, file):
+def execute_yara(job_hash: str, file: Any) -> Any:
     if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
