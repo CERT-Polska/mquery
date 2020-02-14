@@ -1,4 +1,4 @@
-image: certpl/docker-ci-base:latest
+image: certpl/docker-ci-base:latest, python:3.6
 
 services:
   - docker:dind
@@ -83,6 +83,13 @@ test_mquery:
     - docker-compose logs -t
     - docker-compose logs -t > artifacts/test/startup.log
     - docker-compose down | true
+
+test_types:
+  stage: test
+  script:
+  - cp src/config.example.py src/config.py
+  - pip3 install mypy
+  - mypy src
 
 deploy_mquery:
   stage: deploy

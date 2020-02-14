@@ -15,7 +15,7 @@ from yaramod import Yaramod #  type: ignore
 
 from util import make_redis
 import config #  type: ignore
-from typing import Any
+from typing import Any, Union, Callable
 
 redis = make_redis()
 app = Flask(__name__, static_folder='mqueryfront/build/static')
@@ -45,12 +45,13 @@ def download() -> Any:
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     ext = ext + '_'
 
-    print ("Type:", type(send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)))
+    print("Type:", type(send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)))
     return send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)
 
+import typing
 
 @app.route('/api/query', methods=['POST'])
-def query() -> Response:
+def query() -> Any:
     req = request.get_json()
 
     raw_yara = req['raw_yara']
