@@ -184,10 +184,7 @@ def execute_search(job_hash):
         pipe = redis.pipeline()
 
         for file in files:
-            if not config.SKIP_YARA:
-                pipe.rpush('queue-yara', '{}:{}'.format(job_hash, file))
-            else:
-                pipe.rpush('queue-metadata', '{}:{}'.format(job_hash, file))
+            pipe.rpush('queue-yara', '{}:{}'.format(job_hash, file))
 
         pipe.execute()
         logging.info('Done uploading yara jobs.')
