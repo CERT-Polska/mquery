@@ -9,6 +9,8 @@ import requests
 
 @pytest.fixture(scope="session", autouse=True)
 def check_operational(request):
+    log = logging.getLogger()
+
     for attempt in range(60):
         try:
             res = requests.get('http://web:5000/api/backend', timeout=1)
@@ -17,19 +19,21 @@ def check_operational(request):
             if res.json()['db_alive']:
                 return
             else:
-                logging.getLogger().info('Database backend is not active.')
+                log.info('Database backend is not active.')
         except requests.exceptions.ConnectionError:
             if attempt % 15 == 0:
-                logging.getLogger().info('Connection to mquery failed, retrying in a moment...')
+                log.info('Connection to mquery failed, retrying in a moment...')
         except requests.exceptions.RequestException:
             if attempt % 15 == 0:
-                logging.getLogger().info('Request to mquery failed, retrying...')
+                log.info('Request to mquery failed, retrying...')
 
         time.sleep(1)
 
 
 @pytest.mark.timeout(30)
 def test_sth():
+    log = logging.getLogger()
+
     with open('/mnt/samples/foo.txt', 'w') as f:
         f.write('lolwtf123')
 
@@ -54,10 +58,12 @@ rule nymaim {
 
     query_hash = res.json()['query_hash']
     
-    while True:
+    for i in range(15):
         res = requests.get('http://web:5000/api/matches/{}?offset=0&limit=50'.format(query_hash))
+        log.info("API response: %s", res.json())
         if res.json()['job']['status'] == 'done':
             break
+        time.sleep(1)
 
     m = res.json()['matches']
     assert len(m) == 1
