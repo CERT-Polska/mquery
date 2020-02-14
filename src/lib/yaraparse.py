@@ -1,4 +1,5 @@
-from yaramod import Yaramod, AndExpression, StringCountExpression,\
+from yaramod import Yaramod  # type: ignore
+from yaramod import AndExpression, StringCountExpression, \
     IntLiteralExpression, ParenthesesExpression, GtExpression, EqExpression, \
     OrExpression, StringExpression, OfExpression, \
     StringWildcardExpression, StringAtExpression
@@ -28,7 +29,7 @@ def ursify_hex(hex_str: str) -> str:
         # iterate over nibbles
         for i in range(0, len(part), 2):
 
-            if part[i] == '?' or part[i+1] == '?':
+            if part[i] == '?' or part[i + 1] == '?':
                 if last_end is not None:
                     output.append(part[last_end:i])
                 last_end = None
@@ -40,6 +41,7 @@ def ursify_hex(hex_str: str) -> str:
 
     core = '} & {'.join(output)
     return f'{{{core}}}'
+
 
 def ursify_string(string) -> Optional[str]:
     if string.is_xor or string.is_nocase:
@@ -57,6 +59,8 @@ def ursify_string(string) -> Optional[str]:
     elif string.is_regexp:
         # Not supported at this moment
         return None
+
+    return None
 
 
 def and_expr(condition, rule_strings) -> Optional[str]:
@@ -99,7 +103,10 @@ def str_wild_expr(condition, rule_strings) -> Optional[str]:
     condition_regex = re.escape(condition.text)
     condition_regex = condition_regex.replace('\\*', '.*')
     filtered_strings = [v for k, v in rule_strings.items() if re.match(condition_regex, k)]
-    strings = [ursify_string(x) for x in filtered_strings]
+
+    ursa_strings = [ursify_string(x) for x in filtered_strings]
+    strings = [s for s in ursa_strings if s is not None]
+
     if strings:
         return ', '.join(strings)
     return None
@@ -195,7 +202,10 @@ def parse_string(yara_string: str) -> str:
     for string in rule.strings:
         rule_strings[string.identifier] = string
 
-    return yara_traverse(rule.condition, rule_strings)
+    result = yara_traverse(rule.condition, rule_strings)
+    if result is not None:
+        return result
+    return "{}"
 
 
 def main() -> None:

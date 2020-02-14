@@ -2,10 +2,11 @@ import os
 import re
 
 from metadata import Metadata
+from typing import List, Any
 
 
 class CuckooAnalysisMetadata(Metadata):
-    __depends_on__ = []
+    __depends_on__ : List[Any] = []
 
     def __init__(self, path):
         super().__init__()
