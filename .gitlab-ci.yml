@@ -49,40 +49,40 @@ build_images:
   after_script:
     - docker-compose down | true
 
-#test_mquery:
-#  stage: test
-#  script:
-#    - git submodule update --init --recursive
-#
-#    - URSADB_VERSION=$(git ls-tree $CI_COMMIT_SHA ursadb | cut -f3 "-d " | cut -f1)
-#    - echo "URSADB_VERSION=$URSADB_VERSION"
-#
-#    - SECRET_KEY=$(date +%s | sha256sum | base64 | head -c 32)
-#    - echo "SECRET_KEY=$SECRET_KEY" >> .env
-#
-#    - docker pull redis
-#    - docker pull $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID
-#    - docker pull $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
-#    - docker pull $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
-#    - docker pull $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION
-#
-#    - docker tag $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID mquery_web:latest
-#    - docker tag $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID mquery_daemon:latest
-#    - docker tag $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID mquery_tests:latest
-#    - docker tag $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION mquery_ursadb:latest
-#
-#    - docker-compose up -d
-#    - docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
-#  artifacts:
-#    name: "$CI_JOB_NAME"
-#    paths:
-#      - artifacts/test/startup.log
-#    when: always
-#    expire_in: 1 week
-#  after_script:
-#    - docker-compose logs -t
-#    - docker-compose logs -t > artifacts/test/startup.log
-#    - docker-compose down | true
+test_mquery:
+  stage: test
+  script:
+    - git submodule update --init --recursive
+
+    - URSADB_VERSION=$(git ls-tree $CI_COMMIT_SHA ursadb | cut -f3 "-d " | cut -f1)
+    - echo "URSADB_VERSION=$URSADB_VERSION"
+
+    - SECRET_KEY=$(date +%s | sha256sum | base64 | head -c 32)
+    - echo "SECRET_KEY=$SECRET_KEY" >> .env
+
+    - docker pull redis
+    - docker pull $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID
+    - docker pull $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
+    - docker pull $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
+    - docker pull $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION
+
+    - docker tag $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID mquery_web:latest
+    - docker tag $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID mquery_daemon:latest
+    - docker tag $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID mquery_tests:latest
+    - docker tag $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION mquery_ursadb:latest
+
+    - docker-compose up -d
+    - docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths:
+      - artifacts/test/startup.log
+    when: always
+    expire_in: 1 week
+  after_script:
+    - docker-compose logs -t
+    - docker-compose logs -t > artifacts/test/startup.log
+    - docker-compose down | true
 
 deploy_mquery:
   stage: deploy
