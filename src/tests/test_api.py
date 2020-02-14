@@ -9,7 +9,7 @@ import requests
 
 @pytest.fixture(scope="session", autouse=True)
 def check_operational(request):
-    for attempt in range(300):
+    for attempt in range(60):
         try:
             res = requests.get('http://web:5000/api/backend', timeout=1)
             res.raise_for_status()
@@ -28,6 +28,7 @@ def check_operational(request):
         time.sleep(1)
 
 
+@pytest.mark.timeout(30)
 def test_sth():
     with open('/mnt/samples/foo.txt', 'w') as f:
         f.write('lolwtf123')
