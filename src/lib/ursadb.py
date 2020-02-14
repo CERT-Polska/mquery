@@ -1,7 +1,7 @@
 import json
 import time
 
-import zmq
+import zmq # type: ignore
 
 
 class UrsaDb(object):

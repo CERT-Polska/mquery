@@ -86,9 +86,10 @@ test_mquery:
 
 test_types:
   stage: test
+  image: python:3.6
   script:
   - cp src/config.example.py src/config.py
-  - pip install mypy
+  - pip3 install mypy
   - mypy src
 
 deploy_mquery:

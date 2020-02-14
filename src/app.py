@@ -14,7 +14,7 @@ from lib.yaraparse import yara_traverse
 from yaramod import Yaramod #  type: ignore
 
 from util import make_redis
-import config #  type: ignore
+import config
 from typing import Any, Union, Callable
 
 redis = make_redis()
@@ -45,10 +45,8 @@ def download() -> Any:
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     ext = ext + '_'
 
-    print("Type:", type(send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)))
     return send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)
 
-import typing
 
 @app.route('/api/query', methods=['POST'])
 def query() -> Any:

@@ -3,12 +3,12 @@ import json
 import logging
 import time
 
-import yara #  type: ignore
+import yara # type: ignore
 from functools import lru_cache
 
 from yara import SyntaxError
 
-import config #  type: ignore
+import config
 from lib.ursadb import UrsaDb
 from lib.yaraparse import parse_string
 from util import make_redis, setup_logging
