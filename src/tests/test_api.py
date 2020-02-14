@@ -7,6 +7,8 @@ import pytest
 import requests
 
 
+# sanity check
+
 @pytest.fixture(scope="session", autouse=True)
 def check_operational(request):
     for attempt in range(300):
