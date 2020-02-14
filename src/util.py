@@ -3,7 +3,7 @@ import logging
 from itsdangerous import JSONWebSignatureSerializer
 from redis import StrictRedis
 
-import config
+import config #  type: ignore
 
 
 LOG_FORMAT = "[%(asctime)s][%(levelname)s] %(message)s"
