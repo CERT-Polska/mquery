@@ -1,4 +1,4 @@
-image: certpl/docker-ci-base:latest, python:3.6
+image: certpl/docker-ci-base:latest
 
 services:
   - docker:dind
