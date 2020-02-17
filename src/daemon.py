@@ -73,11 +73,11 @@ def execute_metadata(job_hash: str, file_path: str) -> None:
     if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
-    current_meta: Dict = {}
+    current_meta: Dict[str, Any] = {}
 
     for extractor in config.METADATA_EXTRACTORS:
         extr_name = extractor.__class__.__name__
-        local_meta: Dict = {}
+        local_meta: Dict[str, Any] = {}
         deps = extractor.__depends_on__
 
         for dep in deps:
@@ -91,7 +91,7 @@ def execute_metadata(job_hash: str, file_path: str) -> None:
         current_meta[extr_name] = extractor.extract(file_path, local_meta)
 
     # flatten
-    flat_meta: Dict = {}
+    flat_meta: Dict[str, Any] = {}
 
     for v in current_meta.values():
         flat_meta.update(v)
@@ -108,7 +108,7 @@ def execute_metadata(job_hash: str, file_path: str) -> None:
         redis.hset('job:{}'.format(job_hash), 'status', 'done')
 
 
-def execute_yara(job_hash: str, file: Any) -> Any:
+def execute_yara(job_hash: str, file: str) -> None:
     if redis.hget('job:' + job_hash, 'status') in ['cancelled', 'failed']:
         return
 
