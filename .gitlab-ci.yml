@@ -12,9 +12,9 @@ before_script:
   - echo "Start job $CI_BUILD_NAME" at `date +%Y-%m-%d-%H-%M-%S`
   - echo "CI_PIPELINE_ID $CI_PIPELINE_ID"
   - mkdir -p artifacts/test
-  - docker info
-  - docker login -u $DOCKER_REGISTRY_LOGIN -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY
-  - eval $(ssh-agent -s)
+  - if command -v docker >/dev/null ; then docker info ; else echo Skipping Docker related commands on incompatible image ; fi
+  - if command -v docker >/dev/null ; then docker login -u $DOCKER_REGISTRY_LOGIN -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY ; fi
+  - if command -v ssh-agent >/dev/null ; then eval $(ssh-agent -s) ; else echo Skipping ssh-agent command on incomaptible image ; fi
   - (if [ ! -z "$GIT_DEPLOY_KEY" ] ; then echo "$GIT_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null ; fi)
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
@@ -53,10 +53,10 @@ test_mquery:
   stage: test
   script:
     - git submodule update --init --recursive
-  
+
     - URSADB_VERSION=$(git ls-tree $CI_COMMIT_SHA ursadb | cut -f3 "-d " | cut -f1)
     - echo "URSADB_VERSION=$URSADB_VERSION"
-    
+
     - SECRET_KEY=$(date +%s | sha256sum | base64 | head -c 32)
     - echo "SECRET_KEY=$SECRET_KEY" >> .env
 
@@ -65,12 +65,12 @@ test_mquery:
     - docker pull $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID
     - docker pull $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION
-    
+
     - docker tag $DOCKER_REGISTRY/mquery_web:$CI_PIPELINE_ID mquery_web:latest
     - docker tag $DOCKER_REGISTRY/mquery_daemon:$CI_PIPELINE_ID mquery_daemon:latest
     - docker tag $DOCKER_REGISTRY/mquery_tests:$CI_PIPELINE_ID mquery_tests:latest
     - docker tag $DOCKER_REGISTRY/ursadb:build-$URSADB_VERSION mquery_ursadb:latest
-    
+
     - docker-compose up -d
     - docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
   artifacts:
