@@ -6,7 +6,7 @@ import time
 import yara # type: ignore
 from functools import lru_cache
 
-from yara import SyntaxError, Rules
+from yara import SyntaxError
 
 import config
 from lib.ursadb import UrsaDb
@@ -19,7 +19,7 @@ db = UrsaDb(config.BACKEND)
 
 
 @lru_cache(maxsize=8)
-def compile_yara(job_hash: str) -> Rules:
+def compile_yara(job_hash: str) -> Any:
     yara_rule = redis.hget('job:' + job_hash, 'raw_yara')
 
     logging.info('Compiling Yara')
