@@ -5,16 +5,17 @@ import random
 import string
 import time
 
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify, send_file, send_from_directory, Response
 from werkzeug.exceptions import NotFound
-from zmq import Again
+from zmq import Again #  type: ignore
 
 from lib.ursadb import UrsaDb
 from lib.yaraparse import yara_traverse
-from yaramod import Yaramod
+from yaramod import Yaramod #  type: ignore
 
 from util import make_redis
 import config
+from typing import Any, Union, Callable
 
 redis = make_redis()
 app = Flask(__name__, static_folder='mqueryfront/build/static')
@@ -22,7 +23,7 @@ db = UrsaDb(config.BACKEND)
 
 
 @app.after_request
-def add_header(response):
+def add_header(response: Response) -> Response:
     response.headers['X-Frame-Options'] = 'deny'
     response.headers['Access-Control-Allow-Origin'] = request.host
     response.headers['Access-Control-Allow-Headers'] = 'cache-control,x-requested-with,content-type,authorization'
@@ -31,7 +32,7 @@ def add_header(response):
 
 
 @app.route('/api/download')
-def download():
+def download() -> Any:
     job_id = request.args['job_id']
     file_path = request.args['file_path']
     ordinal = request.args['ordinal']
@@ -48,7 +49,7 @@ def download():
 
 
 @app.route('/api/query', methods=['POST'])
-def query():
+def query() -> Any:
     req = request.get_json()
 
     raw_yara = req['raw_yara']
@@ -109,7 +110,7 @@ def query():
 
 
 @app.route('/api/matches/<hash>')
-def matches(hash):
+def matches(hash: str) -> Response:
     offset = int(request.args['offset'])
     limit = int(request.args['limit'])
 
@@ -125,12 +126,12 @@ def matches(hash):
 
 
 @app.route('/api/job/<hash>')
-def job_info(hash):
+def job_info(hash: str) -> Response:
     return jsonify(redis.hgetall('job:' + hash))
 
 
 @app.route('/api/job/<job_id>', methods=['DELETE'])
-def job_cancel(job_id):
+def job_cancel(job_id: str) -> Response:
     redis.hmset('job:' + job_id, {
         'status': 'cancelled',
     })
@@ -139,7 +140,7 @@ def job_cancel(job_id):
 
 
 @app.route('/api/job')
-def job_statuses():
+def job_statuses() -> Response:
     jobs = redis.keys('job:*')
     jobs = sorted([dict({'id': job[4:]}, **redis.hgetall(job)) for job in jobs],
                   key=lambda o: o.get('submitted'), reverse=True)
@@ -148,7 +149,7 @@ def job_statuses():
 
 
 @app.route('/api/backend')
-def backend_status():
+def backend_status() -> Response:
     db_alive = True
 
     try:
@@ -164,7 +165,7 @@ def backend_status():
 
 
 @app.route('/api/backend/datasets')
-def backend_status_datasets():
+def backend_status_datasets() -> Response:
     db_alive = True
 
     try:
@@ -180,21 +181,21 @@ def backend_status_datasets():
 
 
 @app.route('/query/<path:path>')
-def serve_index(path):
+def serve_index(path: str) -> Any:
     return send_file('mqueryfront/build/index.html')
 
 
 @app.route('/recent')
 @app.route('/status')
 @app.route('/query')
-def serve_index_sub():
+def serve_index_sub() -> Any:
     return send_file('mqueryfront/build/index.html')
 
 
 @app.route('/', defaults={'path': 'index.html'})
 @app.route('/favicon.ico', defaults={'path': 'favicon.ico'})
 @app.route('/manifest.json', defaults={'path': 'manifest.json'})
-def serve_root(path):
+def serve_root(path: str) -> Any:
     return send_from_directory('mqueryfront/build', path)
 
 

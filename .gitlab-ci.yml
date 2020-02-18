@@ -12,9 +12,9 @@ before_script:
   - echo "Start job $CI_BUILD_NAME" at `date +%Y-%m-%d-%H-%M-%S`
   - echo "CI_PIPELINE_ID $CI_PIPELINE_ID"
   - mkdir -p artifacts/test
-  - docker info
-  - docker login -u $DOCKER_REGISTRY_LOGIN -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY
-  - eval $(ssh-agent -s)
+  - if command -v docker >/dev/null ; then docker info ; else echo Skipping Docker related commands on incompatible image ; fi
+  - if command -v docker >/dev/null ; then docker login -u $DOCKER_REGISTRY_LOGIN -p $DOCKER_REGISTRY_PASSWORD $DOCKER_REGISTRY ; fi
+  - if command -v ssh-agent >/dev/null ; then eval $(ssh-agent -s) ; else echo Skipping ssh-agent command on incomaptible image ; fi
   - (if [ ! -z "$GIT_DEPLOY_KEY" ] ; then echo "$GIT_DEPLOY_KEY" | tr -d '\r' | ssh-add - > /dev/null ; fi)
   - mkdir -p ~/.ssh
   - chmod 700 ~/.ssh
@@ -83,6 +83,14 @@ test_mquery:
     - docker-compose logs -t
     - docker-compose logs -t > artifacts/test/startup.log
     - docker-compose down | true
+
+test_types:
+  stage: test
+  image: python:3.6
+  script:
+  - cp src/config.example.py src/config.py
+  - pip3 install mypy
+  - mypy src
 
 deploy_mquery:
   stage: deploy
