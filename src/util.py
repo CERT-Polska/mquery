@@ -18,3 +18,5 @@ def setup_logging() -> None:
 def make_redis() -> Any:
     return StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True)
 
+def mquery_version():
+    return "1.0.2"

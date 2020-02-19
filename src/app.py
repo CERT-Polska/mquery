@@ -13,7 +13,7 @@ from lib.ursadb import UrsaDb
 from lib.yaraparse import yara_traverse
 from yaramod import Yaramod #  type: ignore
 
-from util import make_redis
+from util import make_redis, mquery_version
 import config
 from typing import Any, Union, Callable
 
@@ -151,16 +151,19 @@ def job_statuses() -> Response:
 @app.route('/api/backend')
 def backend_status() -> Response:
     db_alive = True
-
+    status = db.status()
     try:
-        tasks = db.status().get('result', {}).get('tasks', [])
+        tasks = status.get('result', {}).get('tasks', [])
+        ursadb_version = status.get('result', {}).get('ursadb_version', 'unknown')
     except Again:
         db_alive = False
         tasks = []
+        ursadb_version = []
 
     return jsonify({
         "db_alive": db_alive,
         "tasks": tasks,
+        "components": {"mquery": mquery_version(), "ursadb": str(ursadb_version)}
     })
 
 
