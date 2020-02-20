@@ -8,11 +8,15 @@ import {API_URL} from "./config";
 
 class DatasetRows extends Component {
     render() {
-        let indexes = this.props.indexes.map((o) => o.type).join(', ');
-
         return <tr>
             <td><code>{this.props.id}</code></td>
-            <td>{indexes}</td>
+            <td>{this.props.indexes.map((x) => {return (
+                    <div class="h6">
+                        <code>{x.type}</code> ({filesize(x.size, {standard: "iec"})})
+                    </div>
+                    )
+                })}
+            </td>
             <td>{filesize(this.props.size, {standard: "iec"})}</td>
         </tr>;
     }
