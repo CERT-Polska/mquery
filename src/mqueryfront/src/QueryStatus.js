@@ -99,6 +99,7 @@ class QueryStatus extends Component {
         axios.delete(API_URL + "/job/" + this.state.qhash);
     }
 
+
     render() {
         let error = null;
         

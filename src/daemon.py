@@ -32,15 +32,25 @@ def compile_yara(job_hash: str) -> Any:
     return rule
 
 
+def get_queue_name(priority: str) -> str:
+    if priority == "low":
+        return 'queue-yara-low'
+    elif priority == "medium":
+        return 'queue-yara-medium'
+    else:
+        return 'queue-yara-high'
+
+
 def job_daemon() -> None:
     setup_logging()
     logging.info('Daemon running...')
+    yara_queues = ['queue-yara-high', 'queue-yara-medium', 'queue-yara-low']
 
     for extractor in config.METADATA_EXTRACTORS:
         extractor.set_redis(redis)
 
     while True:
-        queue, data = redis.blpop(['queue-search', 'queue-index', 'queue-metadata', 'queue-yara'])
+        queue, data = redis.blpop(['queue-search', 'queue-index', 'queue-metadata'] + yara_queues)
 
         if queue == 'queue-search':
             job_hash = data
@@ -54,7 +64,8 @@ def job_daemon() -> None:
                     'status': 'failed',
                     'error': str(e),
                 })
-        elif queue == 'queue-yara':
+
+        elif queue in yara_queues:
             job_hash, file_path = data.split(':', 1)
             try:
                 execute_yara(job_hash, file_path)
@@ -64,6 +75,7 @@ def job_daemon() -> None:
                     'status': 'failed',
                     'error': str(e),
                 })
+
         elif queue == 'queue-metadata':
             job_hash, file_path = data.split(':', 1)
             execute_metadata(job_hash, file_path)
@@ -166,7 +178,6 @@ def execute_search(job_hash: str) -> None:
     if 'error' in result:
         raise RuntimeError(result['error'])
 
-    job = redis.hgetall(job_hash)
     files = [f for f in result['files'] if f.strip()]
 
     logging.info('Database responded with {} files'.format(len(files)))
@@ -182,10 +193,10 @@ def execute_search(job_hash: str) -> None:
 
     if files:
         pipe = redis.pipeline()
-
+        queue_name = get_queue_name(job["priority"])
         for file in files:
             if not config.SKIP_YARA:
-                pipe.rpush('queue-yara', '{}:{}'.format(job_hash, file))
+                pipe.rpush(queue_name, '{}:{}'.format(job_hash, file))
             else:
                 pipe.rpush('queue-metadata', '{}:{}'.format(job_hash, file))
 
