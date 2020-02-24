@@ -48,10 +48,9 @@ def download() -> Any:
     return send_file(file_path, as_attachment=True, attachment_filename=attach_name + ext)
 
 
-@app.route('/api/query', methods=['POST'])
-def query() -> Any:
+@app.route('/api/query/<priority>', methods=['POST'])
+def query(priority: str) -> Any:
     req = request.get_json()
-
     raw_yara = req['raw_yara']
 
     try:
@@ -97,7 +96,8 @@ def query() -> Any:
         'rule_author': rule_author,
         'parsed': parsed,
         'raw_yara': raw_yara,
-        'submitted': int(time.time())
+        'submitted': int(time.time()),
+        'priority': priority
     }
 
     if req['method'] == 'query_100':

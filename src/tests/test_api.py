@@ -53,7 +53,7 @@ rule nymaim {
 }    
 '''
 
-    res = requests.post('http://web:5000/api/query', json={'method': 'query', 'raw_yara': test_yara})
+    res = requests.post('http://web:5000/api/query/low', json={'method': 'query', 'raw_yara': test_yara})
     res.raise_for_status()
 
     query_hash = res.json()['query_hash']

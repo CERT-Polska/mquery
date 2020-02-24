@@ -17,7 +17,7 @@ class SearchJobRow extends Component {
     }
 
     handleCancelJob() {
-        axios.delete(API_URL + "/api/job/" + this.props.id)
+        axios.delete(API_URL + "/job/" + this.props.id)
             .then(response => {
                 this.setState({"cancelled": true});
             })
@@ -54,6 +54,9 @@ class SearchJobRow extends Component {
             <td>
                 <Link to={'/query/' + this.props.id} style={{fontFamily: "monospace"}}>{this.props.rule_name} ({shortId})</Link>
                 <p style={{fontSize: "11px"}}>[{rule_author}] {submittedDate}</p>
+            </td>
+            <td>
+                {this.props.priority}
             </td>
             <td>
                 {status}
@@ -102,6 +105,7 @@ class SearchJobs extends Component {
                         <thead>
                         <tr>
                             <th>Job name</th>
+                            <th>Priority</th>
                             <th>Status</th>
                             <th>Progress</th>
                             <th>Actions</th>

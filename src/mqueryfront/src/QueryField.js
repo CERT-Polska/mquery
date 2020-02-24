@@ -27,9 +27,9 @@ class QueryField extends Component {
         });
     }
 
-    handleQuery(event, method) {
+    handleQuery(event, method, priority) {
         axios.create()
-            .post(API_URL + "/query", {"raw_yara": this.state.rawYara, "method": method})
+            .post(API_URL + "/query/" + priority, {"raw_yara": this.state.rawYara, "method": method})
             .then(response => {
                 if (method === 'query') {
                     this.props.updateQhash(response.data.query_hash, this.state.rawYara);
@@ -73,20 +73,55 @@ class QueryField extends Component {
 
         return (
             <div>
-                <div className="btn-group mb-1">
-                    <button className="btn btn-success btn-lg" name="query" type="submit" onClick={(event) => this.handleQuery(event, 'query')}>
-                        <span className="fa fa-database"/> Query
+                <div class="btn-group mb-1" role="group">
+                <button
+                    type="button"
+                    class="btn btn-success btn-lg"
+                    onClick={event => this.handleQuery(event, "query", "medium")}
+                >
+                    Query
+                </button>
+                <div class="btn-group" role="group">
+                    <button
+                        type="button"
+                        class="btn btn-success dropdown-toggle"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                    ></button>
+                    <div class="dropdown-menu">
+                        <a
+                            class="dropdown-item"
+                            href="#"
+                            onClick={event => this.handleQuery(event, "query", "low")}
+                        >
+                            Low Priority Query
+                        </a>
+                        <a
+                            class="dropdown-item"
+                            href="#"
+                            onClick={event => this.handleQuery(event, "query", "medium")}
+                        >
+                            Standard Priority Query
+                        </a>
+                        <a
+                            class="dropdown-item"
+                            href="#"
+                            onClick={event => this.handleQuery(event, "query", "high")}
+                        >
+                            High Priority Query
+                        </a>
+                    </div>
+                </div>
+                {this.state.isLocked ? (
+                    <button className="btn btn-secondary btn-lg" name="clone" type="submit" onClick={this.handleEdit}>
+                        <span className="fa fa-clone"/> Edit
                     </button>
-
-                    {this.state.isLocked ? (
-                        <button className="btn btn-secondary btn-lg" name="clone" type="submit" onClick={this.handleEdit}>
-                            <span className="fa fa-clone"/> Edit
-                        </button>
-                    ) : (
-                        <button className="btn btn-secondary btn-lg" name="parse" type="submit" onClick={(event) => this.handleQuery(event, 'parse')}>
-                            <span className="fa fa-code"/> Parse
-                        </button>
-                    )}
+                ) : (
+                    <button className="btn btn-secondary btn-lg" name="parse" type="submit" onClick={(event) => this.handleQuery(event, 'parse')}>
+                        <span className="fa fa-code"/> Parse
+                    </button>
+                )}
                 </div>
                 <div className="form-group">
                     <textarea name="rawYara" className="form-control mquery-yara-input" onChange={this.handleInputChange} readOnly={this.state.isLocked} value={this.state.rawYara} />
