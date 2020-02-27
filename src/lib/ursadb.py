@@ -1,6 +1,5 @@
 import json
 import time
-
 import zmq # type: ignore
 
 
@@ -52,6 +51,14 @@ class UrsaDb(object):
     def topology(self):
         socket = self.make_socket()
         socket.send_string('topology;')
+        response = socket.recv_string()
+        socket.close()
+
+        return json.loads(response)
+
+    def execute_command(self, command):
+        socket = self.make_socket(recv_timeout=-1)
+        socket.send_string(command)
         response = socket.recv_string()
         socket.close()
 
