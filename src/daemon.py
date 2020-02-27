@@ -50,7 +50,7 @@ def job_daemon() -> None:
         extractor.set_redis(redis)
 
     while True:
-        queue, data = redis.blpop(['queue-search', 'queue-index', 'queue-metadata'] + yara_queues)
+        queue, data = redis.blpop(['queue-search', 'queue-index', 'queue-metadata', 'queue-commands'] + yara_queues)
 
         if queue == 'queue-search':
             job_hash = data
@@ -79,6 +79,11 @@ def job_daemon() -> None:
         elif queue == 'queue-metadata':
             job_hash, file_path = data.split(':', 1)
             execute_metadata(job_hash, file_path)
+
+        elif queue == 'queue-commands':
+            logging.info("Running a command: %s", data)
+            resp = db.execute_command(data)
+            logging.info(resp)
 
 
 def execute_metadata(job_hash: str, file_path: str) -> None:

@@ -202,5 +202,14 @@ def serve_root(path: str) -> Any:
     return send_from_directory('mqueryfront/build', path)
 
 
+@app.route('/api/compactall')
+def compact_all():
+    redis.rpush('queue-commands', 'compact all;')
+
+    return jsonify({
+        "status": "Command queued"
+    })
+
+
 if __name__ == "__main__":
     app.run()
