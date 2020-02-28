@@ -207,7 +207,7 @@ def compact_all():
     redis.rpush('queue-commands', 'compact all;')
 
     return jsonify({
-        "status": "Command queued"
+        "status": "ok"
     })
 
 
