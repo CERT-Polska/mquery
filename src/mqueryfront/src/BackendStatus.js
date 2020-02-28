@@ -15,10 +15,6 @@ class BackendJobRow extends Component {
 }
 
 class BackendStatus extends Component {
-    constructor(props) {
-        super(props);
-    }
-
     render() {
         const backendJobRows = this.props.jobs
             .map((job) =>
@@ -26,20 +22,23 @@ class BackendStatus extends Component {
             );
 
         return (
-            <div className="table-responsive">
-                <table className="table table-striped table-bordered">
-                    <thead>
-                    <tr>
-                        <th>id</th>
-                        <th>conn</th>
-                        <th>request</th>
-                        <th>progress</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                        {backendJobRows}
-                    </tbody>
-                </table>
+            <div>
+                <h2 className="text-center mq-bottom">current connections</h2>
+                <div className="table-responsive">
+                    <table className="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                            <th>id</th>
+                            <th>conn</th>
+                            <th>request</th>
+                            <th>progress</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {backendJobRows}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         );
     }
