@@ -4,6 +4,7 @@ services:
   - docker:dind
 
 stages:
+  - pretest
   - build
   - test
   - deploy
@@ -85,12 +86,27 @@ test_mquery:
     - docker-compose down | true
 
 test_types:
-  stage: test
+  stage: pretest
   image: python:3.6
   script:
   - cp src/config.example.py src/config.py
   - pip3 install mypy
   - mypy src
+
+test_style:
+  stage: pretest
+  image: python:3.6
+  script:
+  - cp src/config.example.py src/config.py
+  - pip3 install black
+  - black --check "src/"
+
+test_style_js:
+  stage: pretest
+  image: node:13
+  script:
+  - npm install -g prettier
+  - prettier --tab-width=4 --check "src/mqueryfront/src/**/*.js"
 
 deploy_mquery:
   stage: deploy

@@ -1,6 +1,6 @@
 import json
 
-CACHE_EXPIRE_TIME = 60*60*12
+CACHE_EXPIRE_TIME = 60 * 60 * 12
 
 
 class Metadata:
@@ -12,7 +12,7 @@ class Metadata:
 
     def __rs_key(self, cache_tag):
         cls_name = self.__class__.__name__
-        rs_key = 'cached:{}:{}'.format(cls_name, cache_tag)
+        rs_key = "cached:{}:{}".format(cls_name, cache_tag)
         return rs_key
 
     def cache_fetch(self, cache_tag):

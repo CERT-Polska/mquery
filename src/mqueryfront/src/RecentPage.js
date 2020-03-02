@@ -1,6 +1,5 @@
-import React, {Component} from 'react';
-import SearchJobs from './SearchJobs';
-
+import React, { Component } from "react";
+import SearchJobs from "./SearchJobs";
 
 class RecentPage extends Component {
     render() {

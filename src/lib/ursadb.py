@@ -1,6 +1,6 @@
 import json
 import time
-import zmq # type: ignore
+import zmq  # type: ignore
 
 
 class UrsaDb(object):
@@ -19,7 +19,7 @@ class UrsaDb(object):
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
-        query = 'select {};'.format(query)
+        query = "select {};".format(query)
         socket.send_string(query)
 
         response = socket.recv_string()
@@ -28,21 +28,19 @@ class UrsaDb(object):
 
         res = json.loads(response)
 
-        if 'error' in res:
+        if "error" in res:
             return {
-                'error': 'ursadb failed: ' + res.get('error', {}).get('message', '(no message)')
+                "error": "ursadb failed: "
+                + res.get("error", {}).get("message", "(no message)")
             }
 
-        files = res.get('result', {}).get('files', [])
+        files = res.get("result", {}).get("files", [])
 
-        return {
-            'time': (end - start)*1000,
-            'files': files
-        }
+        return {"time": (end - start) * 1000, "files": files}
 
     def status(self):
         socket = self.make_socket()
-        socket.send_string('status;')
+        socket.send_string("status;")
         response = socket.recv_string()
         socket.close()
 
@@ -50,7 +48,7 @@ class UrsaDb(object):
 
     def topology(self):
         socket = self.make_socket()
-        socket.send_string('topology;')
+        socket.send_string("topology;")
         response = socket.recv_string()
         socket.close()
 

@@ -61,7 +61,7 @@ sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 
 cd mquery
-pip install -r src/requirements.txt  # this may take a few minutes
+pip install -r requirements.txt  # this may take a few minutes
 cp src/config.example.py src/config.py
 
 cd src/mqueryfront
@@ -126,6 +126,14 @@ rule emotet4_basic: trojan
         all of them
 }
 ```
+
+## Contributing
+
+If you want to contribute, ensure that your PR passes through the CI pipeline. Ideally:
+
+ - check your code with `flake8`
+ - autoformat your python code with `black`
+ - autoformat your html/js/jsx with `prettier --tab-width=4`
 
 ## Contact
 
