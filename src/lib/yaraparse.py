@@ -1,8 +1,17 @@
 from yaramod import Yaramod  # type: ignore
-from yaramod import AndExpression, StringCountExpression, \
-    IntLiteralExpression, ParenthesesExpression, GtExpression, EqExpression, \
-    OrExpression, StringExpression, OfExpression, \
-    StringWildcardExpression, StringAtExpression
+from yaramod import (
+    AndExpression,
+    StringCountExpression,
+    IntLiteralExpression,
+    ParenthesesExpression,
+    GtExpression,
+    EqExpression,
+    OrExpression,
+    StringExpression,
+    OfExpression,
+    StringWildcardExpression,
+    StringAtExpression,
+)
 from yaramod import ThemExpression, SetExpression
 import sys
 from typing import Optional, List
@@ -15,11 +24,11 @@ class YaraParseError(Exception):
 
 def ursify_hex(hex_str: str) -> str:
     # easier to manage
-    hex_str = hex_str.replace(' ', '')
+    hex_str = hex_str.replace(" ", "")
 
     # alternatives, are nested alternatives a thing?
-    hex_parts = re.split(r'\(.*?\)', hex_str)
-    hex_parts = [x for y in hex_parts for x in re.split(r'\[[\d-]+\]', y)]
+    hex_parts = re.split(r"\(.*?\)", hex_str)
+    hex_parts = [x for y in hex_parts for x in re.split(r"\[[\d-]+\]", y)]
 
     output: List[str] = []
 
@@ -29,7 +38,7 @@ def ursify_hex(hex_str: str) -> str:
         # iterate over nibbles
         for i in range(0, len(part), 2):
 
-            if part[i] == '?' or part[i + 1] == '?':
+            if part[i] == "?" or part[i + 1] == "?":
                 if last_end is not None:
                     output.append(part[last_end:i])
                 last_end = None
@@ -39,8 +48,8 @@ def ursify_hex(hex_str: str) -> str:
         if last_end is not None:
             output.append(part[last_end:])
 
-    core = '} & {'.join(output)
-    return f'{{{core}}}'
+    core = "} & {".join(output)
+    return f"{{{core}}}"
 
 
 def ursify_string(string) -> Optional[str]:
@@ -101,19 +110,21 @@ def str_expr(condition, rule_strings) -> Optional[str]:
 
 def str_wild_expr(condition, rule_strings) -> Optional[str]:
     condition_regex = re.escape(condition.text)
-    condition_regex = condition_regex.replace('\\*', '.*')
-    filtered_strings = [v for k, v in rule_strings.items() if re.match(condition_regex, k)]
+    condition_regex = condition_regex.replace("\\*", ".*")
+    filtered_strings = [
+        v for k, v in rule_strings.items() if re.match(condition_regex, k)
+    ]
 
     ursa_strings = [ursify_string(x) for x in filtered_strings]
     strings = [s for s in ursa_strings if s is not None]
 
     if strings:
-        return ', '.join(strings)
+        return ", ".join(strings)
     return None
 
 
 def of_expr(condition, rule_strings) -> Optional[str]:
-    how_many = condition.text[:condition.text.find('of')].strip()
+    how_many = condition.text[: condition.text.find("of")].strip()
     counter = None
 
     children = condition.iterated_set
@@ -121,21 +132,25 @@ def of_expr(condition, rule_strings) -> Optional[str]:
 
     if type(children) is SetExpression:
         elements = condition.iterated_set.elements
-        parsed_elements = list(filter(None, [yara_traverse(e, rule_strings) for e in elements]))
+        parsed_elements = list(
+            filter(None, [yara_traverse(e, rule_strings) for e in elements])
+        )
     elif type(children) is ThemExpression:
-        parsed_elements = list(filter(None, [ursify_string(k) for k in rule_strings.values()]))
+        parsed_elements = list(
+            filter(None, [ursify_string(k) for k in rule_strings.values()])
+        )
     else:
         raise YaraParseError(f"Unsupported of_expr type: {type(children)}")
 
-    if how_many == 'all':
+    if how_many == "all":
         counter = len(parsed_elements)
-    elif how_many == 'any':
+    elif how_many == "any":
         counter = 1
     else:
         counter = int(how_many)
 
     if parsed_elements:
-        core = f', '.join(parsed_elements)
+        core = f", ".join(parsed_elements)
         return f"min {counter} of ({core})"
     else:
         return None
@@ -154,7 +169,7 @@ def eq_expr(condition, rule_strings) -> Optional[str]:
 
 
 def str_count_expr(condition, rule_strings) -> Optional[str]:
-    fixed_id = '$' + condition.id[1:]
+    fixed_id = "$" + condition.id[1:]
     return ursify_string(rule_strings[fixed_id])
 
 
@@ -209,12 +224,12 @@ def parse_string(yara_string: str) -> str:
 
 
 def main() -> None:
-    with open(sys.argv[1], 'r') as f:
+    with open(sys.argv[1], "r") as f:
         data = f.read()
 
     ursa_query = parse_string(data)
     print(ursa_query)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

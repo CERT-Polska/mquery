@@ -1,9 +1,8 @@
-import React, {Component} from 'react';
-import QueryField from './QueryField';
-import QueryStatus from './QueryStatus';
-import axios from 'axios';
-import {API_URL} from "./config";
-
+import React, { Component } from "react";
+import QueryField from "./QueryField";
+import QueryStatus from "./QueryStatus";
+import axios from "axios";
+import { API_URL } from "./config";
 
 class QueryPage extends Component {
     constructor(props) {
@@ -29,11 +28,9 @@ class QueryPage extends Component {
 
     componentDidMount() {
         if (this.state.qhash) {
-            axios
-                .get(API_URL + "/job/" + this.state.qhash)
-                .then(response => {
-                    this.setState({"rawYara": response.data.raw_yara});
-                });
+            axios.get(API_URL + "/job/" + this.state.qhash).then(response => {
+                this.setState({ rawYara: response.data.raw_yara });
+            });
         }
     }
 
@@ -42,16 +39,16 @@ class QueryPage extends Component {
     }
 
     updateQhash(newQhash, rawYara) {
-        console.log('update qhash called', newQhash);
+        console.log("update qhash called", newQhash);
 
-        if (typeof rawYara !== 'undefined') {
-            this.setState({"rawYara": rawYara});
+        if (typeof rawYara !== "undefined") {
+            this.setState({ rawYara: rawYara });
         }
 
         if (!newQhash) {
-            this.props.history.push('/');
+            this.props.history.push("/");
         } else {
-            this.props.history.push('/query/' + newQhash);
+            this.props.history.push("/query/" + newQhash);
         }
 
         this.setState({
@@ -82,17 +79,21 @@ class QueryPage extends Component {
             <div className="container-fluid">
                 <div className="row">
                     <div className="col-md-6">
-                        <QueryField rawYara={this.state.rawYara}
-                                    isLoading={this.state.qhash && !this.state.rawYara}
-                                    isLocked={!!this.state.qhash}
-                                    updateQhash={this.updateQhash}
-                                    updateQueryPlan={this.updateQueryPlan}
-                                    updateQueryError={this.updateQueryError} />
+                        <QueryField
+                            rawYara={this.state.rawYara}
+                            isLoading={this.state.qhash && !this.state.rawYara}
+                            isLocked={!!this.state.qhash}
+                            updateQhash={this.updateQhash}
+                            updateQueryPlan={this.updateQueryPlan}
+                            updateQueryError={this.updateQueryError}
+                        />
                     </div>
                     <div className="col-md-6" id="status-col">
-                        <QueryStatus qhash={this.state.qhash}
-                                     queryPlan={this.state.queryPlan}
-                                     queryError={this.state.queryError} />
+                        <QueryStatus
+                            qhash={this.state.qhash}
+                            queryPlan={this.state.queryPlan}
+                            queryError={this.state.queryError}
+                        />
                     </div>
                 </div>
             </div>

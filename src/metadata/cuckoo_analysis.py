@@ -6,7 +6,7 @@ from typing import List, Any
 
 
 class CuckooAnalysisMetadata(Metadata):
-    __depends_on__ : List[Any] = []
+    __depends_on__: List[Any] = []
 
     def __init__(self, path):
         super().__init__()
@@ -30,11 +30,14 @@ class CuckooAnalysisMetadata(Metadata):
         except OSError:
             return {}
 
-        binary_hash = target.split('/')[-1]
+        binary_hash = target.split("/")[-1]
 
         obj = {
             "cuckoo_hash": {"value": binary_hash},
-            "cuckoo_analysis": {"display_text": "cuckoo:{}".format(analysis_id), "value": analysis_id}
+            "cuckoo_analysis": {
+                "display_text": "cuckoo:{}".format(analysis_id),
+                "value": analysis_id,
+            },
         }
 
         self.cache_store(analysis_id, obj)

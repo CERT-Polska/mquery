@@ -1,6 +1,5 @@
 import logging
 
-from itsdangerous import JSONWebSignatureSerializer
 from redis import StrictRedis
 
 import config
@@ -12,11 +11,16 @@ LOG_DATEFMT = "%d/%m/%Y %H:%M:%S"
 
 
 def setup_logging() -> None:
-    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATEFMT)
+    logging.basicConfig(
+        level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATEFMT
+    )
 
 
 def make_redis() -> Any:
-    return StrictRedis(host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True)
+    return StrictRedis(
+        host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True
+    )
+
 
 def mquery_version():
     return "1.0.2"
