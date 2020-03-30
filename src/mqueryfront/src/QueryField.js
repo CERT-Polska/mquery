@@ -7,7 +7,7 @@ class QueryField extends Component {
         super(props);
 
         this.state = {
-            rawYara: props.rawYara
+            rawYara: props.rawYara,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -20,7 +20,7 @@ class QueryField extends Component {
     componentWillReceiveProps(newProps) {
         this.setState({
             rawYara: newProps.rawYara,
-            isLocked: newProps.isLocked
+            isLocked: newProps.isLocked,
         });
     }
 
@@ -29,9 +29,9 @@ class QueryField extends Component {
             .create()
             .post(API_URL + "/query/" + priority, {
                 raw_yara: this.state.rawYara,
-                method: method
+                method: method,
             })
-            .then(response => {
+            .then((response) => {
                 if (method === "query") {
                     this.props.updateQhash(
                         response.data.query_hash,
@@ -44,7 +44,7 @@ class QueryField extends Component {
                     );
                 }
             })
-            .catch(error => {
+            .catch((error) => {
                 let err = error.toString();
 
                 if (error.response) {
@@ -64,7 +64,7 @@ class QueryField extends Component {
         const name = target.name;
 
         this.setState({
-            [name]: value
+            [name]: value,
         });
     }
 
@@ -90,7 +90,7 @@ class QueryField extends Component {
                     <button
                         type="button"
                         class="btn btn-success btn-lg"
-                        onClick={event =>
+                        onClick={(event) =>
                             this.handleQuery(event, "query", "medium")
                         }
                     >
@@ -103,12 +103,12 @@ class QueryField extends Component {
                             data-toggle="dropdown"
                             aria-haspopup="true"
                             aria-expanded="false"
-                        ></button>
+                        />
                         <div class="dropdown-menu">
                             <a
                                 class="dropdown-item"
                                 href="#"
-                                onClick={event =>
+                                onClick={(event) =>
                                     this.handleQuery(event, "query", "low")
                                 }
                             >
@@ -117,7 +117,7 @@ class QueryField extends Component {
                             <a
                                 class="dropdown-item"
                                 href="#"
-                                onClick={event =>
+                                onClick={(event) =>
                                     this.handleQuery(event, "query", "medium")
                                 }
                             >
@@ -126,7 +126,7 @@ class QueryField extends Component {
                             <a
                                 class="dropdown-item"
                                 href="#"
-                                onClick={event =>
+                                onClick={(event) =>
                                     this.handleQuery(event, "query", "high")
                                 }
                             >
@@ -148,7 +148,9 @@ class QueryField extends Component {
                             className="btn btn-secondary btn-lg"
                             name="parse"
                             type="submit"
-                            onClick={event => this.handleQuery(event, "parse")}
+                            onClick={(event) =>
+                                this.handleQuery(event, "parse")
+                            }
                         >
                             <span className="fa fa-code" /> Parse
                         </button>

@@ -13,7 +13,7 @@ class DatasetRows extends Component {
                     <code>{this.props.id}</code>
                 </td>
                 <td>
-                    {this.props.indexes.map(x => {
+                    {this.props.indexes.map((x) => {
                         return (
                             <div class="h6">
                                 <code>{x.type}</code> (
@@ -35,30 +35,32 @@ class DatabaseTopology extends Component {
         this.state = {
             datasets: [],
             compacting: false,
-            error: null
+            error: null,
         };
     }
 
     componentDidMount() {
         axios
             .get(API_URL + "/backend/datasets")
-            .then(response => {
+            .then((response) => {
                 this.setState({ datasets: response.data.datasets });
             })
-            .catch(error => {
+            .catch((error) => {
                 this.setState({ error: error });
             });
     }
 
     runCompactAll = () => {
-        axios.get(API_URL + "/compactall").catch(error => {
+        axios.get(API_URL + "/compactall").catch((error) => {
             this.setState({ error: error });
         });
         this.setState({ compacting: true });
     };
 
     render() {
-        const datasetRows = Object.keys(this.state.datasets).map(dataset_id => (
+        const datasetRows = Object.keys(
+            this.state.datasets
+        ).map((dataset_id) => (
             <DatasetRows
                 {...this.state.datasets[dataset_id]}
                 id={dataset_id}

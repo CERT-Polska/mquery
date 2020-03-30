@@ -5,3 +5,4 @@ BACKEND = "tcp://127.0.0.1:9281"
 REDIS_HOST = "127.0.0.1"
 REDIS_PORT = 6379
 METADATA_EXTRACTORS = [CuckooAnalysisMetadata("/opt/mw/samples/analyses/")]
+JOB_EXPIRATION_MINUTES = 3600  # 60 hours

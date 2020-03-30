@@ -41,6 +41,22 @@ def get_queue_name(priority: str) -> str:
         return "queue-yara-high"
 
 
+def collect_expired_jobs() -> None:
+    exp_time = int(60 * config.JOB_EXPIRATION_MINUTES)  # conversion to seconds
+    job_hashes = []
+
+    for job_hash in redis.keys("job:*"):
+        job_hashes.append(job_hash[4:])
+
+    for job in job_hashes:
+        redis.set("gc-lock", "locked", ex=60)
+        job_submitted_time = int(redis.hget("job:" + job, "submitted"))
+        if (int(time.time()) - job_submitted_time) >= exp_time:
+            redis.hset("job:{}".format(job), "status", "expired")
+            redis.delete("meta:{}".format(job))
+            redis.delete("false_positives:{}".format(job))
+
+
 def job_daemon() -> None:
     setup_logging()
     logging.info("Daemon running...")
@@ -86,9 +102,15 @@ def job_daemon() -> None:
             resp = db.execute_command(data)
             logging.info(resp)
 
+        if redis.set("gc-lock", "locked", ex=60, nx=True):
+            collect_expired_jobs()
+
 
 def execute_metadata(job_hash: str, file_path: str) -> None:
-    if redis.hget("job:" + job_hash, "status") in ["cancelled", "failed"]:
+    if redis.hget("job:" + job_hash, "status") in [
+        "cancelled",
+        "failed",
+    ]:
         return
 
     current_meta: Dict[str, Any] = {}
@@ -133,7 +155,10 @@ def execute_metadata(job_hash: str, file_path: str) -> None:
 
 
 def execute_yara(job_hash: str, file: str) -> None:
-    if redis.hget("job:" + job_hash, "status") in ["cancelled", "failed"]:
+    if redis.hget("job:" + job_hash, "status") in [
+        "cancelled",
+        "failed",
+    ]:
         return
 
     rule = compile_yara(job_hash)
@@ -217,6 +242,7 @@ def execute_search(job_hash: str) -> None:
 
         pipe.execute()
         logging.info("Done uploading yara jobs.")
+
     else:
         redis.hset("job:{}".format(job_hash), "status", "done")
 

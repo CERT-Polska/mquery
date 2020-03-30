@@ -18,7 +18,7 @@ class QueryPage extends Component {
             qhash: qhash,
             rawYara: "",
             queryPlan: null,
-            queryError: null
+            queryError: null,
         };
 
         this.updateQhash = this.updateQhash.bind(this);
@@ -28,7 +28,7 @@ class QueryPage extends Component {
 
     componentDidMount() {
         if (this.state.qhash) {
-            axios.get(API_URL + "/job/" + this.state.qhash).then(response => {
+            axios.get(API_URL + "/job/" + this.state.qhash).then((response) => {
                 this.setState({ rawYara: response.data.raw_yara });
             });
         }
@@ -54,7 +54,7 @@ class QueryPage extends Component {
         this.setState({
             queryError: null,
             queryPlan: null,
-            qhash: newQhash
+            qhash: newQhash,
         });
     }
 
@@ -62,7 +62,7 @@ class QueryPage extends Component {
         this.setState({
             queryError: newError,
             queryPlan: null,
-            rawYara: rawYara
+            rawYara: rawYara,
         });
     }
 
@@ -70,7 +70,7 @@ class QueryPage extends Component {
         this.setState({
             queryError: null,
             queryPlan: parsedQuery,
-            rawYara: rawYara
+            rawYara: rawYara,
         });
     }
 
