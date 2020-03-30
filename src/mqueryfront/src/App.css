@@ -5,7 +5,7 @@
 
 .mquery-scroll-matches {
     height: calc(100vh - 95px);
-    overflow-y: scroll
+    overflow-y: scroll;
 }
 
 .mquery-scroll-matches td {

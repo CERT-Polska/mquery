@@ -3,7 +3,7 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 
 function MatchItem(props) {
-    const metadata = Object.keys(props.meta).map(m => (
+    const metadata = Object.keys(props.meta).map((m) => (
         <a href={props.meta[m].url}>
             <span className="badge badge-info">
                 {props.meta[m].display_text}
@@ -30,6 +30,21 @@ function MatchItem(props) {
     );
 }
 
+function ReturnExpiredJob(job_error) {
+    return (
+        <div className="mquery-scroll-matches">
+            {job_error ? (
+                <div className="alert alert-danger">{job_error}</div>
+            ) : (
+                <div />
+            )}
+            <div style={{ marginTop: "55px" }}>
+                Search results expired. Please run the query once again.
+            </div>
+        </div>
+    );
+}
+
 class QueryStatus extends Component {
     constructor(props) {
         super(props);
@@ -40,7 +55,7 @@ class QueryStatus extends Component {
             matches: [],
             queryPlan: null,
             queryError: null,
-            shouldRequest: false
+            shouldRequest: false,
         };
 
         this.timeout = null;
@@ -62,7 +77,7 @@ class QueryStatus extends Component {
     componentWillReceiveProps(newProps) {
         if (this.state.qhash !== newProps.qhash) {
             this.setState({
-                job: null
+                job: null,
             });
         }
 
@@ -71,7 +86,7 @@ class QueryStatus extends Component {
             queryPlan: newProps.queryPlan,
             queryError: newProps.queryError,
             matches: [],
-            shouldRequest: !!newProps.qhash
+            shouldRequest: !!newProps.qhash,
         });
     }
 
@@ -89,11 +104,11 @@ class QueryStatus extends Component {
                         "&limit=" +
                         LIMIT
                 )
-                .then(response => {
+                .then((response) => {
                     let newShouldRequest = true;
 
                     if (
-                        ["done", "cancelled", "failed"].indexOf(
+                        ["done", "cancelled", "failed", "expired"].indexOf(
                             response.data.job.status
                         ) !== -1
                     ) {
@@ -105,10 +120,10 @@ class QueryStatus extends Component {
                     this.setState({
                         matches: [
                             ...this.state.matches,
-                            ...response.data.matches
+                            ...response.data.matches,
                         ],
                         job: response.data.job,
-                        shouldRequest: newShouldRequest
+                        shouldRequest: newShouldRequest,
                     });
 
                     let nextTimeout =
@@ -226,10 +241,16 @@ class QueryStatus extends Component {
         } else if (this.state.job.status === "cancelled") {
             progressBg = "bg-danger";
             cancel = <span />;
+        } else if (this.state.job.status === "expired") {
+            progressBg = "bg-secondary";
+            cancel = <span />;
         }
 
         const lenMatches = this.state.matches.length;
 
+        if (this.state.job.status === "expired") {
+            return ReturnExpiredJob(this.state.job.error);
+        }
         return (
             <div className="mquery-scroll-matches">
                 <div className="progress" style={{ marginTop: "55px" }}>

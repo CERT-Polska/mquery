@@ -13,19 +13,19 @@ class StatusPage extends Component {
         this.state = {
             backend: {
                 tasks: [],
-                components: []
+                components: [],
             },
-            error: null
+            error: null,
         };
     }
 
     componentDidMount() {
         axios
             .get(API_URL + "/backend")
-            .then(response => {
+            .then((response) => {
                 this.setState({ backend: response.data });
             })
-            .catch(error => {
+            .catch((error) => {
                 this.setState({ error: error });
             });
     }

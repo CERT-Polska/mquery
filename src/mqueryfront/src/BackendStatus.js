@@ -19,7 +19,7 @@ class BackendJobRow extends Component {
 
 class BackendStatus extends Component {
     render() {
-        const backendJobRows = this.props.jobs.map(job => (
+        const backendJobRows = this.props.jobs.map((job) => (
             <BackendJobRow {...job} key={job.id} />
         ));
 

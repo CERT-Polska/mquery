@@ -9,14 +9,14 @@ class SearchJobRow extends Component {
         super(props);
 
         this.state = {
-            cancelled: false
+            cancelled: false,
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
     }
 
     handleCancelJob() {
-        axios.delete(API_URL + "/job/" + this.props.id).then(response => {
+        axios.delete(API_URL + "/job/" + this.props.id).then((response) => {
             this.setState({ cancelled: true });
         });
     }
@@ -41,6 +41,9 @@ class SearchJobRow extends Component {
             case "cancelled":
                 rowClass = "table-danger";
                 break;
+            case "expired":
+                rowClass = "table-warning";
+                break;
             default:
                 rowClass = "";
                 break;
@@ -59,6 +62,10 @@ class SearchJobRow extends Component {
         if (this.props.status === "cancelled" || this.state.cancelled) {
             status = "cancelled";
             cancelBtn = <span />;
+        }
+
+        if (this.props.status === "expired") {
+            cancelBtn = "";
         }
 
         if (this.props.status === "done") {
@@ -99,23 +106,23 @@ class SearchJobs extends Component {
 
         this.state = {
             jobs: [],
-            error: null
+            error: null,
         };
     }
 
     componentDidMount() {
         axios
             .get(API_URL + "/job")
-            .then(response => {
+            .then((response) => {
                 this.setState({ jobs: response.data.jobs });
             })
-            .catch(error => {
+            .catch((error) => {
                 this.setState({ error: error });
             });
     }
 
     render() {
-        const backendJobRows = this.state.jobs.map(job => (
+        const backendJobRows = this.state.jobs.map((job) => (
             <SearchJobRow {...job} key={job.id} />
         ));
 
