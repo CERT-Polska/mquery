@@ -1,9 +1,12 @@
 import json
+from typing import List
 
 CACHE_EXPIRE_TIME = 60 * 60 * 12
 
 
 class Metadata:
+    __depends_on__: List[str] = []
+
     def __init__(self):
         self.redis = None
 
@@ -26,3 +29,6 @@ class Metadata:
     def cache_store(self, cache_tag, obj):
         rs_key = self.__rs_key(cache_tag)
         self.redis.setex(rs_key, CACHE_EXPIRE_TIME, json.dumps(obj))
+
+    def extract(self, matched_fname, current_meta):
+        raise NotImplementedError

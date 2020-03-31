@@ -63,7 +63,10 @@ def job_daemon() -> None:
     yara_queues = ["queue-yara-high", "queue-yara-medium", "queue-yara-low"]
 
     for extractor in config.METADATA_EXTRACTORS:
+        logging.info("Plugin loaded: %s", extractor.__class__.__name__)
         extractor.set_redis(redis)
+
+    logging.info("Daemon loaded, entering the main loop...")
 
     while True:
         queue, data = redis.blpop(
