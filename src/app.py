@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import string
+import random
 import time
 
 from flask import (
@@ -148,6 +149,43 @@ def job_cancel(job_id: str) -> Response:
     redis.hmset("job:" + job_id, {"status": "cancelled"})
 
     return jsonify({"status": "ok"})
+
+
+@app.route("/api/user/settings")
+def user_settings() -> Response:
+    return jsonify({
+        "can_register": True,
+        "plugin_name": "Redis",
+    })
+
+
+@app.route("/api/user/register", methods=["POST"])
+def user_register() -> Response:
+    if random.random() < 0.5:
+        return jsonify({"status": "ok"})
+    else:
+        return jsonify({"error": "This user already exists"})
+
+
+@app.route("/api/user/login", methods=["POST"])
+def user_login() -> Response:
+    if random.random() < 0.5:
+        return jsonify({"status": "ok"})
+    else:
+        return jsonify({"error": "Wrong password"})
+
+
+@app.route("/api/user/<name>/info")
+def user_info(name) -> Response:
+    return jsonify({
+        "id": 1,
+        "name": name,
+    })
+
+
+@app.route("/api/user/<name>/jobs")
+def user_jobs(name) -> Response:
+    return job_statuses()
 
 
 @app.route("/api/job")
