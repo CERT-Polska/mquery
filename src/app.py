@@ -3,7 +3,6 @@ import logging
 import os
 import random
 import string
-import random
 import time
 
 from flask import (
@@ -158,7 +157,7 @@ def user_settings() -> Response:
 
 @app.route("/api/user/register", methods=["POST"])
 def user_register() -> Response:
-    if random.random() < 0.5:
+    if request.get_json()["username"].startswith("a"):
         return jsonify({"status": "ok"})
     else:
         return jsonify({"error": "This user already exists"})
@@ -166,7 +165,7 @@ def user_register() -> Response:
 
 @app.route("/api/user/login", methods=["POST"])
 def user_login() -> Response:
-    if random.random() < 0.5:
+    if request.get_json()["username"].startswith("a"):
         return jsonify({"status": "ok"})
     else:
         return jsonify({"error": "Wrong password"})
