@@ -1,6 +1,10 @@
 import json
 import time
 import zmq  # type: ignore
+from typing import Dict, Any
+
+
+Json = Dict[str, Any]
 
 
 class UrsaDb(object):
@@ -42,7 +46,7 @@ class UrsaDb(object):
 
         return {"time": (end - start) * 1000, "files": files}
 
-    def status(self):
+    def status(self) -> Json:
         socket = self.make_socket()
         socket.send_string("status;")
         response = socket.recv_string()
@@ -50,7 +54,7 @@ class UrsaDb(object):
 
         return json.loads(response)
 
-    def topology(self):
+    def topology(self) -> Json:
         socket = self.make_socket()
         socket.send_string("topology;")
         response = socket.recv_string()
@@ -58,7 +62,7 @@ class UrsaDb(object):
 
         return json.loads(response)
 
-    def execute_command(self, command):
+    def execute_command(self, command: str) -> Json:
         socket = self.make_socket(recv_timeout=-1)
         socket.send_string(command)
         response = socket.recv_string()

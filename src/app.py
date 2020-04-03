@@ -117,7 +117,7 @@ def query(priority: str) -> Any:
         "priority": priority,
     }
 
-    if req["taint"] is not None:
+    if "taint" in req and req["taint"] is not None:
         job_obj["taint"] = req["taint"]
 
     if req["method"] == "query_100":
