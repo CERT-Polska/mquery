@@ -150,6 +150,37 @@ def job_cancel(job_id: str) -> Response:
     return jsonify({"status": "ok"})
 
 
+@app.route("/api/user/settings")
+def user_settings() -> Response:
+    return jsonify({"can_register": True, "plugin_name": "Redis",})
+
+
+@app.route("/api/user/register", methods=["POST"])
+def user_register() -> Response:
+    if request.get_json()["username"].startswith("a"):
+        return jsonify({"status": "ok"})
+    else:
+        return jsonify({"error": "This user already exists"})
+
+
+@app.route("/api/user/login", methods=["POST"])
+def user_login() -> Response:
+    if request.get_json()["username"].startswith("a"):
+        return jsonify({"status": "ok"})
+    else:
+        return jsonify({"error": "Wrong password"})
+
+
+@app.route("/api/user/<name>/info")
+def user_info(name) -> Response:
+    return jsonify({"id": 1, "name": name,})
+
+
+@app.route("/api/user/<name>/jobs")
+def user_jobs(name) -> Response:
+    return job_statuses()
+
+
 @app.route("/api/job")
 def job_statuses() -> Response:
     jobs = redis.keys("job:*")
