@@ -9,7 +9,7 @@ import requests
 import random
 import os
 
-from lib import UrsaDb
+from ..lib.ursadb import UrsaDb
 
 
 @pytest.fixture(scope="session", autouse=True)
