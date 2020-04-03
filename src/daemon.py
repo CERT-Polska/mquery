@@ -213,8 +213,10 @@ def execute_search(job_hash: str) -> None:
         "job:" + job_hash, {"status": "querying", "timestamp": time.time()}
     )
 
+    taint = job.get("taint", None)
+
     logging.info("Querying backend...")
-    result = db.query(parsed)
+    result = db.query(parsed, taint)
     if "error" in result:
         raise RuntimeError(result["error"])
 

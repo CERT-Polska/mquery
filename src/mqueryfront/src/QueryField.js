@@ -8,6 +8,7 @@ class QueryField extends Component {
 
         this.state = {
             rawYara: props.rawYara,
+            selectedTaint: null,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -16,6 +17,19 @@ class QueryField extends Component {
     }
 
     componentDidMount() {}
+
+    selectTaint(newTaint) {
+        this.setState({
+            selectedTaint: newTaint,
+        });
+    }
+
+    describeTaint() {
+        if (this.state.selectedTaint == null) {
+            return "everywhere";
+        }
+        return this.state.selectedTaint;
+    }
 
     componentWillReceiveProps(newProps) {
         this.setState({
@@ -30,6 +44,7 @@ class QueryField extends Component {
             .post(API_URL + "/query/" + priority, {
                 raw_yara: this.state.rawYara,
                 method: method,
+                taint: this.state.selectedTaint,
             })
             .then((response) => {
                 if (method === "query") {
@@ -155,6 +170,39 @@ class QueryField extends Component {
                             <span className="fa fa-code" /> Parse
                         </button>
                     )}
+                    <div class="btn-group" role="group">
+                        <button
+                            type="button"
+                            class="btn btn-info dropdown-toggle"
+                            data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                        >
+                            Search: {this.describeTaint()}
+                        </button>
+                        <div class="dropdown-menu">
+                            <a
+                                class="dropdown-item"
+                                href="#"
+                                onClick={(event) => this.selectTaint(null)}
+                            >
+                                everywhere
+                            </a>
+                            {this.props.availableTaints.map((taint) => {
+                                return (
+                                    <a
+                                        class="dropdown-item"
+                                        href="#"
+                                        onClick={(event) =>
+                                            this.selectTaint(taint)
+                                        }
+                                    >
+                                        {taint}
+                                    </a>
+                                );
+                            })}
+                        </div>
+                    </div>
                 </div>
                 <div className="form-group">
                     <textarea

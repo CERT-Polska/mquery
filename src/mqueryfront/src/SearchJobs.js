@@ -90,6 +90,7 @@ class SearchJobRow extends Component {
                     </p>
                 </td>
                 <td>{this.props.priority}</td>
+                <td>{this.props.taint}</td>
                 <td>{status}</td>
                 <td>
                     {this.props.files_processed} / {this.props.total_files}
@@ -134,6 +135,7 @@ class SearchJobs extends Component {
                             <tr>
                                 <th>Job name</th>
                                 <th>Priority</th>
+                                <th>Taints</th>
                                 <th>Status</th>
                                 <th>Progress</th>
                                 <th>Actions</th>

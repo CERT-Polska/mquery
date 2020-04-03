@@ -15,11 +15,15 @@ class UrsaDb(object):
         socket.connect(self.backend)
         return socket
 
-    def query(self, query):
+    def query(self, query, taint):
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
-        query = "select {};".format(query)
+        if taint:
+            taint = taint.replace('"', '"')
+            query = 'select with taints ["{}"] {};'.format(taint, query)
+        else:
+            query = "select {};".format(query)
         socket.send_string(query)
 
         response = socket.recv_string()
