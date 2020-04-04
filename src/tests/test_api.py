@@ -1,3 +1,4 @@
+import sys
 import json
 import logging
 import string
@@ -9,7 +10,8 @@ import requests
 import random
 import os
 
-from ..lib.ursadb import UrsaDb
+sys.path = [".."] + sys.path
+from lib.ursadb import UrsaDb
 
 
 @pytest.fixture(scope="session", autouse=True)
