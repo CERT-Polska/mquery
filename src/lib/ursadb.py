@@ -8,10 +8,10 @@ Json = Dict[str, Any]
 
 
 class UrsaDb(object):
-    def __init__(self, backend):
+    def __init__(self, backend: str) -> None:
         self.backend = backend
 
-    def make_socket(self, recv_timeout=2000):
+    def make_socket(self, recv_timeout: int=2000) -> zmq.Context:
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.setsockopt(zmq.LINGER, 0)
@@ -19,12 +19,12 @@ class UrsaDb(object):
         socket.connect(self.backend)
         return socket
 
-    def query(self, query, taint):
+    def query(self, query: str, taint: str) -> Json:
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
         if taint:
-            taint = taint.replace('"', '"')
+            taint = taint.replace('"', '\\"')
             query = 'select with taints ["{}"] {};'.format(taint, query)
         else:
             query = "select {};".format(query)
@@ -70,5 +70,5 @@ class UrsaDb(object):
 
         return json.loads(response)
 
-    def close(self):
+    def close(self) -> None:
         pass

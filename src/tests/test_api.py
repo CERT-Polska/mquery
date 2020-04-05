@@ -4,8 +4,8 @@ import logging
 import string
 import time
 
-import zmq
-import pytest
+import zmq  # type: ignore
+import pytest  # type: ignore
 import requests
 import random
 import os
