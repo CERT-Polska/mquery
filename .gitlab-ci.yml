@@ -90,7 +90,7 @@ test_types:
   image: python:3.6
   script:
   - cp src/config.example.py src/config.py
-  - pip3 install mypy
+  - pip3 install mypy==0.770
   - mypy src
 
 test_style:
@@ -98,14 +98,22 @@ test_style:
   image: python:3.6
   script:
   - cp src/config.example.py src/config.py
-  - pip3 install black
+  - pip3 install flake8==3.7.9
+  - flake8 "src/"
+
+test_black:
+  stage: pretest
+  image: python:3.6
+  script:
+  - cp src/config.example.py src/config.py
+  - pip3 install black==2.0.2
   - black --check "src/"
 
 test_style_js:
   stage: pretest
   image: node:13
   script:
-  - npm install -g prettier
+  - npm install -g prettier@2.0.2
   - prettier --tab-width=4 --check "src/mqueryfront/src/**/*.js"
 
 deploy_mquery:

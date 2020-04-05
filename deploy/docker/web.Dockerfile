@@ -2,7 +2,6 @@ FROM node:8 AS build
 
 RUN npm install -g serve
 COPY src/mqueryfront /app
-COPY src/mqueryfront/src/config.dist.js /app/src/config.js
 WORKDIR /app
 RUN npm install && npm run build
 
