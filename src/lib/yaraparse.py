@@ -11,6 +11,7 @@ from yaramod import (
     OfExpression,
     StringWildcardExpression,
     StringAtExpression,
+    StringInRangeExpression,
 )
 from yaramod import ThemExpression, SetExpression
 import sys
@@ -182,6 +183,10 @@ def str_at_expr(condition, rule_strings) -> Optional[str]:
     return ursify_string(rule_strings[condition.id])
 
 
+def str_in_expr(condition, rule_strings) -> Optional[str]:
+    return ursify_string(rule_strings[condition.id])
+
+
 CONDITION_HANDLERS = {
     AndExpression: and_expr,
     OrExpression: or_expr,
@@ -194,6 +199,7 @@ CONDITION_HANDLERS = {
     StringCountExpression: str_count_expr,
     IntLiteralExpression: int_lit_expr,
     StringAtExpression: str_at_expr,
+    StringInRangeExpression: str_in_expr,
 }
 
 
