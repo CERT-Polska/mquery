@@ -152,7 +152,7 @@ def job_cancel(job_id: str) -> Response:
 
 @app.route("/api/user/settings")
 def user_settings() -> Response:
-    return jsonify({"can_register": True, "plugin_name": "Redis",})
+    return jsonify({"can_register": True, "plugin_name": "Redis"})
 
 
 @app.route("/api/user/register", methods=["POST"])
@@ -173,7 +173,7 @@ def user_login() -> Response:
 
 @app.route("/api/user/<name>/info")
 def user_info(name) -> Response:
-    return jsonify({"id": 1, "name": name,})
+    return jsonify({"id": 1, "name": name})
 
 
 @app.route("/api/user/<name>/jobs")

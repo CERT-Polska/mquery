@@ -1,24 +1,34 @@
 version: '3'
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: deploy/docker/dev.frontend.Dockerfile
+    ports:
+    - "80:3000"
+    links:
+    - web
+    volumes:
+    - ./src/mqueryfront/src:/app/src
   web:
     build:
       context: .
-      dockerfile: deploy/docker/web.Dockerfile
-    ports:
-    - "80:5000"
+      dockerfile: deploy/docker/dev.web.Dockerfile
     links:
     - redis
     volumes:
     - ./samples:/mnt/samples
+    - ./src:/usr/src/app/src
   daemon:
     build:
       context: .
-      dockerfile: deploy/docker/daemon.Dockerfile
+      dockerfile: deploy/docker/dev.daemon.Dockerfile
     links:
     - redis
     - ursadb
     volumes:
     - ./samples:/mnt/samples
+    - ./src:/usr/src/app/src
   ursadb:
     build:
       context: ursadb/

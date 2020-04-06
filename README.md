@@ -15,7 +15,7 @@ Take a look at [https://mquery.tailcall.net](https://mquery.tailcall.net) for a 
 
 Unfortunately, you won't find any actual malware there. For demo purposes we
 have indexed the sources of this project - for example, you can find all exceptions
-in our source code by using this yara rule:
+in our source code by using this Yara rule:
 
 ```
 rule find_exceptions: trojan
@@ -29,115 +29,67 @@ rule find_exceptions: trojan
 }
 ```
 
-## How does it work?
+## Quickstart
 
-YARA is pretty fast, but searching through large dataset for given signature can take a lot of time. To countermeasure this, we have implemented a custom database called UrsaDB. It is able to pre-filter the results, so it is only necessary to run YARA against a small fraction of binaries:
-
-![mquery flowchart](docs/mquery-flowchart.png?raw=1)
-
-## Quick start (docker)
-
-Easiest way start is with `docker-compose`:
+The easiest way to start is by using `docker-compose` from the source:
 
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
-# change `./samples` in `./samples:/mnt/samples` to the path where you keep
-# your malware samples. You can also keep it as it is, and copy malware samples
-# to ./samples directory before indexing.
-vim docker-compose.yml
+# Copy your malware samples to ./samples directory in the cloned repository
 docker-compose up --scale daemon=3  # building the images will take a while
 ```
 
-Web interface should be available at `http://localhost`.
+The web interface should be available at `http://localhost`.
 
-## Quick start (manual installation)
+For more options see our [installation manual](./INSTALL.md).
 
-You can also build the system from source:
 
-```
-sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server
-
-git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
-
-cd mquery
-pip install -r requirements.txt  # this may take a few minutes
-cp src/config.example.py src/config.py
-
-cd src/mqueryfront
-npm install
-cp src/config.dist.js src/config.js
-npm run build
-
-cd ../../ursadb
-mkdir build; cd build
-cmake -D CMAKE_BUILD_TYPE=Release ..  # requires gcc 7+
-make
-```
-
-Create a new database:
+After you start the system, you should index some files. Use ursadb-cli:
 
 ```
-./ursadb/build/ursadb_new ~/db.ursa
+sudo docker-compose run ursadb-cli tcp://ursadb:9281
+index "/mnt/samples";  # /mnt/samples refers to ./samples in the repo
 ```
 
-And start everything manually (systemd services recommended here):
+The command will track the progress.
+Wait until it's finished (this can take a while).
+
+Now your files should be searchable - try with the following Yara rule (or any other):
 
 ```
-project_dir/mquery/src$ flask run  # web server
-project_dir/mquery/src$ python3 daemon.py  # job daemon (can be scaled horisontally)
-project_dir/ursadb/build$ ./ursadb ~/db.ursa  # backend database
-```
-
-Web interface should be available at `http://localhost:5000`.
-
-## Quick start (kubernetes)
-
-Dealing with Kubernetes is never quick. If you're up for a challenge, take a look
-at the `./deploy/k8s` directory.
-
-## Next steps
-
-After you start the system, you should index some files.
-
-Right now it can only be done with ursadb-cli tool. Start it:
-
-- for bare metal setup: `python3 ursadb-cli/ursaclient.py`
-- for docker: `sudo docker-compose run ursadb-cli tcp://ursadb:9281`
-
-Enter the `index` command (for more complicated options, see ursadb docs):
-
-- for bare metal setup `index "/path/to/your/malware/samples";`
-- for docker: `index "/mnt/samples";` (remember, this is mount configured in `docker-compose.yml`)
-
-The command should print the progress. Wait until it's finished (this can take a while).
-
-Now your files should be searchable - try with the following yara rule (or any other):
-
-```
-rule emotet4_basic: trojan
+rule emotet4_basic
 {
     meta:
         author = "cert.pl"
     strings:
-        $emotet4_rsa_public = { 8d ?? ?? 5? 8d ?? ?? 5? 6a 00 68 00 80 00 00 ff 35 [4] ff 35 [4] 6a 13 68 01 00 01 00 ff 15 [4] 85 }
+        $emotet4_rsa_public = {
+            8d ?? ?? 5? 8d ?? ?? 5? 6a 00 68 00 80 00 00 ff 35 [4] ff
+            35 [4] 6a 13 68 01 00 01 00 ff 15 [4] 85
+        }
         $emotet4_cnc_list = { 39 ?? ?5 [4] 0f 44 ?? (FF | A3)}
     condition:
         all of them
 }
 ```
 
+## Learn more
+
+Read [mquery internals](./docs/internals.md) to learn about:
+
+ - How mquery works on a high level.
+ - Known limitations and design decisions.
+ - How to create efficient yara rules.
+
 ## Contributing
 
-If you want to contribute, ensure that your PR passes through the CI pipeline. Ideally:
-
- - check your code with `flake8`
- - autoformat your python code with `black`
- - autoformat your html/js/jsx with `prettier --tab-width=4`
+If you want to contribute, see our dedicated [documentation for contributors](./CONTRIBUTING.md).
 
 ## Contact
 
-In case of any questions, feel free to contact:
+If you have any problems, bugs or feature requests related to mquery, you're
+encouraged to create a GitHub issue. If you have other questions or want to
+contact the developers directly, you can email:
 
 - Michał Leszczyński (monk@cert.pl)
 - Jarosław Jedynak (msm@cert.pl)
