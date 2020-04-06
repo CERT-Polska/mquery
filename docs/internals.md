@@ -206,7 +206,7 @@ min 2 of ({8D} & {8D} & {6A006800800000FF35} & {FF35} & {6A136801000100FF15} & {
 ```
 
 Strings shorter than 3 characters are ignored by all the index types, so
-this is further degenerated to:
+this is further simplified to:
 
 ```
 min 2 of ({6A006800800000FF35} & {6A136801000100FF15}, ())
@@ -221,13 +221,5 @@ And this is equivalent to:
 And yet this is usually pretty fast to query. But few more question marks in
 the rule could cripple mquery performance.
 
-- The parser is your friend. If your query runs too slow, check the query plan.```
+- The parser is your friend. If your query runs too slow, check the query plan.
 
-## Known performance limits
-
-TODO: document
-
- - Max dataset size supported by ursadb
- - Estimated disk space needed per index
- - Estimated required RAM
- - Estimated CPU needed for indexing and querying data

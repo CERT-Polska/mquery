@@ -2,10 +2,10 @@
 
 Supported installation and deployment methods:
 
-- [docker-compose.yml](#Docker_compose)
-- [docker-compose.dev.yml](#Docker_compose_(dev))
-- [bare metal](#bare_metal)
-- [kubernetes](kubernetes)
+- [docker-compose.yml](#docker-compose)
+- [docker-compose.dev.yml](#docker-compose-dev)
+- [bare metal](#bare-metal)
+- [kubernetes](#kubernetes)
 
 ## Docker compose
 

@@ -4,8 +4,8 @@
 
 Great, so you want to join the development!
 
-First, [set up a development environment](INSTALL.md). Since you're going to
-write new code, use the `docker-compose.dev.yml` method.
+First, [set up a development environment](INSTALL.md#docker-compose-dev).
+Since you're going to write new code, use the `docker-compose.dev.yml` method.
 
 If everything went right, the system should be accessible at `http://localhost:80`.
 
