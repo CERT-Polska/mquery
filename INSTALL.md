@@ -1,4 +1,4 @@
-# INSTALL.md
+# Installing mquery
 
 Supported installation and deployment methods:
 
@@ -9,11 +9,12 @@ Supported installation and deployment methods:
 
 ## Docker compose
 
-Quick build&run with [docker compose](https://docs.docker.com/compose/).
+Quick build & run with [docker compose](https://docs.docker.com/compose/).
 
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
+mkdir samples
 # Copy your malware samples to ./samples directory in the cloned repository
 docker-compose up --scale daemon=3  # this will take a while
 ```
@@ -71,7 +72,7 @@ project_dir/mquery/src$ python3 daemon.py  # job daemon
 project_dir/ursadb/build$ ./ursadb ~/db.ursa  # backend database
 ```
 
-Web interface should be available at `http://localhost:5000`.
+The web interface should be available at `http://localhost:5000`.
 
 - Good for production - the most flexible method.
 - Good for development, but setting up a proper environment is tricky.
@@ -80,7 +81,7 @@ Web interface should be available at `http://localhost:5000`.
 ## Kubernetes
 
 Not strictly supported, but we use it internally so it's battle-tested.
-Take a look at the the `./deploy/k8s` directory for hints.
+Take a look at the `./deploy/k8s` directory for hints.
 
 - Good for production - it's webscale!
 - Terrible for development.

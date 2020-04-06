@@ -31,7 +31,7 @@ rule find_exceptions: trojan
 
 ## Quickstart
 
-Easiest way start is `docker-compose` from source:
+The easiest way to start is by using `docker-compose` from the source:
 
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
@@ -42,9 +42,8 @@ docker-compose up --scale daemon=3  # building the images will take a while
 
 The web interface should be available at `http://localhost`.
 
-For more options see [INSTALL.md](./INSTALL.md).
+For more options see our [installation manual](./INSTALL.md).
 
-## Next steps
 
 After you start the system, you should index some files. Use ursadb-cli:
 
@@ -76,7 +75,7 @@ rule emotet4_basic
 
 ## Learn more
 
-See [internals.md](./docs/internals.md) to learn about:
+Read [mquery internals](./docs/internals.md) to learn about:
 
  - How mquery works on a high level.
  - Known limitations and design decisions.
@@ -84,7 +83,7 @@ See [internals.md](./docs/internals.md) to learn about:
 
 ## Contributing
 
-If you want to contribute, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+If you want to contribute, see our dedicated [documentation for contributors](./CONTRIBUTING.md).
 
 ## Contact
 

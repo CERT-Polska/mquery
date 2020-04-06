@@ -1,20 +1,19 @@
-# mquery internals
+# mquery Internals
 
 ## How does it work?
 
-YARA is pretty fast, but searching through large dataset for given
+YARA is pretty fast, but searching through a large dataset for a given
 signature can take a lot of time. We pre-filter the results, so it is only
 necessary to run YARA against a small fraction of binaries:
 
 ![mquery flowchart](docs/mquery-flowchart.png?raw=1)
 
-Internally this is implemented with a n-gram database called
-[ursadb](https://github.com/CERT-Polska/ursadb/).
-See [readme](https://github.com/CERT-Polska/ursadb/) for more details.
+Internally this is implemented with an n-gram database called
+ursadb. Visit [ursadb's repository](https://github.com/CERT-Polska/ursadb) for more details.
 
 In short, we look for short (3-4) byte fragments in indexed files, and we can
-tell (almost) immediately which files contain given 3-byte pattern. So for
-example if you have files:
+tell (almost) immediately which files contain the given 3-byte pattern. For
+example, let's imagine we have these three files:
 
 ```
 echo "abcde" > abcde
@@ -22,7 +21,7 @@ echo "abcxy" > abcxy
 echo "asdfg" > xbcdx
 ```
 
-And rule:
+And the following rule:
 
 ```
 rule example
@@ -44,15 +43,14 @@ same results as running Yara on the dataset naively. If it doesn't, please
 report a bug.
 
 Because of the specifics of the database engine, we only accelerate a pretty
-naive subset of Yara. Additionaly false positives are possible during the
-filtering stage. So we still have to re-check all the potential
-results with the real Yara binary.
+naive subset of Yara. Additionaly, false positives are possible during the
+filtering stage. Thus, we still have to re-check all the potential
+results with the original Yara binary.
 
-By the way, for parsing yara rules we use and highly recommend
-[yaramod](https://github.com/avast/yaramod) library by Avast.
+Parsing Yara rules is possible thanks to the highly recommended [yaramod](https://github.com/avast/yaramod) library by Avast.
 
-To give you a rough idea what works and what didn't, examples of the
-accelerator limitations:
+The following examples will give you a rough idea of what works and what is not,
+due to the accelerator limitations:
 
 1. Counting strings:
 
@@ -68,7 +66,7 @@ rule CountExample
 }
 ```
 
-Is parsed to `("dummy1" AND "dummy2")`. Counting occurences is done by Yara on
+The rule is parsed to `("dummy1" AND "dummy2")`. Counting occurrences is done by Yara at
 the later stage.
 
 2. `at` construct:
@@ -85,8 +83,8 @@ rule AtExample
 }
 ```
 
-Is parsed to `("dummy1" AND "dummy2")`. Verifying the location is done by Yara
-on the later stage.
+The rule is parsed to `("dummy1" AND "dummy2")`. Verifying the location is done by Yara
+at the later stage.
 
 3. `in` construct:
 
@@ -102,8 +100,8 @@ rule InExample
 }
 ```
 
-Is parsed to `("dummy1" AND "dummy2")`. Again, further verification
-will be done in a second stage.
+The rule is parsed to `("dummy1" AND "dummy2")`. Again, further verification
+will be done by Yara in the second stage.
 
 
 4. Variables:
@@ -117,9 +115,9 @@ rule FileSizeExample
 ```
 
 This is parsed to `()`. We don't accelerate file size queries, so
-*all the files* will have to be scanned with yara rule.
+*all the files* will have to be scanned with Yara rule.
 
-Similarly we can't speed up other expressions like:
+Similarly, we can't speed up other expressions like:
 
 ```
 rule IsPE
@@ -133,12 +131,12 @@ rule IsPE
 ```
 
 In general, everything that doesn't have an explicit string will not get
-accelerated. This is by design - speeding up arbitrarly complex expressions
+accelerated. This is by design - speeding up arbitrary complex expressions
 is out of scope (and probably impossible).
 
 5. `x of y` construct
 
-This will work like you could expect:
+This will work as you could expect:
 
 ```
 rule OfExample1
@@ -175,15 +173,15 @@ rule Rule2
 }
 ```
 
-This is not supported yet, but it's limitation we're aware of and will
-fix in a nearest release. The same goes for private rules feature.
+This is not supported **yet**, but it's a limitation we're aware of and will
+fix in the nearest release. The same goes for the _private_ and _global_ rule features.
 
 # How to write efficient Yara rules.
 
 If you've read the previous two paragraphs, you probably have a rough idea
-what will work and what won't.
+of what will work and what won't.
 
-- Long strings are where mquery really shines. Let's take the emotet rule:
+- Long strings are where mquery really shines. Let's take the following Emotet rule as an example:
 
 ```
 rule emotet4_basic
