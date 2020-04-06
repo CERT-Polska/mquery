@@ -41,9 +41,10 @@ class QueryField extends Component {
     handleQuery(event, method, priority) {
         axios
             .create()
-            .post(API_URL + "/query/" + priority, {
+            .post(API_URL + "/query", {
                 raw_yara: this.state.rawYara,
                 method: method,
+                priority: priority,
                 taint: this.state.selectedTaint,
             })
             .then((response) => {
@@ -101,27 +102,27 @@ class QueryField extends Component {
 
         return (
             <div>
-                <div class="btn-group mb-1" role="group">
+                <div className="btn-group mb-1" role="group">
                     <button
                         type="button"
-                        class="btn btn-success btn-lg"
+                        className="btn btn-success btn-lg"
                         onClick={(event) =>
                             this.handleQuery(event, "query", "medium")
                         }
                     >
                         Query
                     </button>
-                    <div class="btn-group" role="group">
+                    <div className="btn-group" role="group">
                         <button
                             type="button"
-                            class="btn btn-success dropdown-toggle"
+                            className="btn btn-success dropdown-toggle"
                             data-toggle="dropdown"
                             aria-haspopup="true"
                             aria-expanded="false"
                         />
-                        <div class="dropdown-menu">
+                        <div className="dropdown-menu">
                             <a
-                                class="dropdown-item"
+                                className="dropdown-item"
                                 href="#"
                                 onClick={(event) =>
                                     this.handleQuery(event, "query", "low")
@@ -130,7 +131,7 @@ class QueryField extends Component {
                                 Low Priority Query
                             </a>
                             <a
-                                class="dropdown-item"
+                                className="dropdown-item"
                                 href="#"
                                 onClick={(event) =>
                                     this.handleQuery(event, "query", "medium")
@@ -139,7 +140,7 @@ class QueryField extends Component {
                                 Standard Priority Query
                             </a>
                             <a
-                                class="dropdown-item"
+                                className="dropdown-item"
                                 href="#"
                                 onClick={(event) =>
                                     this.handleQuery(event, "query", "high")
@@ -164,7 +165,7 @@ class QueryField extends Component {
                             name="parse"
                             type="submit"
                             onClick={(event) =>
-                                this.handleQuery(event, "parse")
+                                this.handleQuery(event, "parse", "parse")
                             }
                         >
                             <span className="fa fa-code" /> Parse

@@ -11,7 +11,7 @@ class UrsaDb(object):
     def __init__(self, backend: str) -> None:
         self.backend = backend
 
-    def make_socket(self, recv_timeout: int=2000) -> zmq.Context:
+    def make_socket(self, recv_timeout: int = 2000) -> zmq.Context:
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.setsockopt(zmq.LINGER, 0)

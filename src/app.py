@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import random
 import string
@@ -17,8 +16,7 @@ from werkzeug.exceptions import NotFound
 from zmq import Again  # type: ignore
 
 from lib.ursadb import UrsaDb
-from lib.yaraparse import yara_traverse
-from yaramod import Yaramod  # type: ignore
+from lib.yaraparse import parse_yara
 
 from util import make_redis, mquery_version
 import config
@@ -61,44 +59,32 @@ def download() -> Any:
     )
 
 
-@app.route("/api/query/<priority>", methods=["POST"])
-def query(priority: str) -> Any:
+@app.route("/api/query", methods=["POST"])
+def query() -> Any:
     req = request.get_json()
     raw_yara = req["raw_yara"]
 
     try:
-        rules = Yaramod().parse_string(raw_yara).rules
+        rules = parse_yara(raw_yara)
     except Exception as e:
-        return jsonify({"error": f"Yara rule parsing failed{e}"}), 400
+        return jsonify({"error": f"Yara rule parsing failed {e}"}), 400
 
     if not rules:
         return jsonify({"error": "No rule was specified."}), 400
 
-    if len(rules) > 1:
-        return jsonify({"error": "More than one rule specified!"}), 400
-
-    rule = rules[0]
-
-    author_meta = rule.get_meta_with_name("author")
-    if author_meta:
-        rule_author = author_meta.value.pure_text
-    else:
-        rule_author = ""
-
-    rule_name = rule.name
-
-    try:
-        rule_strings = {}
-        for r_string in rule.strings:
-            rule_strings[r_string.identifier] = r_string
-        parsed = yara_traverse(rule.condition, rule_strings)
-
-    except Exception as e:
-        logging.exception("YaraParser failed")
-        return jsonify({"error": f"Yara rule conversion failed: {e}"}), 400
-
     if req["method"] == "parse":
-        return jsonify({"rule_name": rule_name, "parsed": parsed})
+        return jsonify(
+            [
+                {
+                    "rule_name": rule.name,
+                    "rule_author": rule.author,
+                    "is_global": rule.is_global,
+                    "is_private": rule.is_private,
+                    "parsed": rule.parse().query,
+                }
+                for rule in rules
+            ]
+        )
 
     job_hash = "".join(
         random.SystemRandom().choice(string.ascii_uppercase + string.digits)
@@ -107,20 +93,12 @@ def query(priority: str) -> Any:
 
     job_obj = {
         "status": "new",
-        "max_files": -1,
-        "rule_name": rule_name,
-        "rule_author": rule_author,
-        "parsed": parsed,
+        "rule_name": rules[-1].name,
+        "rule_author": rules[-1].author,
         "raw_yara": raw_yara,
         "submitted": int(time.time()),
-        "priority": priority,
+        "priority": req["priority"],
     }
-
-    if "taint" in req and req["taint"] is not None:
-        job_obj["taint"] = req["taint"]
-
-    if req["method"] == "query_100":
-        job_obj.update({"max_files": 100})
 
     redis.hmset("job:" + job_hash, job_obj)
     redis.rpush("queue-search", job_hash)
