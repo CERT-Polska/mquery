@@ -5,12 +5,15 @@ import ErrorBoundary from "./ErrorBoundary";
 import axios from "axios";
 import { API_URL } from "./config";
 
-class DatasetRows extends Component {
+class DatasetRow extends Component {
     render() {
         return (
             <tr>
                 <td>
                     <code>{this.props.id}</code>
+                    {this.props.taints.map((taint) => (
+                        <span class="badge badge-secondary">{taint}</span>
+                    ))}
                 </td>
                 <td>
                     {this.props.indexes.map((x) => {
@@ -61,7 +64,7 @@ class DatabaseTopology extends Component {
         const datasetRows = Object.keys(
             this.state.datasets
         ).map((dataset_id) => (
-            <DatasetRows
+            <DatasetRow
                 {...this.state.datasets[dataset_id]}
                 id={dataset_id}
                 key={dataset_id}

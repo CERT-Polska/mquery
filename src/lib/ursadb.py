@@ -1,13 +1,17 @@
 import json
 import time
 import zmq  # type: ignore
+from typing import Dict, Any
+
+
+Json = Dict[str, Any]
 
 
 class UrsaDb(object):
-    def __init__(self, backend):
+    def __init__(self, backend: str) -> None:
         self.backend = backend
 
-    def make_socket(self, recv_timeout=2000):
+    def make_socket(self, recv_timeout: int=2000) -> zmq.Context:
         context = zmq.Context()
         socket = context.socket(zmq.REQ)
         socket.setsockopt(zmq.LINGER, 0)
@@ -15,11 +19,15 @@ class UrsaDb(object):
         socket.connect(self.backend)
         return socket
 
-    def query(self, query):
+    def query(self, query: str, taint: str) -> Json:
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
-        query = "select {};".format(query)
+        if taint:
+            taint = taint.replace('"', '\\"')
+            query = 'select with taints ["{}"] {};'.format(taint, query)
+        else:
+            query = "select {};".format(query)
         socket.send_string(query)
 
         response = socket.recv_string()
@@ -38,7 +46,7 @@ class UrsaDb(object):
 
         return {"time": (end - start) * 1000, "files": files}
 
-    def status(self):
+    def status(self) -> Json:
         socket = self.make_socket()
         socket.send_string("status;")
         response = socket.recv_string()
@@ -46,7 +54,7 @@ class UrsaDb(object):
 
         return json.loads(response)
 
-    def topology(self):
+    def topology(self) -> Json:
         socket = self.make_socket()
         socket.send_string("topology;")
         response = socket.recv_string()
@@ -54,7 +62,7 @@ class UrsaDb(object):
 
         return json.loads(response)
 
-    def execute_command(self, command):
+    def execute_command(self, command: str) -> Json:
         socket = self.make_socket(recv_timeout=-1)
         socket.send_string(command)
         response = socket.recv_string()
@@ -62,5 +70,5 @@ class UrsaDb(object):
 
         return json.loads(response)
 
-    def close(self):
+    def close(self) -> None:
         pass

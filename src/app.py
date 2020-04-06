@@ -116,6 +116,9 @@ def query(priority: str) -> Any:
         "priority": priority,
     }
 
+    if "taint" in req and req["taint"] is not None:
+        job_obj["taint"] = req["taint"]
+
     if req["method"] == "query_100":
         job_obj.update({"max_files": 100})
 

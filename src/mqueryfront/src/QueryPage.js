@@ -19,6 +19,7 @@ class QueryPage extends Component {
             rawYara: "",
             queryPlan: null,
             queryError: null,
+            datasets: {},
         };
 
         this.updateQhash = this.updateQhash.bind(this);
@@ -32,6 +33,18 @@ class QueryPage extends Component {
                 this.setState({ rawYara: response.data.raw_yara });
             });
         }
+        axios.get(API_URL + "/backend/datasets").then((response) => {
+            this.setState({ datasets: response.data.datasets });
+        });
+    }
+
+    availableTaints() {
+        console.log(this.state.datasets);
+        var taintList = Object.values(this.state.datasets)
+            .map((ds) => ds.taints)
+            .flat();
+        console.log(taintList);
+        return [...new Set(taintList)];
     }
 
     componentWillReceiveProps(newProps) {
@@ -84,6 +97,7 @@ class QueryPage extends Component {
                             isLoading={this.state.qhash && !this.state.rawYara}
                             isLocked={!!this.state.qhash}
                             updateQhash={this.updateQhash}
+                            availableTaints={this.availableTaints()}
                             updateQueryPlan={this.updateQueryPlan}
                             updateQueryError={this.updateQueryError}
                         />
