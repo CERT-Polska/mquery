@@ -221,7 +221,7 @@ And this is equivalent to:
 And yet this is usually pretty fast to query. But few more question marks in
 the rule could cripple mquery performance.
 
-- Parser is your friend. If your query runs too slow, check the query plan.
+- The parser is your friend. If your query runs too slow, check the query plan.```
 
 ## Known performance limits
 
