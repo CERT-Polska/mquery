@@ -108,7 +108,8 @@ def str_expr(condition, rule_strings) -> Optional[str]:
     return ursify_string(rule_strings[condition.id])
 
 
-def str_wild_expr(condition, rule_strings) -> Optional[str]:
+
+def expand_string_wildcard(condition, rule_strings) -> List[str]:
     condition_regex = re.escape(condition.text)
     condition_regex = condition_regex.replace("\\*", ".*")
     filtered_strings = [
@@ -116,11 +117,21 @@ def str_wild_expr(condition, rule_strings) -> Optional[str]:
     ]
 
     ursa_strings = [ursify_string(x) for x in filtered_strings]
-    strings = [s for s in ursa_strings if s is not None]
+    return [s for s in ursa_strings if s is not None]
 
-    if strings:
-        return ", ".join(strings)
-    return None
+
+def expand_set_expression(children: SetExpression, rule_strings) -> List[str]:
+    parsed_elements = []
+    for e in children.elements:
+        if type(e) is StringWildcardExpression:
+            parsed_elements += expand_string_wildcard(e, rule_strings)
+        elif type(e) is StringExpression:
+            parsed_elements.append(str_expr(e, rule_strings))
+        else:
+            print(f"Unknown set expression type: {type(e)}")
+            parsed_elements.append("")
+
+    return parsed_elements
 
 
 def of_expr(condition, rule_strings) -> Optional[str]:
@@ -128,22 +139,18 @@ def of_expr(condition, rule_strings) -> Optional[str]:
     counter = None
 
     children = condition.iterated_set
-    parsed_elements = []
 
     if type(children) is SetExpression:
-        elements = condition.iterated_set.elements
-        parsed_elements = list(
-            filter(None, [yara_traverse(e, rule_strings) for e in elements])
-        )
+        all_elements = expand_set_expression(children, rule_strings)
     elif type(children) is ThemExpression:
-        parsed_elements = list(
-            filter(None, [ursify_string(k) for k in rule_strings.values()])
-        )
+        all_elements = [ursify_string(k) for k in rule_strings.values()]
     else:
         raise YaraParseError(f"Unsupported of_expr type: {type(children)}")
 
+    parsed_elements = [e for e in all_elements if e is not None]
+
     if how_many == "all":
-        counter = len(parsed_elements)
+        counter = len(all_elements)
     elif how_many == "any":
         counter = 1
     else:
@@ -187,7 +194,6 @@ CONDITION_HANDLERS = {
     OrExpression: or_expr,
     ParenthesesExpression: pare_expr,
     StringExpression: str_expr,
-    StringWildcardExpression: str_wild_expr,
     OfExpression: of_expr,
     GtExpression: gt_expr,
     EqExpression: eq_expr,
