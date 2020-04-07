@@ -4,33 +4,44 @@ import random
 import string
 import time
 
-from flask import (
-    Flask,
-    request,
-    jsonify,
-    send_file,
-    send_from_directory,
-    Response,
-)
+import uvicorn
+from fastapi import FastAPI, HTTPException, Body, Query
+from starlette.requests import Request
+from starlette.responses import Response, FileResponse
+from starlette.staticfiles import StaticFiles
 from werkzeug.exceptions import NotFound
-from zmq import Again  # type: ignore
+from zmq import Again
 
 from lib.ursadb import UrsaDb
 from lib.yaraparse import parse_yara
 
 from util import make_redis, mquery_version
 import config
-from typing import Any
+from typing import Any, Callable, Optional, List, Union
+
+from schema import *
 
 redis = make_redis()
-app = Flask(__name__, static_folder="mqueryfront/build/static")
+app = FastAPI()
 db = UrsaDb(config.BACKEND)
 
 
-@app.after_request
-def add_header(response: Response) -> Response:
+app.mount(
+    "/",
+    StaticFiles(
+        directory=os.path.join(
+            os.path.dirname(__file__), "mqueryfront", "build"
+        ),
+        html=True,
+    ),
+)
+
+
+@app.middleware("http")
+async def add_headers(request: Request, call_next: Callable) -> Response:
+    response = await call_next(request)
     response.headers["X-Frame-Options"] = "deny"
-    response.headers["Access-Control-Allow-Origin"] = request.host
+    response.headers["Access-Control-Allow-Origin"] = request.client.host
     response.headers[
         "Access-Control-Allow-Headers"
     ] = "cache-control,x-requested-with,content-type,authorization"
@@ -40,51 +51,51 @@ def add_header(response: Response) -> Response:
     return response
 
 
-@app.route("/api/download")
-def download() -> Any:
-    job_id = request.args["job_id"]
-    file_path = request.args["file_path"]
-    ordinal = request.args["ordinal"]
-
+@app.get("/api/download")
+def download(
+    job_id: str = Body(...),
+    file_path: str = Body(...),
+    ordinal: int = Body(...),
+) -> Any:
     file_list = redis.lrange("meta:" + job_id, ordinal, ordinal)
 
     if not file_list or file_path != json.loads(file_list[0])["file"]:
         raise NotFound("No such file in result set.")
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
-    ext = ext + "_"
-
-    return send_file(
-        file_path, as_attachment=True, attachment_filename=attach_name + ext
-    )
+    return FileResponse(file_path, filename=attach_name + ext + "_")
 
 
-@app.route("/api/query", methods=["POST"])
-def query() -> Any:
-    req = request.get_json()
-    raw_yara = req["raw_yara"]
-
+@app.post(
+    "/api/query/{priority}",
+    response_model=Union[QuerySchema, ParseQuerySchema],
+)
+def query(
+    priority: str,
+    raw_yara: str = Body(...),
+    method: Optional[RequestQueryMethod] = Body(...),
+) -> Union[QuerySchema, ParseQuerySchema]:
     try:
         rules = parse_yara(raw_yara)
     except Exception as e:
-        return jsonify({"error": f"Yara rule parsing failed {e}"}), 400
+        raise HTTPException(
+            status_code=400, detail=f"Yara rule parsing failed: {e}"
+        )
 
     if not rules:
-        return jsonify({"error": "No rule was specified."}), 400
+        raise HTTPException(status_code=400, detail=f"No rule was specified.")
 
-    if req["method"] == "parse":
-        return jsonify(
-            [
-                {
-                    "rule_name": rule.name,
-                    "rule_author": rule.author,
-                    "is_global": rule.is_global,
-                    "is_private": rule.is_private,
-                    "parsed": rule.parse().query,
-                }
-                for rule in rules
-            ]
-        )
+    if method == RequestQueryMethod.parse:
+        return [
+            ParseQuerySchema(
+                rule_name=rule.name,
+                rule_author=rule.author,
+                is_global=rule.is_global,
+                is_private=rule.is_private,
+                parsed=rule.parse().query,
+            )
+            for rule in rules
+        ]
 
     job_hash = "".join(
         random.SystemRandom().choice(string.ascii_uppercase + string.digits)
@@ -97,7 +108,7 @@ def query() -> Any:
         "rule_author": rules[-1].author,
         "raw_yara": raw_yara,
         "submitted": int(time.time()),
-        "priority": req["priority"],
+        "priority": priority,
     }
 
     if "taint" in req and req["taint"] is not None:
@@ -106,67 +117,63 @@ def query() -> Any:
     redis.hmset("job:" + job_hash, job_obj)
     redis.rpush("queue-search", job_hash)
 
-    return jsonify({"query_hash": job_hash})
+    return QuerySchema(query_hash=job_hash)
 
 
-@app.route("/api/matches/<hash>")
-def matches(hash: str) -> Response:
-    offset = int(request.args["offset"])
-    limit = int(request.args["limit"])
-
+@app.get("/api/matches/{hash}", response_model=MatchesSchema)
+def matches(
+    hash: str, offset: int = Query(...), limit: int = Query(...)
+) -> MatchesSchema:
     p = redis.pipeline(transaction=False)
     p.hgetall("job:" + hash)
     p.lrange("meta:" + hash, offset, offset + limit - 1)
     job, meta = p.execute()
 
-    return jsonify({"job": job, "matches": [json.loads(m) for m in meta]})
+    return MatchesSchema(job=job, matches=[json.loads(m) for m in meta])
 
 
-@app.route("/api/job/<hash>")
-def job_info(hash: str) -> Response:
-    return jsonify(redis.hgetall("job:" + hash))
+@app.get("/api/job/<hash>", response_model=List[JobSchema])
+def job_info(hash: str) -> List[JobSchema]:
+    return [JobSchema(**x) for x in redis.hgetall("job:" + hash)]
 
 
-@app.route("/api/job/<job_id>", methods=["DELETE"])
-def job_cancel(job_id: str) -> Response:
+@app.delete("/api/job/{job_id}", response_model=StatusSchema)
+def job_cancel(job_id: str) -> StatusSchema:
     redis.hmset("job:" + job_id, {"status": "cancelled"})
-
-    return jsonify({"status": "ok"})
-
-
-@app.route("/api/user/settings")
-def user_settings() -> Response:
-    return jsonify({"can_register": True, "plugin_name": "Redis"})
+    return StatusSchema(status="ok")
 
 
-@app.route("/api/user/register", methods=["POST"])
-def user_register() -> Response:
-    if request.get_json()["username"].startswith("a"):
-        return jsonify({"status": "ok"})
-    else:
-        return jsonify({"error": "This user already exists"})
+@app.get("/api/user/settings", response_model=UserSettingsSchema)
+def user_settings() -> UserSettingsSchema:
+    return UserSettingsSchema(can_register=True, plugin_name="Redis")
 
 
-@app.route("/api/user/login", methods=["POST"])
-def user_login() -> Response:
-    if request.get_json()["username"].startswith("a"):
-        return jsonify({"status": "ok"})
-    else:
-        return jsonify({"error": "Wrong password"})
+@app.post("/api/user/register", response_model=StatusSchema)
+def user_register(username: str = Body(...)) -> StatusSchema:
+    if username.startswith("a"):
+        return StatusSchema(status="ok")
+    raise HTTPException(status_code=400, detail="This user already exists")
 
 
-@app.route("/api/user/<name>/info")
-def user_info(name) -> Response:
-    return jsonify({"id": 1, "name": name})
+@app.post("/api/user/login", response_model=StatusSchema)
+def user_login(username: str = Body(...)) -> StatusSchema:
+    if username.startswith("a"):
+        return StatusSchema(status="ok")
+    raise HTTPException(status_code=400, detail="Wrong password")
 
 
-@app.route("/api/user/<name>/jobs")
-def user_jobs(name) -> Response:
+@app.get("/api/user/{name}/info", response_model=UserInfoSchema)
+def user_info(name: str) -> UserInfoSchema:
+    return UserInfoSchema(id=1, name=name)
+
+
+@app.get("/api/user/{name}/jobs", response_model=List[JobSchema])
+def user_jobs(name: str) -> List[JobSchema]:
     return job_statuses()
 
 
-@app.route("/api/job")
-def job_statuses() -> Response:
+@app.get("/api/job", response_model=List[JobSchema])
+def job_statuses() -> List[JobSchema]:
     jobs = redis.keys("job:*")
     jobs = sorted(
         [dict({"id": job[4:]}, **redis.hgetall(job)) for job in jobs],
@@ -174,11 +181,11 @@ def job_statuses() -> Response:
         reverse=True,
     )
 
-    return jsonify({"jobs": jobs})
+    return jobs
 
 
-@app.route("/api/backend")
-def backend_status() -> Response:
+@app.get("/api/backend", response_model=BackendStatusSchema)
+def backend_status() -> BackendStatusSchema:
     db_alive = True
     status = db.status()
     try:
@@ -191,20 +198,18 @@ def backend_status() -> Response:
         tasks = []
         ursadb_version = []
 
-    return jsonify(
-        {
-            "db_alive": db_alive,
-            "tasks": tasks,
-            "components": {
-                "mquery": mquery_version(),
-                "ursadb": str(ursadb_version),
-            },
-        }
+    return BackendStatusSchema(
+        db_alive=db_alive,
+        tasks=tasks,
+        components={
+            "mquery": mquery_version(),
+            "ursadb": str(ursadb_version),
+        },
     )
 
 
-@app.route("/api/backend/datasets")
-def backend_status_datasets() -> Response:
+@app.get("/api/backend/datasets", response_model=BackendStatusDatasetsSchema)
+def backend_status_datasets() -> BackendStatusDatasetsSchema:
     db_alive = True
 
     try:
@@ -213,34 +218,26 @@ def backend_status_datasets() -> Response:
         db_alive = False
         datasets = []
 
-    return jsonify({"db_alive": db_alive, "datasets": datasets})
+    return BackendStatusDatasetsSchema(db_alive=db_alive, datasets=datasets)
 
 
-@app.route("/query/<path:path>")
-def serve_index(path: str) -> Any:
-    return send_file("mqueryfront/build/index.html")
+@app.get("/query/{path}", include_in_schema=False)
+def serve_index(path: str) -> FileResponse:
+    return FileResponse("mqueryfront/build/index.html")
 
 
-@app.route("/recent")
-@app.route("/status")
-@app.route("/query")
-def serve_index_sub() -> Any:
-    return send_file("mqueryfront/build/index.html")
+@app.get("/recent", include_in_schema=False)
+@app.get("/status", include_in_schema=False)
+@app.get("/query", include_in_schema=False)
+def serve_index_sub() -> FileResponse:
+    return FileResponse("mqueryfront/build/index.html")
 
 
-@app.route("/", defaults={"path": "index.html"})
-@app.route("/favicon.ico", defaults={"path": "favicon.ico"})
-@app.route("/manifest.json", defaults={"path": "manifest.json"})
-def serve_root(path: str) -> Any:
-    return send_from_directory("mqueryfront/build", path)
-
-
-@app.route("/api/compactall")
-def compact_all():
+@app.get("/api/compactall")
+def compact_all() -> StatusSchema:
     redis.rpush("queue-commands", "compact all;")
-
-    return jsonify({"status": "ok"})
+    return StatusSchema(status="ok")
 
 
 if __name__ == "__main__":
-    app.run()
+    uvicorn.run(app)
