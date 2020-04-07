@@ -2,11 +2,10 @@ import logging
 
 import requests
 import urllib
-
 from metadata import Metadata
 
 
-class MWDBAnalysisMetadata(Metadata):
+class MWDBGetMetadata(Metadata):
     __depends_on__ = ["CuckooBinariesMetadata"]
 
     def __init__(self, mwdb_api_token: str) -> None:

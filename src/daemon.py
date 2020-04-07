@@ -138,7 +138,8 @@ def update_metadata(job_hash: str, file_path: str, matches: List[str]) -> None:
 
             # we build local dictionary for each extractor, thus enforcing dependencies to be declared correctly
             local_meta.update(current_meta[dep])
-
+            
+        local_meta.update(job=job_hash)
         current_meta[extr_name] = extractor.extract(file_path, local_meta)
 
     # flatten
