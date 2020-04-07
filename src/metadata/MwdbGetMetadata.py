@@ -2,7 +2,6 @@ import logging
 
 import requests
 import urllib
-from . import config
 from metadata import Metadata
 
 
