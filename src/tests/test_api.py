@@ -1,9 +1,13 @@
+"""
+End-to-end tests for the whole infrastructore
+"""
+
+
 import sys
 import json
 import logging
 import string
 import time
-
 import zmq  # type: ignore
 import pytest  # type: ignore
 import requests
@@ -11,7 +15,7 @@ import random
 import os
 
 sys.path = [".."] + sys.path
-from lib.ursadb import UrsaDb
+from lib.ursadb import UrsaDb  # noqa
 
 
 @pytest.fixture(scope="session", autouse=True)

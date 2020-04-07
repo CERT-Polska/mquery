@@ -47,13 +47,7 @@ class QueryPage extends Component {
         return [...new Set(taintList)];
     }
 
-    componentWillReceiveProps(newProps) {
-        console.log(newProps);
-    }
-
     updateQhash(newQhash, rawYara) {
-        console.log("update qhash called", newQhash);
-
         if (typeof rawYara !== "undefined") {
             this.setState({ rawYara: rawYara });
         }

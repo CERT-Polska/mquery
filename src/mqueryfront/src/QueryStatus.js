@@ -3,12 +3,20 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 
 function MatchItem(props) {
-    const metadata = Object.keys(props.meta).map((m) => (
-        <a href={props.meta[m].url}>
-            <span className="badge badge-info">
-                {props.meta[m].display_text}
+    const metadata = Object.values(props.meta).map((v) => (
+        <a href={v.url}>
+            {" "}
+            <span className="badge badge-pill badge-warning">
+                {v.display_text}
             </span>
         </a>
+    ));
+
+    const matches = Object.values(props.matches).map((v) => (
+        <span>
+            {" "}
+            <span className="badge badge-pill badge-primary">{v}</span>
+        </span>
     ));
 
     const download_url =
@@ -22,10 +30,9 @@ function MatchItem(props) {
 
     return (
         <tr>
-            <td>
-                <a href={download_url}>{props.file}</a>
-            </td>
-            <td>{metadata}</td>
+            <a href={download_url}>{props.file}</a>
+            {matches}
+            {metadata}
         </tr>
     );
 }
@@ -166,26 +173,33 @@ class QueryStatus extends Component {
 
         if (this.state.queryPlan) {
             return (
-                <div style={{ marginTop: "55px" }}>
+                <div>
                     <h4>Parse result</h4>
-                    <div className="form-group">
-                        <label>Rule name:</label>
-                        <input
-                            type=""
-                            className="form-control"
-                            value={this.state.queryPlan.rule_name}
-                            readOnly
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label>Query plan</label>
-                        <textarea
-                            className="form-control"
-                            rows="6"
-                            value={this.state.queryPlan.parsed}
-                            readOnly
-                        />
-                    </div>
+                    {this.state.queryPlan.map((rule) => (
+                        <div key={rule.rule_name} style={{ marginTop: "55px" }}>
+                            <div className="form-group">
+                                <label>
+                                    <b>{rule.rule_name}</b>
+                                    {rule.is_private ? (
+                                        <span class="badge badge-info">
+                                            private
+                                        </span>
+                                    ) : null}
+                                    {rule.is_global ? (
+                                        <span class="badge badge-info">
+                                            global
+                                        </span>
+                                    ) : null}
+                                </label>
+                                <textarea
+                                    rows="4"
+                                    className="form-control"
+                                    value={rule.parsed}
+                                    readOnly
+                                />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             );
         }
@@ -289,8 +303,7 @@ class QueryStatus extends Component {
                 <table className={"table table-striped table-bordered"}>
                     <thead>
                         <tr>
-                            <th>File name</th>
-                            <th>Metadata</th>
+                            <th>Matches</th>
                         </tr>
                     </thead>
                     <tbody>{matches}</tbody>

@@ -12,7 +12,10 @@ class DatasetRow extends Component {
                 <td>
                     <code>{this.props.id}</code>
                     {this.props.taints.map((taint) => (
-                        <span class="badge badge-secondary">{taint}</span>
+                        <span>
+                            {" "}
+                            <span class="badge badge-secondary">{taint}</span>
+                        </span>
                     ))}
                 </td>
                 <td>
