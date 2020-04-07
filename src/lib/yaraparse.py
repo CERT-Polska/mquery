@@ -212,7 +212,6 @@ class RuleParseEngine:
 
     def of_expr(self, condition: OfExpression) -> Optional[UrsaExpression]:
         how_many = condition.text[: condition.text.find("of")].strip()
-        counter = None
 
         children = condition.iterated_set
 
@@ -224,15 +223,18 @@ class RuleParseEngine:
             raise YaraParseError(f"Unsupported of_expr type: {type(children)}")
 
         parsed_elements = [e for e in all_elements if e is not None]
+        unknown_count = len(all_elements) - len(parsed_elements)
 
         if how_many == "all":
-            counter = len(all_elements)
+            raw_counter = len(all_elements)
         elif how_many == "any":
-            counter = 1
+            raw_counter = 1
         else:
-            counter = int(how_many)
+            raw_counter = int(how_many)
 
-        if parsed_elements:
+        counter = raw_counter - unknown_count
+
+        if counter > 0:
             return UrsaExpression.min_of(counter, *parsed_elements)
         else:
             return None
