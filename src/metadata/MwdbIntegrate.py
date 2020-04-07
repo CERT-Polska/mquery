@@ -10,9 +10,10 @@ from metadata import Metadata
 class MWDBIntegrateMetadata(Metadata):
     __depends_on__ = ["CuckooBinariesMetadata"]
 
-    def __init__(self, mwdb_api_token: str) -> None:
+    def __init__(self, mwdb_api_token: str, mwdb_api_url) -> None:
         super().__init__()
         self.token = mwdb_api_token
+        self.mwdb_url = mwdb_api_url
 
     def extract(self, matched_fname, dependent_meta):
         if not dependent_meta.get("cuckoo_hash"):
@@ -32,7 +33,7 @@ class MWDBIntegrateMetadata(Metadata):
 
         try:
             api = mwdblib.MalwarecageAPI(
-                api_url="https://mwdb.cert.pl/api/", api_key=self.token
+                api_url=self.mwdb_url, api_key=self.token
             )
             mwdb = Malwarecage(api=api)
             file = mwdb.query_file(hash)
@@ -48,7 +49,7 @@ class MWDBIntegrateMetadata(Metadata):
 
         obj["mwdb_sample"] = {
             "display_text": "mwdb",
-            "url": "http://mwdb.cert.pl/sample/{}".format(job_id),
+            "url": f"http://mwdb.cert.pl/sample/{job_id}",
         }
         self.cache_store(hash, obj)
         return obj
