@@ -165,7 +165,7 @@ class QueryField extends Component {
                             name="parse"
                             type="submit"
                             onClick={(event) =>
-                                this.handleQuery(event, "parse", "parse")
+                                this.handleQuery(event, "parse", null)
                             }
                         >
                             <span className="fa fa-code" /> Parse
