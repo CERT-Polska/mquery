@@ -10,9 +10,9 @@ from yara import SyntaxError
 
 import config
 from lib.ursadb import UrsaDb
-from lib.yaraparse import parse_string
+from lib.yaraparse import parse_yara, combine_rules
 from util import make_redis, setup_logging
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 redis = make_redis()
 db = UrsaDb(config.BACKEND)
@@ -97,8 +97,13 @@ def job_daemon() -> None:
                 )
 
         elif queue == "queue-metadata":
+            # LEGACY QUEUE
+            # Exists mostly because there is no sane way to do migrations
+            # for job queues in redis.
+            # This is currently a "drain only" queue that will pick up any
+            # pending tasks during mquery update, and will stay idle forever.
             job_hash, file_path = data.split(":", 1)
-            execute_metadata(job_hash, file_path)
+            update_metadata(job_hash, file_path, [])
 
         elif queue == "queue-commands":
             logging.info("Running a command: %s", data)
@@ -109,7 +114,7 @@ def job_daemon() -> None:
             collect_expired_jobs()
 
 
-def execute_metadata(job_hash: str, file_path: str) -> None:
+def update_metadata(job_hash: str, file_path: str, matches: List[str]) -> None:
     if redis.hget("job:" + job_hash, "status") in [
         "cancelled",
         "failed",
@@ -133,7 +138,7 @@ def execute_metadata(job_hash: str, file_path: str) -> None:
 
             # we build local dictionary for each extractor, thus enforcing dependencies to be declared correctly
             local_meta.update(current_meta[dep])
-
+            
         local_meta.update(job=job_hash)
         current_meta[extr_name] = extractor.extract(file_path, local_meta)
 
@@ -148,7 +153,7 @@ def execute_metadata(job_hash: str, file_path: str) -> None:
     pipe = redis.pipeline()
     pipe.rpush(
         "meta:{}".format(job_hash),
-        json.dumps({"file": file_path, "meta": flat_meta}),
+        json.dumps({"file": file_path, "meta": flat_meta, "matches": matches}),
     )
     pipe.hget("job:{}".format(job_hash), "total_files")
     pipe.hincrby("job:{}".format(job_hash), "files_processed")
@@ -180,7 +185,7 @@ def execute_yara(job_hash: str, file: str) -> None:
 
     if matches:
         logging.info("Processed (match): {}".format(file))
-        redis.rpush("queue-metadata", "{}:{}".format(job_hash, file))
+        update_metadata(job_hash, file, [r.rule for r in matches])
     else:
         logging.info("Processed (nope ): {}".format(file))
 
@@ -204,27 +209,22 @@ def execute_search(job_hash: str) -> None:
         "job:" + job_hash, {"status": "parsing", "timestamp": time.time()}
     )
 
-    try:
-        parsed = parse_string(yara_rule)
-    except Exception as e:
-        logging.exception(e)
-        raise RuntimeError("Failed to parse Yara")
+    rules = parse_yara(yara_rule)
+    parsed = combine_rules(rules)
 
     redis.hmset(
         "job:" + job_hash, {"status": "querying", "timestamp": time.time()}
     )
 
     logging.info("Querying backend...")
-    result = db.query(parsed)
+    taint = job.get("taint", None)
+    result = db.query(parsed.query, taint)
     if "error" in result:
         raise RuntimeError(result["error"])
 
     files = [f for f in result["files"] if f.strip()]
 
     logging.info("Database responded with {} files".format(len(files)))
-
-    if "max_files" in job and int(job["max_files"]) > 0:
-        files = files[: int(job["max_files"])]
 
     redis.hmset(
         "job:" + job_hash,
