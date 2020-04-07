@@ -10,7 +10,7 @@ from metadata import Metadata
 class MWDBIntegrateMetadata(Metadata):
     __depends_on__ = ["CuckooBinariesMetadata"]
 
-    def __init__(self, mwdb_api_token: str, mwdb_api_url) -> None:
+    def __init__(self, mwdb_api_token: str, mwdb_api_url: str) -> None:
         super().__init__()
         self.token = mwdb_api_token
         self.mwdb_url = mwdb_api_url
