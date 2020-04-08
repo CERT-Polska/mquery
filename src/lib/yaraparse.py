@@ -60,8 +60,14 @@ class YaraRuleData:
 
     def __parse_internal(self) -> UrsaExpression:
         strings = {}
+        anonymous_no = 0
+
         for string in self.rule.strings:
-            strings[string.identifier] = string
+            if string.identifier == "$":
+                strings[f"anonymous_{anonymous_no}"] = string
+                anonymous_no += 1
+            else:
+                strings[string.identifier] = string
 
         parser = RuleParseEngine(strings, self.context)
         result = parser.traverse(self.rule.condition)
