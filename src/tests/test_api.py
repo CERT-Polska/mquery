@@ -89,8 +89,13 @@ def add_files_to_index(check_operational):
 
 def request_query(log, i, taint=None):
     res = requests.post(
-        "http://web:5000/api/query/low",
-        json={"method": "query", "raw_yara": i, "taint": taint},
+        "http://web:5000/api/query",
+        json={
+            "method": "query",
+            "raw_yara": i,
+            "taint": taint,
+            "priority": "low",
+        },
     )
     log.info("API response: %s", res.json())
     res.raise_for_status()
@@ -212,10 +217,12 @@ def test_query_with_taints(add_files_to_index):
     # a bit hacky, but this calls for a whole test framework otherwise
     db = UrsaDb("tcp://ursadb:9281")
 
-    dataset_id = db.topology()["result"]["datasets"].keys()[0]
     random_taint = os.urandom(8).hex()
-
-    db.execute_command(f'taint "{dataset_id}" add "{random_taint}')
+    for dataset_id in db.topology()["result"]["datasets"].keys():
+        out = db.execute_command(
+            f'dataset "{dataset_id}" taint "{random_taint}";'
+        )
+        log.info("taint result: %s", out)
 
     files_to_detect = add_files_to_index["files_to_detect"]
     clue_words = add_files_to_index["clue_words"]

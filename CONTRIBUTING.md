@@ -29,9 +29,9 @@ $ docker build -t mquery_tests -f ./src/tests/Dockerfile .
 $ docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
 ```
 
-5. Run code formatters and linters on your code to speed-up review (we run
-them automatically on every commit, but currently only on our internal
-GitLab instance):
+5. We run many code formatters and linters on the code to ensure expected
+code quality. Your code will be checked automatically when you submit your
+pull request, but you can also run the checks locally to speed-up review:
 
 - **Important:** we use [black](https://pypi.org/project/black/) for Python:
 
@@ -43,7 +43,7 @@ $ black src/
 - Important: we use [prettier](httpss://prettier.io/) for Javascript/React:
 
 ```bash
-$ npm install -g prettier@2.0.2
+$ npm install -g prettier@2.0.4
 $ prettier --tab-width=4 --write "src/mqueryfront/src/**/*.js"
 ```
 

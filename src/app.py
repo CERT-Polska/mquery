@@ -100,6 +100,9 @@ def query() -> Any:
         "priority": req["priority"],
     }
 
+    if "taint" in req and req["taint"] is not None:
+        job_obj["taint"] = req["taint"]
+
     redis.hmset("job:" + job_hash, job_obj)
     redis.rpush("queue-search", job_hash)
 
