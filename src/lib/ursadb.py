@@ -1,7 +1,7 @@
 import json
 import time
 import zmq  # type: ignore
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 
 Json = Dict[str, Any]
@@ -25,9 +25,11 @@ class UrsaDb(object):
         start = time.clock()
         if taint:
             taint = taint.replace('"', '\\"')
-            query = 'select with taints ["{}"] {};'.format(taint, query)
+            query = 'select with taints ["{}"] into iterator {};'.format(
+                taint, query
+            )
         else:
-            query = "select {};".format(query)
+            query = "select into iterator {};".format(query)
         socket.send_string(query)
 
         response = socket.recv_string()
@@ -42,9 +44,35 @@ class UrsaDb(object):
                 + res.get("error", {}).get("message", "(no message)")
             }
 
-        files = res.get("result", {}).get("files", [])
+        iterator = res["result"]["iterator"]
+        file_count = res["result"]["file_count"]
 
-        return {"time": (end - start) * 1000, "files": files}
+        return {
+            "time": (end - start) * 1000,
+            "iterator": iterator,
+            "file_count": file_count,
+        }
+
+    def pop(self, iterator: str, count: int) -> Tuple[bool, List[str]]:
+        socket = self.make_socket(recv_timeout=-1)
+
+        query = f'iterator "{iterator}" pop {count};'
+        socket.send_string(query)
+
+        response = socket.recv_string()
+        socket.close()
+
+        res = json.loads(response)
+        if "error" in res:
+            if "retry" in res["error"]:
+                # iterator locked, try again in a sec
+                return False, []
+            # return empty file sed - this will clear the job from the db!
+            return True, []
+
+        files = res["result"]["files"]
+
+        return True, files
 
     def status(self) -> Json:
         socket = self.make_socket()

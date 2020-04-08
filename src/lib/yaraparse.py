@@ -339,8 +339,6 @@ def combine_rules(rules: List[YaraRuleData]) -> UrsaExpression:
         elif not rule.is_private:
             public_expressions.append(rule.parse())
 
-    print("public", public_expressions)
-    print("global", global_expressions)
     return UrsaExpression.and_(
         UrsaExpression.or_(*public_expressions), *global_expressions
     )

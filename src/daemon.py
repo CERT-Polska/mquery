@@ -2,23 +2,21 @@
 import json
 import logging
 import time
-
 import yara  # type: ignore
 from functools import lru_cache
-
+import random
 from yara import SyntaxError
-
 import config
 from lib.ursadb import UrsaDb
 from lib.yaraparse import parse_yara, combine_rules
 from util import make_redis, setup_logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 redis = make_redis()
 db = UrsaDb(config.BACKEND)
 
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=32)
 def compile_yara(job_hash: str) -> Any:
     yara_rule = redis.hget("job:" + job_hash, "raw_yara")
 
@@ -32,13 +30,13 @@ def compile_yara(job_hash: str) -> Any:
     return rule
 
 
-def get_queue_name(priority: str) -> str:
+def get_list_name(priority: str) -> str:
     if priority == "low":
-        return "queue-yara-low"
+        return "list-yara-low"
     elif priority == "medium":
-        return "queue-yara-medium"
+        return "list-yara-medium"
     else:
-        return "queue-yara-high"
+        return "list-yara-high"
 
 
 def collect_expired_jobs() -> None:
@@ -54,13 +52,76 @@ def collect_expired_jobs() -> None:
         if (int(time.time()) - job_submitted_time) >= exp_time:
             redis.hset("job:{}".format(job), "status", "expired")
             redis.delete("meta:{}".format(job))
-            redis.delete("false_positives:{}".format(job))
+
+
+def process_task(queue: str, data: str) -> None:
+    if queue == "queue-search":
+        job_hash = data
+        logging.info(f"New task: {queue}:{job_hash}")
+
+        try:
+            execute_search(job_hash)
+        except Exception as e:
+            logging.exception("Failed to execute job.")
+            redis.hmset(
+                "job:" + job_hash, {"status": "failed", "error": str(e)}
+            )
+    elif queue == "queue-commands":
+        logging.info("Running a command: %s", data)
+        resp = db.execute_command(data)
+        logging.info(resp)
+
+
+def get_random_job_by_priority() -> Tuple[Optional[str], str]:
+    yara_lists = ["list-yara-high", "list-yara-medium", "list-yara-low"]
+    for yara_list in yara_lists:
+        yara_jobs = redis.lrange(yara_list, 0, -1)
+        if yara_jobs:
+            return yara_list, random.choice(yara_jobs)
+    return None, ""
+
+
+def try_to_do_task() -> bool:
+    task_queues = ["queue-search", "queue-commands"]
+    task = None
+    for queue in task_queues:
+        task = redis.lpop(queue)
+        if task is not None:
+            data = task
+            process_task(queue, data)
+            return True
+
+    return False
+
+
+def try_to_do_search() -> bool:
+    yara_list, job_hash = get_random_job_by_priority()
+    if yara_list is None:
+        return False
+
+    job_id = "job:" + job_hash
+    job_data = redis.hgetall(job_id)
+
+    try:
+        BATCH_SIZE = 500
+        ready, files = db.pop(job_data["iterator"], BATCH_SIZE)
+        if not ready:
+            # iterator locked, try again later
+            return True
+        execute_yara(job_hash, files)
+        if len(files) < BATCH_SIZE:
+            redis.hset(job_id, "status", "done")
+            redis.lrem(yara_list, 0, job_hash)
+    except Exception as e:
+        logging.exception("Failed to execute yara match.")
+        redis.hmset(job_id, {"status": "failed", "error": str(e)})
+        redis.lrem(yara_list, 0, job_hash)
+    return True
 
 
 def job_daemon() -> None:
     setup_logging()
     logging.info("Daemon running...")
-    yara_queues = ["queue-yara-high", "queue-yara-medium", "queue-yara-low"]
 
     for extractor in config.METADATA_EXTRACTORS:
         logging.info("Plugin loaded: %s", extractor.__class__.__name__)
@@ -69,58 +130,19 @@ def job_daemon() -> None:
     logging.info("Daemon loaded, entering the main loop...")
 
     while True:
-        queue, data = redis.blpop(
-            ["queue-search", "queue-index", "queue-metadata", "queue-commands"]
-            + yara_queues
-        )
+        if try_to_do_task():
+            continue
 
-        if queue == "queue-search":
-            job_hash = data
-            logging.info("New task: {}:{}".format(queue, job_hash))
-
-            try:
-                execute_search(job_hash)
-            except Exception as e:
-                logging.exception("Failed to execute job.")
-                redis.hmset(
-                    "job:" + job_hash, {"status": "failed", "error": str(e)}
-                )
-
-        elif queue in yara_queues:
-            job_hash, file_path = data.split(":", 1)
-            try:
-                execute_yara(job_hash, file_path)
-            except Exception as e:
-                logging.exception("Failed to execute yara match.")
-                redis.hmset(
-                    "job:" + job_hash, {"status": "failed", "error": str(e)}
-                )
-
-        elif queue == "queue-metadata":
-            # LEGACY QUEUE
-            # Exists mostly because there is no sane way to do migrations
-            # for job queues in redis.
-            # This is currently a "drain only" queue that will pick up any
-            # pending tasks during mquery update, and will stay idle forever.
-            job_hash, file_path = data.split(":", 1)
-            update_metadata(job_hash, file_path, [])
-
-        elif queue == "queue-commands":
-            logging.info("Running a command: %s", data)
-            resp = db.execute_command(data)
-            logging.info(resp)
+        if try_to_do_search():
+            continue
 
         if redis.set("gc-lock", "locked", ex=60, nx=True):
             collect_expired_jobs()
 
+        time.sleep(5)
+
 
 def update_metadata(job_hash: str, file_path: str, matches: List[str]) -> None:
-    if redis.hget("job:" + job_hash, "status") in [
-        "cancelled",
-        "failed",
-    ]:
-        return
-
     current_meta: Dict[str, Any] = {}
 
     for extractor in config.METADATA_EXTRACTORS:
@@ -148,73 +170,51 @@ def update_metadata(job_hash: str, file_path: str, matches: List[str]) -> None:
     for v in current_meta.values():
         flat_meta.update(v)
 
-    logging.info("Fetched metadata: " + file_path)
-
-    pipe = redis.pipeline()
-    pipe.rpush(
+    redis.rpush(
         "meta:{}".format(job_hash),
         json.dumps({"file": file_path, "meta": flat_meta, "matches": matches}),
     )
-    pipe.hget("job:{}".format(job_hash), "total_files")
-    pipe.hincrby("job:{}".format(job_hash), "files_processed")
-    _, total_files, files_processed = pipe.execute()
-
-    if int(files_processed) >= int(total_files):
-        redis.hset("job:{}".format(job_hash), "status", "done")
 
 
-def execute_yara(job_hash: str, file: str) -> None:
-    if redis.hget("job:" + job_hash, "status") in [
+def execute_yara(job_hash: str, files: List[str]) -> None:
+    job_id = f"job:{job_hash}"
+    if redis.hget(job_id, "status") in [
         "cancelled",
         "failed",
     ]:
         return
 
+    if len(files) == 0:
+        return
+
     rule = compile_yara(job_hash)
 
-    try:
-        matches = rule.match(data=open(file, "rb").read())
-    except yara.Error:
-        logging.exception("Yara failed to check file {}".format(file))
-        matches = None
-    except FileNotFoundError:
-        logging.exception(
-            "Failed to open file for yara check: {}".format(file)
-        )
-        matches = None
+    for sample in files:
+        try:
+            matches = rule.match(data=open(sample, "rb").read())
+            if matches:
+                update_metadata(job_hash, sample, [r.rule for r in matches])
+        except yara.Error:
+            logging.exception(f"Yara failed to check file {sample}")
+        except FileNotFoundError:
+            logging.exception(f"Failed to open file for yara check: {sample}")
 
-    if matches:
-        logging.info("Processed (match): {}".format(file))
-        update_metadata(job_hash, file, [r.rule for r in matches])
-    else:
-        logging.info("Processed (nope ): {}".format(file))
-
-        pipe = redis.pipeline()
-        pipe.rpush("false_positives:" + job_hash, file)
-        pipe.hget("job:{}".format(job_hash), "total_files")
-        pipe.hincrby("job:{}".format(job_hash), "files_processed")
-        _, total_files, files_processed = pipe.execute()
-
-        if int(files_processed) >= int(total_files):
-            redis.hset("job:{}".format(job_hash), "status", "done")
+    redis.hincrby(job_id, "files_processed", len(files))
 
 
 def execute_search(job_hash: str) -> None:
     logging.info("Parsing...")
+    job_id = "job:" + job_hash
 
-    job = redis.hgetall("job:" + job_hash)
+    job = redis.hgetall(job_id)
     yara_rule = job["raw_yara"]
 
-    redis.hmset(
-        "job:" + job_hash, {"status": "parsing", "timestamp": time.time()}
-    )
+    redis.hmset(job_id, {"status": "parsing", "timestamp": time.time()})
 
     rules = parse_yara(yara_rule)
     parsed = combine_rules(rules)
 
-    redis.hmset(
-        "job:" + job_hash, {"status": "querying", "timestamp": time.time()}
-    )
+    redis.hmset(job_id, {"status": "querying", "timestamp": time.time()})
 
     logging.info("Querying backend...")
     taint = job.get("taint", None)
@@ -222,33 +222,25 @@ def execute_search(job_hash: str) -> None:
     if "error" in result:
         raise RuntimeError(result["error"])
 
-    files = [f for f in result["files"] if f.strip()]
-
-    logging.info("Database responded with {} files".format(len(files)))
+    file_count = result["file_count"]
+    iterator = result["iterator"]
+    logging.info(f"Iterator contains {file_count} files")
 
     redis.hmset(
-        "job:" + job_hash,
+        job_id,
         {
             "status": "processing",
+            "iterator": iterator,
             "files_processed": 0,
-            "total_files": len(files),
+            "total_files": file_count,
         },
     )
 
-    if files:
-        pipe = redis.pipeline()
-        queue_name = get_queue_name(job["priority"])
-        for file in files:
-            if not config.SKIP_YARA:
-                pipe.rpush(queue_name, "{}:{}".format(job_hash, file))
-            else:
-                pipe.rpush("queue-metadata", "{}:{}".format(job_hash, file))
-
-        pipe.execute()
-        logging.info("Done uploading yara jobs.")
-
+    if file_count > 0:
+        list_name = get_list_name(job["priority"])
+        redis.lpush(list_name, job_hash)
     else:
-        redis.hset("job:{}".format(job_hash), "status", "done")
+        redis.hset(job_id, "status", "done")
 
 
 if __name__ == "__main__":
