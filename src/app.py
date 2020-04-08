@@ -17,24 +17,13 @@ from lib.yaraparse import parse_yara
 
 from util import make_redis, mquery_version
 import config
-from typing import Any, Callable, Optional, List, Union
+from typing import Any, Callable, List, Union
 
 from schema import *
 
 redis = make_redis()
 app = FastAPI()
 db = UrsaDb(config.BACKEND)
-
-
-app.mount(
-    "/",
-    StaticFiles(
-        directory=os.path.join(
-            os.path.dirname(__file__), "mqueryfront", "build"
-        ),
-        html=True,
-    ),
-)
 
 
 @app.middleware("http")
@@ -52,18 +41,14 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 
 @app.get("/api/download")
-def download(
-    job_id: str = Body(...),
-    file_path: str = Body(...),
-    ordinal: int = Body(...),
-) -> Any:
-    file_list = redis.lrange("meta:" + job_id, ordinal, ordinal)
+def download(data: DownloadSchema = Body(...)) -> Any:
+    file_list = redis.lrange("meta:" + data.job_id, data.ordinal, data.ordinal)
 
-    if not file_list or file_path != json.loads(file_list[0])["file"]:
+    if not file_list or data.file_path != json.loads(file_list[0])["file"]:
         raise NotFound("No such file in result set.")
 
-    attach_name, ext = os.path.splitext(os.path.basename(file_path))
-    return FileResponse(file_path, filename=attach_name + ext + "_")
+    attach_name, ext = os.path.splitext(os.path.basename(data.file_path))
+    return FileResponse(data.file_path, filename=attach_name + ext + "_")
 
 
 @app.post(
@@ -72,11 +57,10 @@ def download(
 )
 def query(
     priority: str,
-    raw_yara: str = Body(...),
-    method: Optional[RequestQueryMethod] = Body(...),
+    data: QueryRequestSchema = Body(...)
 ) -> Union[QuerySchema, ParseQuerySchema]:
     try:
-        rules = parse_yara(raw_yara)
+        rules = parse_yara(data.raw_yara)
     except Exception as e:
         raise HTTPException(
             status_code=400, detail=f"Yara rule parsing failed: {e}"
@@ -85,7 +69,7 @@ def query(
     if not rules:
         raise HTTPException(status_code=400, detail=f"No rule was specified.")
 
-    if method == RequestQueryMethod.parse:
+    if data.method == RequestQueryMethod.parse:
         return [
             ParseQuerySchema(
                 rule_name=rule.name,
@@ -106,7 +90,7 @@ def query(
         "status": "new",
         "rule_name": rules[-1].name,
         "rule_author": rules[-1].author,
-        "raw_yara": raw_yara,
+        "raw_yara": data.raw_yara,
         "submitted": int(time.time()),
         "priority": priority,
     }
@@ -149,15 +133,15 @@ def user_settings() -> UserSettingsSchema:
 
 
 @app.post("/api/user/register", response_model=StatusSchema)
-def user_register(username: str = Body(...)) -> StatusSchema:
-    if username.startswith("a"):
+def user_register(auth: UserAuthSchema = Body(...)) -> StatusSchema:
+    if auth.username.startswith("a"):
         return StatusSchema(status="ok")
     raise HTTPException(status_code=400, detail="This user already exists")
 
 
 @app.post("/api/user/login", response_model=StatusSchema)
-def user_login(username: str = Body(...)) -> StatusSchema:
-    if username.startswith("a"):
+def user_login(auth: UserAuthSchema = Body(...)) -> StatusSchema:
+    if auth.username.startswith("a"):
         return StatusSchema(status="ok")
     raise HTTPException(status_code=400, detail="Wrong password")
 
@@ -213,10 +197,10 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
     db_alive = True
 
     try:
-        datasets = db.topology().get("result", {}).get("datasets", [])
+        datasets = db.topology().get("result", {}).get("datasets", {})
     except Again:
         db_alive = False
-        datasets = []
+        datasets = {}
 
     return BackendStatusDatasetsSchema(db_alive=db_alive, datasets=datasets)
 
@@ -237,6 +221,17 @@ def serve_index_sub() -> FileResponse:
 def compact_all() -> StatusSchema:
     redis.rpush("queue-commands", "compact all;")
     return StatusSchema(status="ok")
+
+
+app.mount(
+    "/",
+    StaticFiles(
+        directory=os.path.join(
+            os.path.dirname(__file__), "mqueryfront", "build"
+        ),
+        html=True,
+    ),
+)
 
 
 if __name__ == "__main__":

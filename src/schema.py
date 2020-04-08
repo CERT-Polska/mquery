@@ -14,11 +14,25 @@ class JobSchema(BaseModel):
     priority: str
 
 
+class TaskSchema(BaseModel):
+    connection_id: str
+    epoch_ms: int
+    id: str
+    request: str
+    work_done: int
+    work_estimated: int
+
+
 class RequestQueryMethod(str, Enum):
     parse = "parse"
 
 
 class QuerySchema(BaseModel):
+    raw_yara: str
+    method: Optional[RequestQueryMethod]
+
+
+class QueryResponseSchema(BaseModel):
     query_hash: str
 
 
@@ -28,6 +42,12 @@ class ParseQuerySchema(BaseModel):
     is_global: bool
     is_private: bool
     parsed: str
+
+
+class DownloadSchema(BaseModel):
+    job_id: str
+    file_path: str
+    ordinal: int
 
 
 class MatchesSchema(BaseModel):
@@ -49,12 +69,17 @@ class UserInfoSchema(BaseModel):
     name: str
 
 
+class UserAuthSchema(BaseModel):
+    username: str
+    password: str
+
+
 class BackendStatusSchema(BaseModel):
     db_alive: bool
-    tasks: List[Dict[str, JobSchema]]
+    tasks: List[TaskSchema]
     components: TypedDict("components", {"mquery": str, "ursadb": str})
 
 
 class BackendStatusDatasetsSchema(BaseModel):
     db_alive: bool
-    datasets: List
+    datasets: TypedDict("datasets", {"indexes": List[TypedDict("index", {"type": str})]})
