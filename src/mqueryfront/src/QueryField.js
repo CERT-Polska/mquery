@@ -61,10 +61,11 @@ class QueryField extends Component {
                 }
             })
             .catch((error) => {
+                console.log(error);
                 let err = error.toString();
 
                 if (error.response) {
-                    err = error.response.data.error;
+                    err = error.response.data.detail;
                 }
 
                 this.props.updateQueryError(err, this.state.rawYara);

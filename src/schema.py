@@ -6,12 +6,17 @@ from pydantic import BaseModel
 
 
 class JobSchema(BaseModel):
+    id: str
     status: str
     rule_name: str
     rule_author: str
     raw_yara: str
     submitted: int
     priority: str
+
+
+class JobsSchema(BaseModel):
+    jobs: List[JobSchema]
 
 
 class TaskSchema(BaseModel):
@@ -24,21 +29,22 @@ class TaskSchema(BaseModel):
 
 
 class RequestQueryMethod(str, Enum):
+    query = "query"
     parse = "parse"
 
 
 class QueryRequestSchema(BaseModel):
     raw_yara: str
-    taint: str
-    priority: str
-    method: Optional[RequestQueryMethod]
+    taint: Optional[str]
+    priority: Optional[str]
+    method: str
 
 
 class QueryResponseSchema(BaseModel):
     query_hash: str
 
 
-class ParseQuerySchema(BaseModel):
+class ParseResponseSchema(BaseModel):
     rule_name: str
     rule_author: str
     is_global: bool

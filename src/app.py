@@ -5,7 +5,7 @@ import string
 import time
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Body, Query
+from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
 from starlette.staticfiles import StaticFiles
@@ -20,12 +20,13 @@ import config
 from typing import Any, Callable, List, Union, cast
 
 from schema import (
+    JobsSchema,
     JobSchema,
     TaskSchema,
     RequestQueryMethod,
     QueryRequestSchema,
     QueryResponseSchema,
-    ParseQuerySchema,
+    ParseResponseSchema,
     DownloadSchema,
     MatchesSchema,
     StatusSchema,
@@ -68,11 +69,11 @@ def download(data: DownloadSchema = Body(...)) -> Any:
 
 @app.post(
     "/api/query",
-    response_model=Union[QueryRequestSchema, ParseQuerySchema],
+    response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
 )
 def query(
     data: QueryRequestSchema = Body(...)
-) -> Union[QueryRequestSchema, List[ParseQuerySchema]]:
+) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
     try:
         rules = parse_yara(data.raw_yara)
     except Exception as e:
@@ -85,7 +86,7 @@ def query(
 
     if data.method == RequestQueryMethod.parse:
         return [
-            ParseQuerySchema(
+            ParseResponseSchema(
                 rule_name=rule.name,
                 rule_author=rule.author,
                 is_global=rule.is_global,
@@ -115,7 +116,7 @@ def query(
     redis.hmset("job:" + job_hash, job_obj)
     redis.rpush("queue-search", job_hash)
 
-    return QueryRequestSchema(query_hash=job_hash)
+    return QueryResponseSchema(query_hash=job_hash)
 
 
 @app.get("/api/matches/{hash}", response_model=MatchesSchema)
@@ -170,15 +171,17 @@ def user_jobs(name: str) -> List[JobSchema]:
     return job_statuses()
 
 
-@app.get("/api/job", response_model=List[JobSchema])
-def job_statuses() -> List[JobSchema]:
+@app.get("/api/job", response_model=JobsSchema)
+def job_statuses() -> JobsSchema:
     jobs = redis.keys("job:*")
     jobs = sorted(
         [dict({"id": job[4:]}, **redis.hgetall(job)) for job in jobs],
         key=lambda o: o.get("submitted"),
         reverse=True,
     )
-    return cast(List[JobSchema], jobs)
+    return JobsSchema(
+        jobs=jobs
+    )
 
 
 @app.get("/api/backend", response_model=BackendStatusSchema)
