@@ -27,8 +27,10 @@ class RequestQueryMethod(str, Enum):
     parse = "parse"
 
 
-class QuerySchema(BaseModel):
+class QueryRequestSchema(BaseModel):
     raw_yara: str
+    taint: str
+    priority: str
     method: Optional[RequestQueryMethod]
 
 

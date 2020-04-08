@@ -17,9 +17,24 @@ from lib.yaraparse import parse_yara
 
 from util import make_redis, mquery_version
 import config
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Union, cast
 
-from schema import *
+from schema import (
+    JobSchema,
+    TaskSchema,
+    RequestQueryMethod,
+    QueryRequestSchema,
+    QueryResponseSchema,
+    ParseQuerySchema,
+    DownloadSchema,
+    MatchesSchema,
+    StatusSchema,
+    UserSettingsSchema,
+    UserInfoSchema,
+    UserAuthSchema,
+    BackendStatusSchema,
+    BackendStatusDatasetsSchema,
+)
 
 redis = make_redis()
 app = FastAPI()
@@ -52,13 +67,12 @@ def download(data: DownloadSchema = Body(...)) -> Any:
 
 
 @app.post(
-    "/api/query/{priority}",
-    response_model=Union[QuerySchema, ParseQuerySchema],
+    "/api/query",
+    response_model=Union[QueryRequestSchema, ParseQuerySchema],
 )
 def query(
-    priority: str,
     data: QueryRequestSchema = Body(...)
-) -> Union[QuerySchema, ParseQuerySchema]:
+) -> Union[QueryRequestSchema, List[ParseQuerySchema]]:
     try:
         rules = parse_yara(data.raw_yara)
     except Exception as e:
@@ -92,16 +106,16 @@ def query(
         "rule_author": rules[-1].author,
         "raw_yara": data.raw_yara,
         "submitted": int(time.time()),
-        "priority": priority,
+        "priority": data.priority,
     }
 
-    if "taint" in req and req["taint"] is not None:
-        job_obj["taint"] = req["taint"]
+    if data.taint is not None:
+        job_obj["taint"] = data.taint
 
     redis.hmset("job:" + job_hash, job_obj)
     redis.rpush("queue-search", job_hash)
 
-    return QuerySchema(query_hash=job_hash)
+    return QueryRequestSchema(query_hash=job_hash)
 
 
 @app.get("/api/matches/{hash}", response_model=MatchesSchema)
@@ -164,8 +178,7 @@ def job_statuses() -> List[JobSchema]:
         key=lambda o: o.get("submitted"),
         reverse=True,
     )
-
-    return jobs
+    return cast(List[JobSchema], jobs)
 
 
 @app.get("/api/backend", response_model=BackendStatusSchema)
