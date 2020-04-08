@@ -1,8 +1,6 @@
 import logging
 
-import requests
-import urllib
-import mwdblib
+import mwdblib  # type: ignore
 from mwdblib import Malwarecage
 from metadata import Metadata
 
@@ -40,8 +38,7 @@ class MWDBIntegrateMetadata(Metadata):
 
             job_id = dependent_meta["job"]
             file.add_metakey("mquery", job_id)
-
-        except:
+        except Exception:
             logging.exception("Failed to post mquery metadata")
             return {}
 
