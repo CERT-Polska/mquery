@@ -16,6 +16,8 @@ from yaramod import (  # type: ignore
     StringInRangeExpression,
     ThemExpression,
     SetExpression,
+    String,
+    PlainString,
 )
 from typing import Optional, List, Dict
 import re
@@ -125,16 +127,27 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
     return UrsaExpression(f"{{{core}}}")
 
 
-def ursify_string(string) -> Optional[UrsaExpression]:
+def ursify_plain_string(string: PlainString) -> UrsaExpression:
+    text_ascii = string.pure_text
+    text_wide = bytes(x for y in text_ascii for x in [y, 0])
+
+    ursa_ascii = UrsaExpression(f"{{{text_ascii.hex()}}}")
+    ursa_wide = UrsaExpression(f"{{{text_wide.hex()}}}")
+
+    if string.is_wide and not string.is_ascii:
+        return ursa_wide
+    elif string.is_wide and string.is_ascii:
+        return UrsaExpression.or_(ursa_ascii, ursa_wide)
+    else:
+        return ursa_ascii
+
+
+def ursify_string(string: String) -> Optional[UrsaExpression]:
     if string.is_xor or string.is_nocase:
         return None
 
     if string.is_plain:
-        text = string.pure_text
-        if string.is_wide:
-            text = bytes(x for y in text for x in [y, 0])
-        value_safe = text.hex()
-        return UrsaExpression(f"{{{value_safe}}}")
+        return ursify_plain_string(string)
     elif string.is_hex:
         value_safe = string.pure_text.decode()
         return ursify_hex(value_safe)
