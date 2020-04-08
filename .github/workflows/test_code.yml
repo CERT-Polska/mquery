@@ -1,0 +1,96 @@
+name: "Code testing"
+on: [push]
+jobs:
+  test_python_types:
+    name: python mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.6'
+      - name: copy config
+        run: cp src/config.example.py src/config.py
+      - name: install mypy
+        run: pip3 install mypy==0.770 typing_extensions==3.7.4.2
+      - name: run mypy
+        run: mypy src
+  test_python_style:
+    name: python flake8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.6'
+      - name: copy config
+        run: cp src/config.example.py src/config.py
+      - name: install mypy
+        run: pip3 install flake8
+      - name: run flake8==3.7.9
+        run: flake8 src
+  test_python_lint:
+    name: python black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.6'
+      - name: copy config
+        run: cp src/config.example.py src/config.py
+      - name: install black
+        run: pip3 install black==19.10b0
+      - name: run black
+        run: black --check "src"
+  test_js_style:
+    name: js prettier
+    runs-on: ubuntu-latest
+    env:
+      working-directory: src/mqueryfront
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: install prettier
+        run: npm install -g prettier@2.0.4
+      - name: run prettier
+        run: prettier --tab-width=4 --check "src/**/*.js"
+  test_js_build:
+    name: npm build
+    runs-on: ubuntu-latest
+    env:
+      working-directory: src/mqueryfront
+    steps:
+      - name: Setup nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: install dependencies
+        run: npm install
+      - name: build
+        run: npm build
+  test_whole:
+    name: e2e tests
+    runs-on: ubuntu-latest
+    needs: [test_python_types, test_js_build]
+    steps:
+      - uses: actions/checkout@v2
+      - name: git submodule init
+        run: git submodule init
+      - name: git submodule update
+        run: git submodule update
+      - name: build test image
+        run: docker build -t mquery_tests:latest -f src/tests/Dockerfile .
+      - name: run docker compose
+        run: docker-compose up --scale daemon=1 --build -d
+      - name: run e2e tests
+        run: docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
+      - name: stop docker compose
+        if: always()
+        run: docker-compose down
