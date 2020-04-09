@@ -236,7 +236,6 @@ class QueryStatus extends Component {
         if (isNaN(progress)) {
             progress = 100
             processed = "-"
-
         }
 
         const matches = this.state.matches.map((match, index) => (
@@ -287,7 +286,6 @@ class QueryStatus extends Component {
                 </table>
             )
         }
-
 
         return (
             <div className="mquery-scroll-matches">
