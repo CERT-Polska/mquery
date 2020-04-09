@@ -5,3 +5,4 @@ config.py
 .idea
 .mypy_cache
 samples/
+index/
