@@ -1,0 +1,7 @@
+*.pyc
+venv/
+config.py
+.vscode
+.idea
+.mypy_cache
+samples/
