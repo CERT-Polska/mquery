@@ -8,7 +8,7 @@ class JobSchema(BaseModel):
     id: str
     status: str
     rule_name: str
-    rule_author: str
+    rule_author: Optional[str]
     raw_yara: str
     submitted: int
     priority: str
