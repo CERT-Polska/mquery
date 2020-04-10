@@ -100,7 +100,7 @@ class QueryResultsStatus extends Component {
             </button>
         );
 
-        if (!this.props.job.total_files && this.props.job.status !== "done")
+        if (!this.props.job.total_files && this.props.job.status !== "done") {
             progress = 0;
             processed = "-";
         }

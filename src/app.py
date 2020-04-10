@@ -132,12 +132,12 @@ def get_job(job_id: str) -> JobSchema:
     job = redis.hgetall(job_id)
     return JobSchema(
         id=job_id[4:],
-        status=job.get("status", "[error]"),
-        rule_name=job.get("rule_name", "[error]"),
+        status=job.get("status", "ERROR"),
+        rule_name=job.get("rule_name", "ERROR"),
         rule_author=job.get("rule_author", None),
-        raw_yara=job.get("raw_yara", "[error]"),
+        raw_yara=job.get("raw_yara", "ERROR"),
         submitted=job.get("submitted", 0),
-        priority=job.get("priority", "[error]"),
+        priority=job.get("priority", "ERROR"),
         files_processed=job.get("files_processed", 0),
         total_files=job.get("total_files", 0),
     )
