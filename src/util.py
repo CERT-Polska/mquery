@@ -23,4 +23,4 @@ def make_redis() -> Any:
 
 
 def mquery_version():
-    return "1.0.2"
+    return "1.1.0"
