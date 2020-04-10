@@ -40,6 +40,9 @@ def get_list_name(priority: str) -> str:
 
 
 def collect_expired_jobs() -> None:
+    if config.JOB_EXPIRATION_MINUTES <= 0:
+        return
+
     exp_time = int(60 * config.JOB_EXPIRATION_MINUTES)  # conversion to seconds
     job_hashes = []
 
