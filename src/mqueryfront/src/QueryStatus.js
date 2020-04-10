@@ -233,9 +233,9 @@ class QueryStatus extends Component {
             </button>
         );
 
-        if (isNaN(progress)) {
-            progress = 100
-            processed = "-"
+        if (!this.state.job.total_files && this.state.job.status !== "done") {
+            progress = 0;
+            processed = "-";
         }
 
         const matches = this.state.matches.map((match, index) => (
@@ -265,16 +265,13 @@ class QueryStatus extends Component {
         if (this.state.job.status === "expired") {
             return ReturnExpiredJob(this.state.job.error);
         }
-        
+
         let results;
 
-        if (lenMatches === 0) {
-            results = (
-                <div className="alert alert-info">
-                    No matches found.
-                </div>
-            )
-        } else {
+        if (lenMatches === 0 && this.state.job.status === "done") {
+            progress = 100;
+            results = <div className="alert alert-info">No matches found.</div>;
+        } else if (this.state.job.status === "done") {
             results = (
                 <table className={"table table-striped table-bordered"}>
                     <thead>
@@ -284,7 +281,7 @@ class QueryStatus extends Component {
                     </thead>
                     <tbody>{matches}</tbody>
                 </table>
-            )
+            );
         }
 
         return (
