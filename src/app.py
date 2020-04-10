@@ -17,7 +17,7 @@ from lib.yaraparse import parse_yara
 
 from util import make_redis, mquery_version
 import config
-from typing import Any, Callable, List, Union, cast
+from typing import Any, Callable, List, Union
 
 from schema import (
     JobsSchema,
@@ -70,7 +70,7 @@ def download(job_id: str, ordinal: str, file_path: str) -> Any:
     response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
 )
 def query(
-    data: QueryRequestSchema = Body(...)
+    data: QueryRequestSchema = Body(...),
 ) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
     try:
         rules = parse_yara(data.raw_yara)
@@ -144,7 +144,7 @@ def get_job(job_id: str) -> JobSchema:
 
 
 @app.get("/api/job/{job_id}", response_model=JobSchema)
-def job_info(job_id: str) -> List[JobSchema]:
+def job_info(job_id: str) -> JobSchema:
     return get_job(f"job:{job_id}")
 
 
@@ -186,9 +186,7 @@ def user_jobs(name: str) -> List[JobSchema]:
 @app.get("/api/job", response_model=JobsSchema)
 def job_statuses() -> JobsSchema:
     jobs = [get_job(j) for j in redis.keys("job:*")]
-    return JobsSchema(
-        jobs=sorted(jobs, key=lambda j: j.submitted)
-    )
+    return JobsSchema(jobs=sorted(jobs, key=lambda j: j.submitted))
 
 
 @app.get("/api/backend", response_model=BackendStatusSchema)

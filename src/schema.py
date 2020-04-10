@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import List, Dict, Optional
-from typing_extensions import TypedDict
 
 from pydantic import BaseModel
 
@@ -81,9 +80,9 @@ class UserAuthSchema(BaseModel):
 class BackendStatusSchema(BaseModel):
     db_alive: bool
     tasks: List[TaskSchema]
-    components: TypedDict("components", {"mquery": str, "ursadb": str})
+    components: Dict
 
 
 class BackendStatusDatasetsSchema(BaseModel):
     db_alive: bool
-    datasets: TypedDict("datasets", {"indexes": List[TypedDict("index", {"type": str})]})
+    datasets: Dict

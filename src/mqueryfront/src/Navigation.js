@@ -50,7 +50,9 @@ class Navigation extends Component {
                     </ul>
                     <ul className="navbar-nav mr-auto navbar-right">
                         <li className="nav-item nav-right">
-                            <a className="nav-link" href="/docs">API Docs</a>
+                            <a className="nav-link" href="/docs">
+                                API Docs
+                            </a>
                         </li>
                     </ul>
                 </div>

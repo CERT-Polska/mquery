@@ -22,5 +22,9 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "proxy": "http://web:5000"
+  "proxy": {
+    "/api": { "target": "http://dev-web:5000" },
+    "/docs": { "target": "http://dev-web:5000" },
+    "/openapi.json": { "target": "http://dev-web:5000" }
+  }
 }

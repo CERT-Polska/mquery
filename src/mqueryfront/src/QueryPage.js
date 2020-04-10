@@ -46,7 +46,7 @@ class QueryPage extends Component {
         }
 
         this.setState({
-            qhash: null
+            qhash: null,
         });
     }
 
@@ -74,7 +74,7 @@ class QueryPage extends Component {
             queryPlan: null,
             qhash: newQhash,
             matches: [],
-            job: []
+            job: [],
         });
 
         this.loadMatches();
@@ -111,11 +111,8 @@ class QueryPage extends Component {
                 }
 
                 this.setState({
-                    matches: [
-                        ...this.state.matches,
-                        ...response.data.matches,
-                    ],
-                    job: response.data.job
+                    matches: [...this.state.matches, ...response.data.matches],
+                    job: response.data.job,
                 });
 
                 if (newShouldRequest) {
@@ -141,9 +138,8 @@ class QueryPage extends Component {
             queryPlan: null,
             rawYara: rawYara,
             job: null,
-            matches: []
+            matches: [],
         });
-
     }
 
     updateQueryPlan(parsedQuery, rawYara) {
@@ -153,21 +149,25 @@ class QueryPage extends Component {
             queryError: null,
             rawYara: rawYara,
             job: null,
-            matches: []
+            matches: [],
         });
     }
 
     render() {
-        var queryParse = <QueryParseStatus
-            qhash={this.state.qhash}
-            queryPlan={this.state.queryPlan}
-            queryError={this.state.queryError}
-        /> 
-        var queryResults = <QueryResultsStatus
-            qhash={this.state.qhash}
-            job={this.state.job}
-            matches={this.state.matches}
-        />
+        var queryParse = (
+            <QueryParseStatus
+                qhash={this.state.qhash}
+                queryPlan={this.state.queryPlan}
+                queryError={this.state.queryError}
+            />
+        );
+        var queryResults = (
+            <QueryResultsStatus
+                qhash={this.state.qhash}
+                job={this.state.job}
+                matches={this.state.matches}
+            />
+        );
         return (
             <div className="container-fluid">
                 <div className="row">
@@ -183,7 +183,9 @@ class QueryPage extends Component {
                         />
                     </div>
                     <div className="col-md-6" id="status-col">
-                        { this.state.mode === "query" ? queryParse : queryResults }
+                        {this.state.mode === "query"
+                            ? queryParse
+                            : queryResults}
                     </div>
                 </div>
             </div>
