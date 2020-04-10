@@ -137,7 +137,7 @@ def get_job(job_id: str) -> JobSchema:
         rule_author=job.get("rule_author", None),
         raw_yara=job.get("raw_yara", "ERROR"),
         submitted=job.get("submitted", 0),
-        priority=job.get("priority", "ERROR"),
+        priority=job.get("priority", "medium"),
         files_processed=job.get("files_processed", 0),
         total_files=job.get("total_files", 0),
     )
@@ -186,7 +186,8 @@ def user_jobs(name: str) -> List[JobSchema]:
 @app.get("/api/job", response_model=JobsSchema)
 def job_statuses() -> JobsSchema:
     jobs = [get_job(j) for j in redis.keys("job:*")]
-    return JobsSchema(jobs=sorted(jobs, key=lambda j: j.submitted))
+    jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
+    return JobsSchema(jobs=jobs)
 
 
 @app.get("/api/backend", response_model=BackendStatusSchema)
