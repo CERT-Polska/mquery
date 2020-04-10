@@ -12,12 +12,15 @@ function MatchItem(props) {
         </a>
     ));
 
-    const matches = Object.values(props.matches).map((v) => (
-        <span key={v}>
-            {" "}
-            <span className="badge badge-pill badge-primary">{v}</span>
-        </span>
-    ));
+    let matches = <span></span>;
+    if (props.matches) {
+        matches = Object.values(props.matches).map((v) => (
+            <span key={v}>
+                {" "}
+                <span className="badge badge-pill badge-primary">{v}</span>
+            </span>
+        ));
+    }
 
     const download_url =
         API_URL +
