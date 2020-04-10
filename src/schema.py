@@ -13,6 +13,8 @@ class JobSchema(BaseModel):
     raw_yara: str
     submitted: int
     priority: str
+    files_processed: int
+    total_files: int
 
 
 class JobsSchema(BaseModel):
@@ -50,12 +52,6 @@ class ParseResponseSchema(BaseModel):
     is_global: bool
     is_private: bool
     parsed: str
-
-
-class DownloadSchema(BaseModel):
-    job_id: str
-    file_path: str
-    ordinal: int
 
 
 class MatchesSchema(BaseModel):

@@ -14,6 +14,8 @@ services:
     build:
       context: .
       dockerfile: deploy/docker/dev.web.Dockerfile
+    ports:
+    - "5000:5000"
     links:
     - redis
     volumes:

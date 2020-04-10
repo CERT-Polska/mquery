@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import QueryField from "./QueryField";
-import QueryStatus from "./QueryStatus";
+import QueryResultsStatus from "./QueryResultsStatus";
+import QueryParseStatus from "./QueryParseStatus";
 import axios from "axios";
 import { API_URL } from "./config";
 
@@ -15,6 +16,7 @@ class QueryPage extends Component {
         }
 
         this.state = {
+            mode: "query",
             qhash: qhash,
             rawYara: "",
             queryPlan: null,
@@ -30,7 +32,7 @@ class QueryPage extends Component {
     componentDidMount() {
         if (this.state.qhash) {
             axios.get(API_URL + "/job/" + this.state.qhash).then((response) => {
-                this.setState({ rawYara: response.data.raw_yara });
+                this.updateQhash(this.state.qhash, response.data.raw_yara);
             });
         }
         axios.get(API_URL + "/backend/datasets").then((response) => {
@@ -38,12 +40,20 @@ class QueryPage extends Component {
         });
     }
 
+    componentWillUnmount() {
+        if (this.timeout !== null) {
+            clearTimeout(this.timeout);
+        }
+
+        this.setState({
+            qhash: null
+        });
+    }
+
     availableTaints() {
-        console.log(this.state.datasets);
         var taintList = Object.values(this.state.datasets)
             .map((ds) => ds.taints)
             .flat();
-        console.log(taintList);
         return [...new Set(taintList)];
     }
 
@@ -59,29 +69,105 @@ class QueryPage extends Component {
         }
 
         this.setState({
+            mode: "job",
             queryError: null,
             queryPlan: null,
             qhash: newQhash,
+            matches: [],
+            job: []
         });
+
+        this.loadMatches();
+    }
+
+    loadMatches() {
+        const LIMIT = 50;
+
+        if (!this.state.qhash) {
+            return;
+        }
+
+        axios
+            .get(
+                API_URL +
+                    "/matches/" +
+                    this.state.qhash +
+                    "?offset=" +
+                    this.state.matches.length +
+                    "&limit=" +
+                    LIMIT
+            )
+            .then((response) => {
+                let newShouldRequest = true;
+
+                if (
+                    ["done", "cancelled", "failed", "expired"].indexOf(
+                        response.data.job.status
+                    ) !== -1
+                ) {
+                    if (!response.data.matches.length) {
+                        newShouldRequest = false;
+                    }
+                }
+
+                this.setState({
+                    matches: [
+                        ...this.state.matches,
+                        ...response.data.matches,
+                    ],
+                    job: response.data.job
+                });
+
+                if (newShouldRequest) {
+                    let nextTimeout =
+                        response.data.matches.length >= LIMIT ? 50 : 1000;
+                    this.timeout = setTimeout(
+                        () => this.loadMatches(),
+                        nextTimeout
+                    );
+                }
+            })
+            .catch(() => {
+                this.setState({
+                    shouldRequest: false,
+                });
+            });
     }
 
     updateQueryError(newError, rawYara) {
         this.setState({
+            mode: "query",
             queryError: newError,
             queryPlan: null,
             rawYara: rawYara,
+            job: null,
+            matches: []
         });
+
     }
 
     updateQueryPlan(parsedQuery, rawYara) {
         this.setState({
-            queryError: null,
+            mode: "query",
             queryPlan: parsedQuery,
+            queryError: null,
             rawYara: rawYara,
+            job: null,
+            matches: []
         });
     }
 
     render() {
+        var queryParse = <QueryParseStatus
+            qhash={this.state.qhash}
+            queryPlan={this.state.queryPlan}
+            queryError={this.state.queryError}
+        /> 
+        var queryResults = <QueryResultsStatus
+            qhash={this.state.qhash}
+            job={this.state.job}
+            matches={this.state.matches}
+        />
         return (
             <div className="container-fluid">
                 <div className="row">
@@ -97,11 +183,7 @@ class QueryPage extends Component {
                         />
                     </div>
                     <div className="col-md-6" id="status-col">
-                        <QueryStatus
-                            qhash={this.state.qhash}
-                            queryPlan={this.state.queryPlan}
-                            queryError={this.state.queryError}
-                        />
+                        { this.state.mode === "query" ? queryParse : queryResults }
                     </div>
                 </div>
             </div>

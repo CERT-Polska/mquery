@@ -172,19 +172,19 @@ class QueryField extends Component {
                             <span className="fa fa-code" /> Parse
                         </button>
                     )}
-                    <div class="btn-group" role="group">
+                    <div className="btn-group" role="group">
                         <button
                             type="button"
-                            class="btn btn-info dropdown-toggle"
+                            className="btn btn-info dropdown-toggle"
                             data-toggle="dropdown"
                             aria-haspopup="true"
                             aria-expanded="false"
                         >
                             Search: {this.describeTaint()}
                         </button>
-                        <div class="dropdown-menu">
+                        <div className="dropdown-menu">
                             <a
-                                class="dropdown-item"
+                                className="dropdown-item"
                                 href="#"
                                 onClick={(event) => this.selectTaint(null)}
                             >
@@ -193,7 +193,7 @@ class QueryField extends Component {
                             {this.props.availableTaints.map((taint) => {
                                 return (
                                     <a
-                                        class="dropdown-item"
+                                        className="dropdown-item"
                                         href="#"
                                         onClick={(event) =>
                                             this.selectTaint(taint)

@@ -22,12 +22,10 @@ from typing import Any, Callable, List, Union, cast
 from schema import (
     JobsSchema,
     JobSchema,
-    TaskSchema,
     RequestQueryMethod,
     QueryRequestSchema,
     QueryResponseSchema,
     ParseResponseSchema,
-    DownloadSchema,
     MatchesSchema,
     StatusSchema,
     UserSettingsSchema,
@@ -57,14 +55,14 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 
 @app.get("/api/download")
-def download(data: DownloadSchema = Body(...)) -> Any:
-    file_list = redis.lrange("meta:" + data.job_id, data.ordinal, data.ordinal)
+def download(job_id: str, ordinal: str, file_path: str) -> Any:
+    file_list = redis.lrange("meta:" + job_id, ordinal, ordinal)
 
-    if not file_list or data.file_path != json.loads(file_list[0])["file"]:
+    if not file_list or file_path != json.loads(file_list[0])["file"]:
         raise NotFound("No such file in result set.")
 
-    attach_name, ext = os.path.splitext(os.path.basename(data.file_path))
-    return FileResponse(data.file_path, filename=attach_name + ext + "_")
+    attach_name, ext = os.path.splitext(os.path.basename(file_path))
+    return FileResponse(file_path, filename=attach_name + ext + "_")
 
 
 @app.post(
@@ -127,13 +125,27 @@ def matches(
     p.hgetall("job:" + hash)
     p.lrange("meta:" + hash, offset, offset + limit - 1)
     job, meta = p.execute()
-
     return MatchesSchema(job=job, matches=[json.loads(m) for m in meta])
 
 
-@app.get("/api/job/<hash>", response_model=List[JobSchema])
-def job_info(hash: str) -> List[JobSchema]:
-    return [JobSchema(**x) for x in redis.hgetall("job:" + hash)]
+def get_job(job_id: str) -> JobSchema:
+    job = redis.hgetall(job_id)
+    return JobSchema(
+        id=job_id[4:],
+        status=job.get("status", "[error]"),
+        rule_name=job.get("rule_name", "[error]"),
+        rule_author=job.get("rule_author", None),
+        raw_yara=job.get("raw_yara", "[error]"),
+        submitted=job.get("submitted", 0),
+        priority=job.get("priority", "[error]"),
+        files_processed=job.get("files_processed", 0),
+        total_files=job.get("total_files", 0),
+    )
+
+
+@app.get("/api/job/{job_id}", response_model=JobSchema)
+def job_info(job_id: str) -> List[JobSchema]:
+    return get_job(f"job:{job_id}")
 
 
 @app.delete("/api/job/{job_id}", response_model=StatusSchema)
@@ -173,14 +185,9 @@ def user_jobs(name: str) -> List[JobSchema]:
 
 @app.get("/api/job", response_model=JobsSchema)
 def job_statuses() -> JobsSchema:
-    jobs = redis.keys("job:*")
-    jobs = sorted(
-        [dict({"id": job[4:]}, **redis.hgetall(job)) for job in jobs],
-        key=lambda o: o.get("submitted"),
-        reverse=True,
-    )
+    jobs = [get_job(j) for j in redis.keys("job:*")]
     return JobsSchema(
-        jobs=jobs
+        jobs=sorted(jobs, key=lambda j: j.submitted)
     )
 
 
