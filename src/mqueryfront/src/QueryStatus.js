@@ -233,7 +233,7 @@ class QueryStatus extends Component {
             </button>
         );
 
-        if (!this.state.job.total_files) {
+        if (!this.state.job.total_files && this.state.job.status !== "done") {
             progress = 0;
             processed = "-";
         }
@@ -265,6 +265,25 @@ class QueryStatus extends Component {
         if (this.state.job.status === "expired") {
             return ReturnExpiredJob(this.state.job.error);
         }
+
+        let results = <div />;
+
+        if (lenMatches === 0 && this.state.job.status === "done") {
+            progress = 100;
+            results = <div className="alert alert-info">No matches found.</div>;
+        } else if (lenMatches !== 0) {
+            results = (
+                <table className={"table table-striped table-bordered"}>
+                    <thead>
+                        <tr>
+                            <th>Matches</th>
+                        </tr>
+                    </thead>
+                    <tbody>{matches}</tbody>
+                </table>
+            );
+        }
+
         return (
             <div className="mquery-scroll-matches">
                 <div className="progress" style={{ marginTop: "55px" }}>
@@ -300,14 +319,7 @@ class QueryStatus extends Component {
                 ) : (
                     <div />
                 )}
-                <table className={"table table-striped table-bordered"}>
-                    <thead>
-                        <tr>
-                            <th>Matches</th>
-                        </tr>
-                    </thead>
-                    <tbody>{matches}</tbody>
-                </table>
+                {results}
             </div>
         );
     }
