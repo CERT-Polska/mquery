@@ -266,7 +266,7 @@ class QueryStatus extends Component {
             return ReturnExpiredJob(this.state.job.error);
         }
 
-        let results;
+        let results = <div />;
 
         if (lenMatches === 0 && this.state.job.status === "done") {
             progress = 100;
