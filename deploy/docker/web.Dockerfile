@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY "src/." "."
 COPY --from=build "/app/build" "./mqueryfront/build"
 COPY "src/config.docker.py" "config.py"
-CMD ["flask", "run", "--host", "0.0.0.0"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]

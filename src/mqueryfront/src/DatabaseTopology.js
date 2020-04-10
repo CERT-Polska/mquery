@@ -14,14 +14,16 @@ class DatasetRow extends Component {
                     {this.props.taints.map((taint) => (
                         <span>
                             {" "}
-                            <span class="badge badge-secondary">{taint}</span>
+                            <span className="badge badge-secondary">
+                                {taint}
+                            </span>
                         </span>
                     ))}
                 </td>
                 <td>
                     {this.props.indexes.map((x) => {
                         return (
-                            <div class="h6">
+                            <div key={x.type} className="h6">
                                 <code>{x.type}</code> (
                                 {filesize(x.size, { standard: "iec" })})
                             </div>

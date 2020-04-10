@@ -22,7 +22,6 @@ class SearchJobRow extends Component {
     }
 
     render() {
-        const shortId = this.props.id.substr(0, 6);
         const submittedDate = new Date(
             this.props.submitted * 1000
         ).toISOString();
@@ -83,7 +82,7 @@ class SearchJobRow extends Component {
                         to={"/query/" + this.props.id}
                         style={{ fontFamily: "monospace" }}
                     >
-                        {this.props.rule_name} ({shortId})
+                        {this.props.rule_name}
                     </Link>
                     <p style={{ fontSize: "11px" }}>
                         [{rule_author}] {submittedDate}

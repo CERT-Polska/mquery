@@ -1,25 +1,27 @@
 version: '3'
 services:
-  frontend:
+  dev-frontend:
     build:
       context: .
       dockerfile: deploy/docker/dev.frontend.Dockerfile
     ports:
     - "80:3000"
     links:
-    - web
+    - dev-web
     volumes:
     - ./src/mqueryfront/src:/app/src
-  web:
+  dev-web:
     build:
       context: .
       dockerfile: deploy/docker/dev.web.Dockerfile
+    ports:
+    - "5000:5000"
     links:
     - redis
     volumes:
     - ./samples:/mnt/samples
     - ./src:/usr/src/app/src
-  daemon:
+  dev-daemon:
     build:
       context: .
       dockerfile: deploy/docker/dev.daemon.Dockerfile
