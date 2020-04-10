@@ -2,7 +2,7 @@ import re
 import urllib.parse
 
 from metadata import Metadata
-from mwdblib import Malwarecage  # type: ignore
+from mwdblib import Malwarecage
 from typing import List, Any
 
 
@@ -26,13 +26,14 @@ class MalwarecageUploadsMetadata(Metadata):
         # '/uploads' Malwarecage directory format
         # /mnt/samples/9/d/c/5/9dc571ae13a62954155999cae9cecc4f0689e2ba9a8940f81d1e564271507a3e
         m = re.search(
-            r"/[a-f0-9]/[a-f0-9]/[a-f0-9]/[a-f0-9]/([a-f0-9]+)$", matched_fname
+            r"/([a-f0-9])/([a-f0-9])/([a-f0-9])/([a-f0-9])/(\1\2\3\4[a-f0-9]+)$",
+            matched_fname,
         )
 
         if not m:
             return {}
 
-        binary_hash = m.group(1)
+        binary_hash = m.group(5)
         cached = self.cache_fetch(binary_hash)
 
         if cached:
