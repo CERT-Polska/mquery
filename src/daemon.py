@@ -113,7 +113,7 @@ def try_to_do_search() -> bool:
             logging.info(
                 "Iterator %s exhausted, removing job %s",
                 job_data["iterator"],
-                job_hash
+                job_hash,
             )
             redis.hset(job_id, "status", "done")
             redis.lrem(yara_list, 0, job_hash)
