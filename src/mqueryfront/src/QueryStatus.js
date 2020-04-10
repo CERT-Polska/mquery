@@ -271,7 +271,7 @@ class QueryStatus extends Component {
         if (lenMatches === 0 && this.state.job.status === "done") {
             progress = 100;
             results = <div className="alert alert-info">No matches found.</div>;
-        } else if (this.state.job.status === "done") {
+        } else if (lenMatches !== 0) {
             results = (
                 <table className={"table table-striped table-bordered"}>
                     <thead>
