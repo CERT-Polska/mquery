@@ -110,6 +110,11 @@ def try_to_do_search() -> bool:
             return True
         execute_yara(job_hash, files)
         if len(files) < BATCH_SIZE:
+            logging.info(
+                "Iterator %s exhausted, removing job %s",
+                job_data["iterator"],
+                job_hash
+            )
             redis.hset(job_id, "status", "done")
             redis.lrem(yara_list, 0, job_hash)
     except Exception as e:
@@ -191,7 +196,7 @@ def execute_yara(job_hash: str, files: List[str]) -> None:
 
     for sample in files:
         try:
-            matches = rule.match(data=open(sample, "rb").read())
+            matches = rule.match(sample)
             if matches:
                 update_metadata(job_hash, sample, [r.rule for r in matches])
         except yara.Error:

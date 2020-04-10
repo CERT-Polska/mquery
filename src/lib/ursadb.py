@@ -25,11 +25,9 @@ class UrsaDb(object):
         start = time.clock()
         if taint:
             taint = taint.replace('"', '\\"')
-            query = 'select with taints ["{}"] into iterator {};'.format(
-                taint, query
-            )
+            query = f'select with taints ["{taint}"] into iterator {query};'
         else:
-            query = "select into iterator {};".format(query)
+            query = f"select into iterator {query};"
         socket.send_string(query)
 
         response = socket.recv_string()
@@ -66,9 +64,9 @@ class UrsaDb(object):
         if "error" in res:
             if "retry" in res["error"]:
                 # iterator locked, try again in a sec
-                return False, []
-            # return empty file sed - this will clear the job from the db!
-            return True, []
+                return True, []
+            # return empty file set - this will clear the job from the db!
+            return False, []
 
         files = res["result"]["files"]
 
