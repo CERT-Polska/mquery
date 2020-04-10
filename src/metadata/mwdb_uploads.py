@@ -2,7 +2,7 @@ import re
 import urllib.parse
 
 from metadata import Metadata
-from mwdblib import Malwarecage
+from mwdblib import Malwarecage  # type: ignore
 from typing import List, Any
 
 
