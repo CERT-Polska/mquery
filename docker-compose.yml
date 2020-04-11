@@ -10,6 +10,8 @@ services:
     - redis
     volumes:
     - ./samples:/mnt/samples
+    depends_on:
+      - "redis"
   daemon:
     build:
       context: .
@@ -19,6 +21,9 @@ services:
     - ursadb
     volumes:
     - ./samples:/mnt/samples
+    depends_on:
+      - "redis"
+      - "ursadb"
   ursadb:
     build:
       context: ursadb/
@@ -35,5 +40,7 @@ services:
     volumes:
     - ./samples:/mnt/samples
     command: tcp://ursadb:9281 --cmd "ping;"
+    depends_on:
+      - "ursadb"
   redis:
     image: redis
