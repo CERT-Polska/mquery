@@ -16,9 +16,11 @@
 **Test plan**
 <!-- Explain how to test your changes -->
 
+<!-- After submitting, your code will be tested by the CI pipeline. Please
+ensure that all tests pass. If they don't at first, please update your code -->
+
+**Closing issues**
+
 <!-- Add in issue numbers related to this PR, if applicable -->
 
 Fixes: #issuenumber
-
-<!-- After submitting, your code will be tested by the CI pipeline. Please 
-ensure that all tests pass. If they don't at first, please update your code -->

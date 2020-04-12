@@ -14,7 +14,7 @@ about: Create a report to help us improve
 
 **Reproduction Steps**
 
-Please explain how can we reproduce your problem.
+<!-- Please explain how can we reproduce your problem. -->
 
 
 **Expected behaviour**

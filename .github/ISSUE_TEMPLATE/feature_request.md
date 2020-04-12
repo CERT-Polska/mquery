@@ -11,7 +11,7 @@ about: Suggest your idea
 - [ ] Performance
 - [ ] Other (please explain)
 
-**Describe the problem.**
+**Describe the problem**
 
 <!-- A clear and concise description of the problem. -->
 
