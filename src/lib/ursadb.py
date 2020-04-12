@@ -1,13 +1,26 @@
 import json
 import time
 import zmq  # type: ignore
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 
 
 Json = Dict[str, Any]
 
 
-class UrsaDb(object):
+class PopResult:
+    def __init__(self, was_locked: bool, files: List[str]) -> None:
+        self.was_locked = was_locked
+        self.files = files
+
+    @property
+    def should_drop_iterator(self) -> bool:
+        """ Is it safe to remove the iterator after this operation? """
+        if self.was_locked:
+            return False
+        return len(self.files) == 0
+
+
+class UrsaDb:
     def __init__(self, backend: str) -> None:
         self.backend = backend
 
@@ -51,7 +64,7 @@ class UrsaDb(object):
             "file_count": file_count,
         }
 
-    def pop(self, iterator: str, count: int) -> Tuple[bool, List[str]]:
+    def pop(self, iterator: str, count: int) -> PopResult:
         socket = self.make_socket(recv_timeout=-1)
 
         query = f'iterator "{iterator}" pop {count};'
@@ -62,15 +75,13 @@ class UrsaDb(object):
 
         res = json.loads(response)
         if "error" in res:
-            if "retry" in res["error"]:
+            if res["error"].get("retry", False):
                 # iterator locked, try again in a sec
-                return True, []
+                return PopResult(True, [])
             # return empty file set - this will clear the job from the db!
-            return False, []
+            return PopResult(False, [])
 
-        files = res["result"]["files"]
-
-        return True, files
+        return PopResult(False, res["result"]["files"])
 
     def status(self) -> Json:
         socket = self.make_socket()

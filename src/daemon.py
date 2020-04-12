@@ -107,12 +107,12 @@ def try_to_do_search() -> bool:
 
     try:
         BATCH_SIZE = 500
-        ready, files = db.pop(job_data["iterator"], BATCH_SIZE)
-        if not ready:
-            # iterator locked, try again later
+        pop_result = db.pop(job_data["iterator"], BATCH_SIZE)
+        if pop_result.was_locked:
             return True
-        execute_yara(job_hash, files)
-        if len(files) < BATCH_SIZE:
+        if pop_result.files:
+            execute_yara(job_hash, pop_result.files)
+        if pop_result.should_drop_iterator:
             logging.info(
                 "Iterator %s exhausted, removing job %s",
                 job_data["iterator"],
