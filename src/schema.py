@@ -23,6 +23,13 @@ class JobsSchema(BaseModel):
     jobs: List[JobSchema]
 
 
+class ConfigSchema(BaseModel):
+    plugin: str
+    key: str
+    value: str
+    description: str
+
+
 class TaskSchema(BaseModel):
     connection_id: str
     epoch_ms: int
@@ -35,6 +42,12 @@ class TaskSchema(BaseModel):
 class RequestQueryMethod(str, Enum):
     query = "query"
     parse = "parse"
+
+
+class RequestConfigEdit(BaseModel):
+    plugin: str
+    key: str
+    value: str
 
 
 class QueryRequestSchema(BaseModel):
