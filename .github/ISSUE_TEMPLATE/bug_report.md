@@ -5,7 +5,8 @@ about: Create a report to help us improve
 ---
 
 **Environment information**
-* Mquery version:
+* Mquery version (from the /status page):
+* Ursadb version (from the /status page):
 * Installation method:
   - [ ] Generic docker-compose
   - [ ] Dev docker-compose
