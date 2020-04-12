@@ -29,6 +29,7 @@ Docker compose dedicated for developers.
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
+cp src/config.docker.py src/config.py
 # Optionally copy test files to ./samples directory
 docker-compose -f docker-compose.dev.yml up  # this will take a while
 ```
