@@ -17,7 +17,9 @@ function MatchItem(props) {
         matches = Object.values(props.matches).map((v) => (
             <span key={v}>
                 {" "}
-                <span className="badge badge-pill badge-primary ml-1 pull-right ">{v}</span>
+                <span className="badge badge-pill badge-primary ml-1 pull-right ">
+                    {v}
+                </span>
             </span>
         ));
     }
@@ -98,7 +100,8 @@ class QueryResultsStatus extends Component {
             return (
                 <div>
                     <h2>
-                    <i className="fa fa-spinner fa-spin spin-big" /> Loading...
+                        <i className="fa fa-spinner fa-spin spin-big" />{" "}
+                        Loading...
                     </h2>
                 </div>
             );
