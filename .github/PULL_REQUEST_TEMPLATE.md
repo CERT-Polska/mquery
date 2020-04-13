@@ -23,4 +23,4 @@ ensure that all tests pass. If they don't at first, please update your code -->
 
 <!-- Add in issue numbers related to this PR, if applicable -->
 
-Fixes: #issuenumber
+fixes #issuenumber
