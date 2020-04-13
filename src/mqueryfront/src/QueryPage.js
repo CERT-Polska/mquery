@@ -17,6 +17,7 @@ class QueryPage extends Component {
 
         this.state = {
             mode: "query",
+            collapsed: false,
             qhash: qhash,
             rawYara: "",
             queryPlan: null,
@@ -27,6 +28,7 @@ class QueryPage extends Component {
         this.updateQhash = this.updateQhash.bind(this);
         this.updateQueryError = this.updateQueryError.bind(this);
         this.updateQueryPlan = this.updateQueryPlan.bind(this);
+        this.collapsePane = this.collapsePane.bind(this);
     }
 
     componentDidMount() {
@@ -66,6 +68,7 @@ class QueryPage extends Component {
             this.props.history.push("/");
         } else {
             this.props.history.push("/query/" + newQhash);
+            this.collapsePane();
         }
 
         this.setState({
@@ -76,7 +79,6 @@ class QueryPage extends Component {
             matches: [],
             job: [],
         });
-
         this.loadMatches();
     }
 
@@ -153,6 +155,12 @@ class QueryPage extends Component {
         });
     }
 
+    collapsePane() {
+        this.setState((prevState) => ({
+            collapsed: !prevState.collapsed,
+        }));
+    }
+
     render() {
         var queryParse = (
             <QueryParseStatus
@@ -162,16 +170,30 @@ class QueryPage extends Component {
             />
         );
         var queryResults = (
-            <QueryResultsStatus
-                qhash={this.state.qhash}
-                job={this.state.job}
-                matches={this.state.matches}
-            />
+            <div>
+                <button
+                    type="button"
+                    className="btn btn-primary btn-sm pull-left mr-4"
+                    onClick={this.collapsePane}
+                >
+                    <span className="fa fa-align-left" />{" "}
+                    {this.state.collapsed ? "Show" : "Hide"} query
+                </button>
+                <QueryResultsStatus
+                    qhash={this.state.qhash}
+                    job={this.state.job}
+                    matches={this.state.matches}
+                />
+            </div>
         );
         return (
             <div className="container-fluid">
-                <div className="row">
-                    <div className="col-md-6">
+                <div className="row wrapper">
+                    <div
+                        className={
+                            this.state.collapsed ? "is-collapsed" : "col-md-5"
+                        }
+                    >
                         <QueryField
                             rawYara={this.state.rawYara}
                             isLoading={this.state.qhash && !this.state.rawYara}
@@ -182,7 +204,11 @@ class QueryPage extends Component {
                             updateQueryError={this.updateQueryError}
                         />
                     </div>
-                    <div className="col-md-6" id="status-col">
+                    <div
+                        className={
+                            this.state.collapsed ? "col-md-12" : "col-md-7"
+                        }
+                    >
                         {this.state.mode === "query"
                             ? queryParse
                             : queryResults}

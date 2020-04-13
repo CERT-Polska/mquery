@@ -4,10 +4,16 @@
 }
 
 .mquery-scroll-matches {
-    height: calc(100vh - 95px);
+    height: calc(100vh - 235px);
     overflow-y: scroll;
 }
 
 .mquery-scroll-matches td {
     word-break: break-all;
+}
+
+.is-collapsed {
+    -webkit-transform: translateX(-100%);
+    transform: translateX(-100%);
+    position: absolute;
 }

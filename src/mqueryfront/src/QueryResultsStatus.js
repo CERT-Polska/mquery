@@ -17,7 +17,9 @@ function MatchItem(props) {
         matches = Object.values(props.matches).map((v) => (
             <span key={v}>
                 {" "}
-                <span className="badge badge-pill badge-primary">{v}</span>
+                <span className="badge badge-pill badge-primary ml-1 pull-right ">
+                    {v}
+                </span>
             </span>
         ));
     }
@@ -66,6 +68,22 @@ class QueryResultsStatus extends Component {
 
     handleCancelJob() {
         axios.delete(API_URL + "/job/" + this.props.qhash);
+    }
+
+    renderSwitchStatus(status) {
+        switch (status) {
+            case "done":
+                return "success";
+            case "cancelled":
+                return "danger";
+            case "expired":
+                return "warning";
+            case "processing":
+            case "querying":
+                return "info";
+            default:
+                return "info";
+        }
     }
 
     render() {
@@ -117,16 +135,10 @@ class QueryResultsStatus extends Component {
             />
         ));
 
-        let progressBg = "bg-info";
+        let progressBg = "bg-" + this.renderSwitchStatus(this.props.job.status);
 
-        if (this.props.job.status === "done") {
-            progressBg = "bg-success";
-            cancel = <span />;
-        } else if (this.props.job.status === "cancelled") {
-            progressBg = "bg-danger";
-            cancel = <span />;
-        } else if (this.props.job.status === "expired") {
-            progressBg = "bg-secondary";
+        let finishedStatuses = ["done", "cancelled", "expired"];
+        if (finishedStatuses.includes(this.props.job.status)) {
             cancel = <span />;
         }
 
@@ -143,19 +155,21 @@ class QueryResultsStatus extends Component {
             results = <div className="alert alert-info">No matches found.</div>;
         } else if (lenMatches !== 0) {
             results = (
-                <table className={"table table-striped table-bordered"}>
-                    <thead>
-                        <tr>
-                            <th>Matches</th>
-                        </tr>
-                    </thead>
-                    <tbody>{matches}</tbody>
-                </table>
+                <div class="mquery-scroll-matches">
+                    <table className={"table table-striped table-bordered"}>
+                        <thead>
+                            <tr>
+                                <th>Matches</th>
+                            </tr>
+                        </thead>
+                        <tbody>{matches}</tbody>
+                    </table>
+                </div>
             );
         }
 
         return (
-            <div className="mquery-scroll-matches">
+            <div>
                 <div className="progress" style={{ marginTop: "55px" }}>
                     <div
                         className={"progress-bar " + progressBg}
@@ -173,7 +187,12 @@ class QueryResultsStatus extends Component {
                     </div>
                     <div className="col-md-3">
                         Status:{" "}
-                        <span className="badge badge-dark">
+                        <span
+                            className={
+                                "badge badge-" +
+                                this.renderSwitchStatus(this.props.job.status)
+                            }
+                        >
                             {this.props.job.status}
                         </span>
                     </div>
