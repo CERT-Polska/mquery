@@ -106,7 +106,7 @@ class QueryField extends Component {
                 <div className="btn-group mb-1" role="group">
                     <button
                         type="button"
-                        className="btn btn-success btn-lg"
+                        className="btn btn-success btn-sm"
                         onClick={(event) =>
                             this.handleQuery(event, "query", "medium")
                         }
@@ -153,7 +153,7 @@ class QueryField extends Component {
                     </div>
                     {this.state.isLocked ? (
                         <button
-                            className="btn btn-secondary btn-lg"
+                            className="btn btn-secondary btn-sm"
                             name="clone"
                             type="submit"
                             onClick={this.handleEdit}
@@ -162,7 +162,7 @@ class QueryField extends Component {
                         </button>
                     ) : (
                         <button
-                            className="btn btn-secondary btn-lg"
+                            className="btn btn-secondary btn-sm"
                             name="parse"
                             type="submit"
                             onClick={(event) =>
