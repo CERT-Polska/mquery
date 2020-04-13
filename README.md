@@ -45,12 +45,15 @@ The web interface should be available at `http://localhost`.
 For more options see our [installation manual](./INSTALL.md).
 
 
-After you start the system, you should index some files. Use ursadb-cli:
+After you start the system, you should index some files. Use `ursacli`:
 
 ```
-sudo docker-compose run ursadb-cli tcp://ursadb:9281
-index "/mnt/samples";  # /mnt/samples refers to ./samples in the repo
+$ sudo docker-compose exec ursadb ursacli
+[2020-04-13 23:25:49.597] [info] Connected to UrsaDB v1.3.0 (connection id: 006B8B4569)
+ursadb> index "/mnt/samples";
 ```
+
+In a default docker-compose deployment, `/mnt/samples` point to `./samples` directory relative to the repository root.
 
 The command will track the progress.
 Wait until it's finished (this can take a while).
