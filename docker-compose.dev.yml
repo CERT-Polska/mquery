@@ -25,6 +25,7 @@ services:
     - ./src:/usr/src/app/src
     depends_on:
       - "redis"
+      - "ursadb"
   dev-daemon:
     build:
       context: .

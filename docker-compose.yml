@@ -12,6 +12,7 @@ services:
     - ./samples:/mnt/samples
     depends_on:
       - "redis"
+      - "ursadb"
   daemon:
     build:
       context: .
