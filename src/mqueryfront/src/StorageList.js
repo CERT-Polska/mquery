@@ -6,7 +6,7 @@ class StorageRow extends Component {
         if (this.props.enabled) {
             return (
                 <span
-                className="badge badge-success"
+                    className="badge badge-success"
                     data-toggle="tooltip"
                     title="This location is watched and indexed automatically"
                 >
@@ -16,7 +16,7 @@ class StorageRow extends Component {
         }
         return (
             <span
-            className="badge badge-secondary"
+                className="badge badge-secondary"
                 data-toggle="tooltip"
                 title="This location is not indexed automatically"
             >
