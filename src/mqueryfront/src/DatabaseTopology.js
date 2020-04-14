@@ -31,6 +31,7 @@ class DatasetRow extends Component {
                     })}
                 </td>
                 <td>{filesize(this.props.size, { standard: "iec" })}</td>
+                <td>{this.props.file_count}</td>
             </tr>
         );
     }
@@ -98,6 +99,7 @@ class DatabaseTopology extends Component {
                                 <th>dataset id</th>
                                 <th>index types</th>
                                 <th>size</th>
+                                <th>file count</th>
                             </tr>
                         </thead>
                         <tbody>{datasetRows}</tbody>
