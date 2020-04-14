@@ -47,6 +47,7 @@ services:
     - "9281:9281"
     volumes:
     - ./samples:/mnt/samples
+    - ./index:/var/lib/ursadb
   ursadb-cli:
     build:
       context: ursadb-cli/
