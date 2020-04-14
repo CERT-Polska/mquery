@@ -17,3 +17,29 @@
     transform: translateX(-100%);
     position: absolute;
 }
+
+.accordion-toggle {
+    cursor: pointer;
+    position: relative;
+}
+
+.accordion-toggle::after {
+    content: "\f107";
+    color: rgb(134, 134, 134);
+    padding: 1rem;
+    right: 0px;
+    position: absolute;
+    font-family: "FontAwesome";
+}
+
+.accordion-toggle[aria-expanded="true"]::after {
+    content: "\f106";
+}
+
+.table-topology tbody tr:nth-child(4n + 1) {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.table-topology tbody tr:nth-child(2n) {
+    background: rgba(0, 0, 0, 0.02);
+}
