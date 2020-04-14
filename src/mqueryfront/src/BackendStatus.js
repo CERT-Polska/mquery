@@ -25,15 +25,15 @@ class BackendStatus extends Component {
 
         return (
             <div>
-                <h2 className="text-center mq-bottom">current connections</h2>
+                <h2 className="text-center mq-bottom">Current Connections</h2>
                 <div className="table-responsive">
                     <table className="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>id</th>
-                                <th>conn</th>
-                                <th>request</th>
-                                <th>progress</th>
+                                <th>ID</th>
+                                <th>Connection</th>
+                                <th>Request</th>
+                                <th>Progress</th>
                             </tr>
                         </thead>
                         <tbody>{backendJobRows}</tbody>

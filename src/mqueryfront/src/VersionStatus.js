@@ -6,13 +6,13 @@ class VersionStatus extends Component {
 
         return (
             <div>
-                <h2 className="text-center mq-bottom">system version</h2>
+                <h2 className="text-center mq-bottom">System Version</h2>
                 <div className="table-responsive">
                     <table className="table table-striped table-bordered">
                         <thead>
                             <tr>
-                                <th>component</th>
-                                <th>version</th>
+                                <th>Component</th>
+                                <th>Version</th>
                             </tr>
                         </thead>
                         <tbody>
