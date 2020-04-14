@@ -5,6 +5,7 @@ import string
 import time
 
 import uvicorn
+from datetime import datetime
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
@@ -28,6 +29,7 @@ from schema import (
     ParseResponseSchema,
     MatchesSchema,
     StatusSchema,
+    StorageSchema,
     UserSettingsSchema,
     UserInfoSchema,
     UserAuthSchema,
@@ -152,6 +154,21 @@ def job_info(job_id: str) -> JobSchema:
 def job_cancel(job_id: str) -> StatusSchema:
     redis.hmset("job:" + job_id, {"status": "cancelled"})
     return StatusSchema(status="ok")
+
+
+@app.get("/api/storage", response_model=List[StorageSchema])
+def storage_list() -> List[StorageSchema]:
+    return [
+        StorageSchema(
+            id="XYZ",
+            name="default",
+            path="/mnt/samples",
+            indexing_job_id=None,
+            last_update=datetime(2020, 4, 12),
+            taints=["malware"],
+            enabled=True,
+        )
+    ]
 
 
 @app.get("/api/user/settings", response_model=UserSettingsSchema)
