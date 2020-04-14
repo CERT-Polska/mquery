@@ -36,7 +36,7 @@ class StoragePage extends Component {
                             className="nav-link"
                             to={"/storage/add"}
                             type="button"
-                            class="btn btn-success btn-sm"
+                            className="btn btn-success btn-sm"
                             data-toggle="tooltip"
                             title="Configure a new storage location"
                         >

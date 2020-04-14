@@ -4,39 +4,39 @@ class StorageAddForm extends Component {
     render() {
         return (
             <form>
-                <div class="form-group row">
+                <div className="form-group row">
                     <label
                         for="storageName"
-                        class="col-sm-2 col-form-label col-form-label"
+                        className="col-sm-2 col-form-label col-form-label"
                     >
                         Name
                     </label>
-                    <div class="col-sm-10">
+                    <div className="col-sm-10">
                         <input
                             type="text"
-                            class="form-control form-control"
+                            className="form-control form-control"
                             id="storageName"
                             placeholder="Name for your new storage"
                         />
                     </div>
                 </div>
-                <div class="form-group row">
+                <div className="form-group row">
                     <label
                         for="storagePath"
-                        class="col-sm-2 col-form-label col-form-label"
+                        className="col-sm-2 col-form-label col-form-label"
                     >
                         Path
                     </label>
-                    <div class="col-sm-10">
+                    <div className="col-sm-10">
                         <input
                             type="text"
-                            class="form-control form-control"
+                            className="form-control form-control"
                             id="storagePath"
                             placeholder="Root local filesystem path for storage"
                         />
                     </div>
                 </div>
-                <button class="btn btn-primary" type="submit">
+                <button className="btn btn-primary" type="submit">
                     Submit
                 </button>
             </form>

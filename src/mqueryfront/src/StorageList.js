@@ -6,7 +6,7 @@ class StorageRow extends Component {
         if (this.props.enabled) {
             return (
                 <span
-                    class="badge badge-success"
+                className="badge badge-success"
                     data-toggle="tooltip"
                     title="This location is watched and indexed automatically"
                 >
@@ -16,7 +16,7 @@ class StorageRow extends Component {
         }
         return (
             <span
-                class="badge badge-secondary"
+            className="badge badge-secondary"
                 data-toggle="tooltip"
                 title="This location is not indexed automatically"
             >
@@ -26,11 +26,11 @@ class StorageRow extends Component {
     }
 
     render() {
-        var taintTags = this.props.taints.map((taint) => (
+        let taintTags = this.props.taints.map((taint) => (
             <span>
                 {" "}
                 <span
-                    class="badge badge-primary"
+                    className="badge badge-primary"
                     data-toggle="tooltip"
                     title={`New indexed files are tagged with "${taint}"`}
                 >
@@ -39,11 +39,11 @@ class StorageRow extends Component {
             </span>
         ));
 
-        var actionButtons = (
+        let actionButtons = (
             <div>
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm"
+                    className="btn btn-secondary btn-sm"
                     data-toggle="tooltip"
                     title="Reindex this dataset now"
                 >
@@ -51,7 +51,7 @@ class StorageRow extends Component {
                 </button>{" "}
                 <button
                     type="button"
-                    class="btn btn-danger btn-sm"
+                    className="btn btn-danger btn-sm"
                     data-toggle="tooltip"
                     title="Stop watching the dataset (keep indexed files)"
                 >

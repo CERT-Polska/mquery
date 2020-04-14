@@ -42,13 +42,13 @@ class Navigation extends Component {
                                 Recent jobs
                             </Link>
                         </li>
-                        {process.env.NODE_ENV == "development" ? (
+                        {process.env.NODE_ENV === "development" ? (
                             <li className="nav-item">
                                 <Link className="nav-link" to={"/storage"}>
                                     Storage
                                 </Link>
                             </li>
-                        ) : undefined}
+                        ) : null}
                         <li className="nav-item">
                             <Link className="nav-link" to={"/status"}>
                                 Status
