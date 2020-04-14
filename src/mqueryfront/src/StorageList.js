@@ -26,22 +26,45 @@ class StorageRow extends Component {
     }
 
     render() {
+        var taintTags = this.props.taints.map((taint) => (
+            <span>
+                {" "}
+                <span
+                    class="badge badge-primary"
+                    data-toggle="tooltip"
+                    title={`New indexed files are tagged with "${taint}"`}
+                >
+                    {taint}
+                </span>
+            </span>
+        ));
+
+        var actionButtons = (
+            <div>
+                <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    data-toggle="tooltip"
+                    title="Reindex this dataset now"
+                >
+                    Reindex
+                </button>{" "}
+                <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    data-toggle="tooltip"
+                    title="Stop watching the dataset (keep indexed files)"
+                >
+                    Delete
+                </button>
+            </div>
+        );
+
         return (
             <tr>
                 <td>
                     <code>{this.props.name}</code>
-                    {this.props.taints.map((taint) => (
-                        <span>
-                            {" "}
-                            <span
-                                class="badge badge-primary"
-                                data-toggle="tooltip"
-                                title={`New indexed files are tagged with "${taint}"`}
-                            >
-                                {taint}
-                            </span>
-                        </span>
-                    ))}
+                    {taintTags}
                 </td>
                 <td>
                     <code>{this.props.path}</code>
@@ -50,24 +73,7 @@ class StorageRow extends Component {
                     {new Date(this.props.lastUpdate).toLocaleDateString()}{" "}
                     {this.getWatchedBadge()}
                 </td>
-                <td>
-                    <button
-                        type="button"
-                        class="btn btn-secondary btn-sm"
-                        data-toggle="tooltip"
-                        title="Reindex this dataset now"
-                    >
-                        Reindex
-                    </button>
-                    <button
-                        type="button"
-                        class="btn btn-danger btn-sm"
-                        data-toggle="tooltip"
-                        title="Stop watching the dataset (keep indexed files)"
-                    >
-                        Delete
-                    </button>
-                </td>
+                <td>{actionButtons}</td>
             </tr>
         );
     }
