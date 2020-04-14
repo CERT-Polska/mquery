@@ -95,7 +95,7 @@ class DatabaseTopology extends Component {
         return (
             <ErrorBoundary error={this.state.error}>
                 <h2 className="text-center mq-bottom">
-                    topology
+                    Topology
                     <button
                         className="btn btn-danger btn-sm float-right"
                         name="query"
@@ -104,15 +104,15 @@ class DatabaseTopology extends Component {
                         onClick={this.runCompactAll}
                         title="Compact the db. Warning: this may take a long time"
                     >
-                        db compact
+                        DB Compact
                     </button>
                 </h2>
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>
                             <tr>
-                                <th>dataset id</th>
-                                <th> # files (size)</th>
+                                <th>Dataset ID</th>
+                                <th> # Files (size)</th>
                             </tr>
                         </thead>
                         <tbody>{datasetRows}</tbody>
