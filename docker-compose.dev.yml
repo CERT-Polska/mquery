@@ -10,6 +10,8 @@ services:
     - dev-web
     volumes:
     - ./src/mqueryfront/src:/app/src
+    depends_on:
+      - "dev-web"
   dev-web:
     build:
       context: .
@@ -21,6 +23,9 @@ services:
     volumes:
     - ./samples:/mnt/samples
     - ./src:/usr/src/app/src
+    depends_on:
+      - "redis"
+      - "ursadb"
   dev-daemon:
     build:
       context: .
@@ -31,6 +36,9 @@ services:
     volumes:
     - ./samples:/mnt/samples
     - ./src:/usr/src/app/src
+    depends_on:
+      - "redis"
+      - "ursadb"
   ursadb:
     build:
       context: ursadb/
@@ -46,5 +54,7 @@ services:
     volumes:
     - ./samples:/mnt/samples
     command: tcp://ursadb:9281 --cmd "ping;"
+    depends_on:
+      - "ursadb"
   redis:
     image: redis
