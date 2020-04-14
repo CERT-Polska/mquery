@@ -30,6 +30,8 @@ spec:
         volumeMounts:
         - mountPath: /mnt/samples
           name: mquery-nfs-volume-prod
+        - mountPath: /mnt/kuku-analyses
+          name: mquery-nfs-analyses-volume-prod
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: dr-auth
@@ -43,3 +45,6 @@ spec:
       - name: mquery-nfs-volume-prod
         persistentVolumeClaim:
           claimName: mquery-nfs-claim-prod
+      - name: mquery-nfs-analyses-volume-prod
+        persistentVolumeClaim:
+          claimName: mquery-nfs-analyses-claim-prod
