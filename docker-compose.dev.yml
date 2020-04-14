@@ -48,14 +48,5 @@ services:
     volumes:
     - ./samples:/mnt/samples
     - ./index:/var/lib/ursadb
-  ursadb-cli:
-    build:
-      context: ursadb-cli/
-      dockerfile: Dockerfile
-    volumes:
-    - ./samples:/mnt/samples
-    command: tcp://ursadb:9281 --cmd "ping;"
-    depends_on:
-      - "ursadb"
   redis:
     image: redis

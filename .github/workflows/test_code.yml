@@ -89,10 +89,8 @@ jobs:
     needs: [test_python_types, test_js_build]
     steps:
       - uses: actions/checkout@v2
-      - name: git submodule init
-        run: git submodule init
-      - name: git submodule update
-        run: git submodule update
+        with:
+          submodules: recursive
       - name: build test image
         run: docker build -t mquery_tests:latest -f src/tests/Dockerfile .
       - name: run docker compose
