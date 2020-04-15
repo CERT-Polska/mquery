@@ -1,26 +1,32 @@
 import argparse
+import itertools
+import re
+from typing import Dict, List, Optional
+
 from yaramod import (  # type: ignore
-    Yaramod,
     AndExpression,
-    StringCountExpression,
-    IntLiteralExpression,
-    ParenthesesExpression,
-    GtExpression,
     EqExpression,
-    OrExpression,
-    StringExpression,
-    OfExpression,
-    StringWildcardExpression,
-    StringAtExpression,
+    GtExpression,
     IdExpression,
-    StringInRangeExpression,
-    ThemExpression,
+    IntLiteralExpression,
+    OfExpression,
+    OrExpression,
+    ParenthesesExpression,
+    PlainString,
     SetExpression,
     String,
-    PlainString,
+    StringAtExpression,
+    StringCountExpression,
+    StringExpression,
+    StringInRangeExpression,
+    StringWildcardExpression,
+    ThemExpression,
+    Yaramod,
 )
-from typing import Optional, List, Dict
-import re
+
+
+def xor(data: bytes, key: bytes) -> bytes:
+    return bytes(x ^ y for x, y in zip(data, itertools.cycle(key)))
 
 
 class YaraParseError(Exception):
@@ -148,11 +154,31 @@ def ursify_plain_string(string: PlainString) -> UrsaExpression:
         return ursa_ascii
 
 
+def ursify_xor_string(string: PlainString) -> UrsaExpression:
+    text_ascii = string.pure_text
+    xored_strings: List[UrsaExpression] = []
+
+    # TODO implement modifier ranges - https://github.com/CERT-Polska/mquery/issues/100
+    for xor_key in range(256):
+        xored_ascii = xor(text_ascii, bytes([xor_key]))
+        xored_wide = bytes(x ^ xor_key for y in text_ascii for x in [y, 0])
+
+        if string.is_ascii:
+            xored_strings.append(UrsaExpression(f"{{{xored_ascii.hex()}}}"))
+        if string.is_wide:
+            xored_strings.append(UrsaExpression(f"{{{xored_wide.hex()}}}"))
+
+    return UrsaExpression.or_(*xored_strings)
+
+
 def ursify_string(string: String) -> Optional[UrsaExpression]:
-    if string.is_xor or string.is_nocase:
+    # nocase strings are not currently supported
+    if string.is_nocase:
         return None
 
-    if string.is_plain:
+    if string.is_xor:
+        return ursify_xor_string(string)
+    elif string.is_plain:
         return ursify_plain_string(string)
     elif string.is_hex:
         value_safe = string.pure_text.decode()

@@ -25,4 +25,4 @@ uWSGI==2.0.17.1
 websockets==8.1
 Werkzeug==0.15.3
 yara-python==3.8.1
-yaramod==3.0.1
+yaramod==3.5.0
