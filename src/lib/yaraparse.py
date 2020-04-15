@@ -158,6 +158,7 @@ def ursify_xor_string(string: PlainString) -> UrsaExpression:
     text_ascii = string.pure_text
     xored_strings: List[UrsaExpression] = []
 
+    # TODO implement modifier ranges - https://github.com/CERT-Polska/mquery/issues/100
     for xor_key in range(256):
         xored_ascii = xor(text_ascii, bytes([xor_key]))
         xored_wide = bytes(x ^ xor_key for y in text_ascii for x in [y, 0])
