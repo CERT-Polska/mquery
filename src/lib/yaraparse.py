@@ -3,10 +3,10 @@ import itertools
 import re
 from typing import Dict, List, Optional
 
-from yaramod import (
+from yaramod import (  # type: ignore
     AndExpression,
     EqExpression,
-    GtExpression,  # type: ignore
+    GtExpression,
     IdExpression,
     IntLiteralExpression,
     OfExpression,
