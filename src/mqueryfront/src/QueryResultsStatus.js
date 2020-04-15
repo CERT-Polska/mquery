@@ -1,4 +1,4 @@
-import React, { Component, useState, useEffect } from "react";
+import React, { Component } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
