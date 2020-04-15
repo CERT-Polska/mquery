@@ -160,7 +160,7 @@ def ursify_xor_string(string: PlainString) -> UrsaExpression:
 
     for xor_key in range(256):
         xored_ascii = xor(text_ascii, bytes([xor_key]))
-        xored_wide = bytes(x for y in xored_ascii for x in [y, 0])
+        xored_wide = bytes(x ^ xor_key for y in text_ascii for x in [y, 0])
 
         if string.is_ascii:
             xored_strings.append(UrsaExpression(f"{{{xored_ascii.hex()}}}"))
