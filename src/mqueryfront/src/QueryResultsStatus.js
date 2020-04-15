@@ -1,6 +1,7 @@
-import React, { Component } from "react";
+import React, { Component, useState, useEffect } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
+import Pagination from "react-js-pagination";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -63,11 +64,21 @@ class QueryResultsStatus extends Component {
     constructor(props) {
         super(props);
 
+        this.state = {
+            activePage: 1,
+            itemPerPage: 20,
+        };
+
         this.handleCancelJob = this.handleCancelJob.bind(this);
     }
 
     handleCancelJob() {
         axios.delete(API_URL + "/job/" + this.props.qhash);
+    }
+
+    handlePageChange(pageNumber) {
+        console.log(`active page is ${pageNumber}`);
+        this.setState({ activePage: pageNumber });
     }
 
     renderSwitchStatus(status) {
@@ -148,6 +159,13 @@ class QueryResultsStatus extends Component {
             return ReturnExpiredJob(this.props.job.error);
         }
 
+        var indexOfLastMatch = this.state.activePage * this.state.itemPerPage;
+        var indexOfFirstMatch = indexOfLastMatch - this.state.itemPerPage;
+        var renderedMatches = matches.slice(
+            indexOfFirstMatch,
+            indexOfLastMatch
+        );
+
         let results = <div />;
 
         if (lenMatches === 0 && this.props.job.status === "done") {
@@ -162,8 +180,19 @@ class QueryResultsStatus extends Component {
                                 <th>Matches</th>
                             </tr>
                         </thead>
-                        <tbody>{matches}</tbody>
+                        <tbody>{renderedMatches}</tbody>
                     </table>
+                    <div>
+                        <Pagination
+                            activePage={this.state.activePage}
+                            itemsCountPerPage={this.state.itemPerPage}
+                            totalItemsCount={lenMatches}
+                            pageRangeDisplayed={5}
+                            onChange={this.handlePageChange.bind(this)}
+                            itemClass="page-item"
+                            linkClass="page-link"
+                        />
+                    </div>
                 </div>
             );
         }
