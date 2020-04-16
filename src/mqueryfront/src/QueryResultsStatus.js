@@ -70,6 +70,7 @@ class QueryResultsStatus extends Component {
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
+        this.sendResultsActivePage = this.sendResultsActivePage.bind(this)
     }
 
     handleCancelJob() {
@@ -79,6 +80,10 @@ class QueryResultsStatus extends Component {
     handlePageChange(pageNumber) {
         console.log(`active page is ${pageNumber}`);
         this.setState({ activePage: pageNumber });
+    }
+
+    sendResultsActivePage = () => {
+        this.props.parentCallback(this.state.activePage);
     }
 
     renderSwitchStatus(status) {
@@ -136,6 +141,7 @@ class QueryResultsStatus extends Component {
             progress = 0;
             processed = "-";
         }
+        this.sendResultsActivePage()
 
         const matches = this.props.matches.map((match, index) => (
             <MatchItem
@@ -165,6 +171,8 @@ class QueryResultsStatus extends Component {
             indexOfFirstMatch,
             indexOfLastMatch
         );
+
+        // this.sendResultsActivePage()
 
         let results = <div />;
 

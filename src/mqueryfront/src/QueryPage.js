@@ -23,6 +23,7 @@ class QueryPage extends Component {
             queryPlan: null,
             queryError: null,
             datasets: {},
+            activePage: 0,
         };
 
         this.updateQhash = this.updateQhash.bind(this);
@@ -82,8 +83,13 @@ class QueryPage extends Component {
         this.loadMatches();
     }
 
+    callbackResultsActivePage = (pageNumber) => {
+        this.setState({activePage: pageNumber})
+    }
+
+
     loadMatches() {
-        const LIMIT = 50;
+        const LIMIT = 20000;
 
         if (!this.state.qhash) {
             return;
@@ -169,6 +175,7 @@ class QueryPage extends Component {
                 queryError={this.state.queryError}
             />
         );
+        console.log(this.state.activePage)
         var queryResults = (
             <div>
                 <button
@@ -183,6 +190,7 @@ class QueryPage extends Component {
                     qhash={this.state.qhash}
                     job={this.state.job}
                     matches={this.state.matches}
+                    parentCallback = {this.callbackResultsActivePage}
                 />
             </div>
         );
