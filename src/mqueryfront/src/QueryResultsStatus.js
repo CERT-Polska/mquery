@@ -136,12 +136,6 @@ class QueryResultsStatus extends Component {
             progress = 0;
             processed = "-";
         }
-        // fmatched = this.props.job.files_matched
-        //alert(this.props.job.files_matched)
-
-         console.log(this.props.job.files_matched)
-        // console.log(type(fmatched))
-        // console.log(fmatched)
 
         const matches = this.props.matches.map((match, index) => (
             <MatchItem
