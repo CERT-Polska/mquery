@@ -70,20 +70,21 @@ class QueryResultsStatus extends Component {
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
-        this.sendResultsActivePage = this.sendResultsActivePage.bind(this)
+
     }
 
     handleCancelJob() {
         axios.delete(API_URL + "/job/" + this.props.qhash);
     }
 
-    handlePageChange(pageNumber) {
-        console.log(`active page is ${pageNumber}`);
-        this.setState({ activePage: pageNumber });
+    sendResultsActivePage = (pageNumber) => {
+        this.props.parentCallback(pageNumber);
     }
 
-    sendResultsActivePage = () => {
-        this.props.parentCallback(this.state.activePage);
+    handlePageChange(pageNumber) {
+        this.setState({ activePage: pageNumber });
+        this.sendResultsActivePage(pageNumber);
+
     }
 
     renderSwitchStatus(status) {
@@ -141,7 +142,6 @@ class QueryResultsStatus extends Component {
             progress = 0;
             processed = "-";
         }
-        this.sendResultsActivePage()
 
         const matches = this.props.matches.map((match, index) => (
             <MatchItem

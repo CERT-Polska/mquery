@@ -23,7 +23,7 @@ class QueryPage extends Component {
             queryPlan: null,
             queryError: null,
             datasets: {},
-            activePage: 0,
+            activePage: 1,
         };
 
         this.updateQhash = this.updateQhash.bind(this);
@@ -87,9 +87,8 @@ class QueryPage extends Component {
         this.setState({activePage: pageNumber})
     }
 
-
     loadMatches() {
-        const LIMIT = 20000;
+        const LIMIT = 100;
 
         if (!this.state.qhash) {
             return;
@@ -175,7 +174,7 @@ class QueryPage extends Component {
                 queryError={this.state.queryError}
             />
         );
-        console.log(this.state.activePage)
+        
         var queryResults = (
             <div>
                 <button
