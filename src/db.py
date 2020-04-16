@@ -127,12 +127,14 @@ class Database:
                 "status": "processing",
                 "iterator": iterator,
                 "files_processed": 0,
+                "files_matched": 0,
                 "total_files": file_count,
             },
         )
 
-    def update_job(self, job: JobId, files_processed: int) -> None:
+    def update_job(self, job: JobId, files_processed: int, files_matched: int) -> None:
         self.redis.hincrby(job.key, "files_processed", files_processed)
+        self.redis.hincrby(job.key, "files_matched", files_matched)
 
     def set_job_to_parsing(self, job: JobId) -> None:
         """ Sets the job status to parsing """
@@ -169,6 +171,7 @@ class Database:
             submitted=data.get("submitted", 0),
             priority=data.get("priority", "medium"),
             files_processed=data.get("files_processed", 0),
+            files_matched=data.get("files_matched", 0),
             total_files=data.get("total_files", 0),
             iterator=data.get("iterator", None),
             taint=data.get("taint", None),

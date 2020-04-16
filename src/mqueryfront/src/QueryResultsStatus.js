@@ -136,6 +136,12 @@ class QueryResultsStatus extends Component {
             progress = 0;
             processed = "-";
         }
+        // fmatched = this.props.job.files_matched
+        //alert(this.props.job.files_matched)
+
+         console.log(this.props.job.files_matched)
+        // console.log(type(fmatched))
+        // console.log(fmatched)
 
         const matches = this.props.matches.map((match, index) => (
             <MatchItem
@@ -153,7 +159,7 @@ class QueryResultsStatus extends Component {
             cancel = <span />;
         }
 
-        const lenMatches = this.props.matches.length;
+        const lenMatches = this.props.job.files_matched;
 
         if (this.props.job.status === "expired") {
             return ReturnExpiredJob(this.props.job.error);
