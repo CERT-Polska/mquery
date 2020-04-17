@@ -98,7 +98,9 @@ class Database:
         self.redis.hset(job.key, "status", "expired")
         self.redis.delete(job.meta_key)
 
-    def fail_job(self, queue: Optional[JobQueue], job: JobId, message: str) -> None:
+    def fail_job(
+        self, queue: Optional[JobQueue], job: JobId, message: str
+    ) -> None:
         """ Sets the job status to failed, and removes it from job queues """
         self.redis.hmset(job.key, {"status": "failed", "error": message})
         if queue:
@@ -140,7 +142,7 @@ class Database:
 
     def gc_lock(self) -> bool:
         """ Tries to get a GC lock,and returns ture if succeeded """
-        return self.redis.set("gc-lock", "locked", ex=60, nx=True)
+        return bool(self.redis.set("gc-lock", "locked", ex=60, nx=True))
 
     def push_job_to_queue(self, job: JobSchema) -> None:
         list_name = get_list_name(job.priority)
@@ -220,13 +222,13 @@ class Database:
     def run_command(self, command: str) -> None:
         self.redis.rpush("queue-commands", command)
 
-    def get_task(self) -> Tuple[Optional[str], Optional[str]]:
+    def get_task(self) -> Optional[Tuple[str, str]]:
         task_queues = ["queue-search", "queue-commands"]
         for queue in task_queues:
             task = self.redis.lpop(queue)
             if task is not None:
                 return queue, task
-        return None, None
+        return None
 
     def unsafe_get_redis(self) -> StrictRedis:
         return self.redis

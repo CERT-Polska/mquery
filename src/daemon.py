@@ -34,14 +34,10 @@ def collect_expired_jobs() -> None:
         return
 
     exp_time = int(60 * config.JOB_EXPIRATION_MINUTES)  # conversion to seconds
-    job_ids: List[JobId] = []
 
     for job in redis.get_job_ids():
-        job_ids.append(job)
-
-    for job in job_ids:
-        job_submitted_time = redis.get_job_submitted(job)
-        if (int(time.time()) - job_submitted_time) >= exp_time:
+        job_submission_time = redis.get_job_submitted(job)
+        if (int(time.time()) - job_submission_time) >= exp_time:
             redis.expire_job(job)
 
 
@@ -62,10 +58,10 @@ def process_task(queue: str, data: str) -> None:
 
 
 def try_to_do_task() -> bool:
-    queue, task = redis.get_task()
-    if task is not None:
-        data = task
-        process_task(str(queue), str(data))
+    queue_and_task = redis.get_task()
+    if queue_and_task is not None:
+        queue, task = queue_and_task
+        process_task(queue, task)
         return True
 
     return False
