@@ -61,7 +61,9 @@ class JobQueue:
 class MatchInfo:
     """ Represents information about a single match """
 
-    def __init__(self, file: str, meta: Dict[str, Any], matches: List[str]):
+    def __init__(
+        self, file: str, meta: Dict[str, Any], matches: List[str]
+    ) -> None:
         self.file = file
         self.meta = meta
         self.matches = matches
