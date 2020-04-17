@@ -168,11 +168,7 @@ def execute_yara(job: JobId, files: List[str]) -> None:
             matches = rule.match(sample)
             if matches:
                 len_matches += 1
-<<<<<<< HEAD
                 update_metadata(job, sample, [r.rule for r in matches])
-=======
-                update_metadata(job_hash, sample, [r.rule for r in matches])
->>>>>>> Update daemon.pt
         except yara.Error:
             logging.exception(f"Yara failed to check file {sample}")
         except FileNotFoundError:

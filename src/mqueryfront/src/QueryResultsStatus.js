@@ -66,7 +66,7 @@ class QueryResultsStatus extends Component {
 
         this.state = {
             activePage: 1,
-            itemPerPage: 20,
+            itemsPerPage: 20,
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
@@ -165,15 +165,6 @@ class QueryResultsStatus extends Component {
             return ReturnExpiredJob(this.props.job.error);
         }
 
-        // var indexOfLastMatch = this.state.activePage * this.state.itemPerPage;
-        // var indexOfFirstMatch = indexOfLastMatch - this.state.itemPerPage;
-        // var renderedMatches = matches.slice(
-        //     indexOfFirstMatch,
-        //     indexOfLastMatch
-        // );
-
-        // this.sendResultsActivePage()
-
         let results = <div />;
 
         if (lenMatches === 0 && this.props.job.status === "done") {
@@ -193,7 +184,7 @@ class QueryResultsStatus extends Component {
                     <div>
                         <Pagination
                             activePage={this.state.activePage}
-                            itemsCountPerPage={this.state.itemPerPage}
+                            itemsCountPerPage={this.state.itemsPerPage}
                             totalItemsCount={lenMatches}
                             pageRangeDisplayed={5}
                             onChange={this.handlePageChange.bind(this)}

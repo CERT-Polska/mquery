@@ -97,45 +97,24 @@ class QueryPage extends Component {
                     "/matches/" +
                     this.state.qhash +
                     "?offset=" +
-                    1 +
+                    0 +
                     "&limit=" +
                     LIMIT
             )
             .then((response) => {
-                let newShouldRequest = true;
-
-                if (
-                    ["done", "cancelled", "failed", "expired"].indexOf(
-                        response.data.job.status
-                    ) !== -1
-                ) {
-                    if (
-                        response.data.job.files_processed >=
-                        response.data.job.total_files
-                    ) {
-                        newShouldRequest = false;
-                    }
-                }
-
+                let job = response.data.job;
                 this.setState({
-                    job: response.data.job,
+                    job: job,
                     matches: response.data.matches,
                 });
-
-                if (newShouldRequest) {
-                    let nextTimeout =
-                        response.data.job.files_matched >= LIMIT ? 20 : 1000;
-                    this.timeout = setTimeout(
-                        () => this.loadJob(),
-                        nextTimeout
-                    );
+                let doneStatuses = ["done", "cancelled", "failed", "expired"];
+                let isDone = doneStatuses.indexOf(job.status) !== -1;
+                let processedAll = job.files_processed >= job.total_files;
+                if (isDone && processedAll) {
+                    return;
                 }
+                this.timeout = setTimeout(() => this.loadJob(), 1000);
             })
-            .catch(() => {
-                this.setState({
-                    shouldRequest: false,
-                });
-            });
     }
 
     callbackResultsActivePage = (pageNumber) => {
@@ -146,7 +125,7 @@ class QueryPage extends Component {
 
     loadMatches() {
         const LIMIT = 20;
-        let OFFSET = (this.state.activePage - 1) * 20 + 1;
+        let OFFSET = (this.state.activePage - 1) * 20;
         axios
             .get(
                 API_URL +
