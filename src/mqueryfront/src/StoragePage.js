@@ -13,9 +13,15 @@ class StoragePage extends Component {
             storage: [],
             error: null,
         };
+
+        this.reloadStorage = this.reloadStorage.bind(this);
     }
 
     componentDidMount() {
+        this.reloadStorage();
+    }
+
+    reloadStorage() {
         axios
             .get(API_URL + "/storage")
             .then((response) => {
@@ -43,7 +49,10 @@ class StoragePage extends Component {
                             +
                         </Link>
                     </h1>
-                    <StorageList storage={this.state.storage} />
+                    <StorageList
+                        reload={this.reloadStorage}
+                        storage={this.state.storage}
+                    />
                 </div>
             </ErrorBoundary>
         );

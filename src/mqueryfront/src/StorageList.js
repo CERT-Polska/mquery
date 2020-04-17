@@ -1,7 +1,23 @@
 import React, { Component } from "react";
+import axios from "axios";
+import { API_URL } from "./config";
 import ErrorBoundary from "./ErrorBoundary";
 
 class StorageRow extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            storageName: "",
+            storagePath: "",
+            error: null,
+        };
+
+        this.handleEnable = this.handleEnable.bind(this);
+        this.handleDisable = this.handleDisable.bind(this);
+        this.handleDelete = this.handleDelete.bind(this);
+    }
+
     getWatchedBadge() {
         if (this.props.enabled) {
             return (
@@ -25,6 +41,33 @@ class StorageRow extends Component {
         );
     }
 
+    handleEnable() {
+        axios
+            .create()
+            .post(API_URL + "/storage/enable", {
+                id: this.props.id,
+            })
+            .then(() => this.props.reload());
+    }
+
+    handleDisable() {
+        axios
+            .create()
+            .post(API_URL + "/storage/disable", {
+                id: this.props.id,
+            })
+            .then(() => this.props.reload());
+    }
+
+    handleDelete() {
+        axios
+            .create()
+            .post(API_URL + "/storage/delete", {
+                id: this.props.id,
+            })
+            .then(() => this.props.reload());
+    }
+
     render() {
         let taintTags = this.props.taints.map((taint) => (
             <span>
@@ -39,21 +82,42 @@ class StorageRow extends Component {
             </span>
         ));
 
-        let actionButtons = (
-            <div>
+        let toggleButton;
+        if (this.props.enabled) {
+            toggleButton = (
                 <button
                     type="button"
                     className="btn btn-secondary btn-sm"
                     data-toggle="tooltip"
-                    title="Reindex this dataset now"
+                    title="Disable reindexing"
+                    onClick={this.handleDisable}
                 >
-                    Reindex
-                </button>{" "}
+                    Disable
+                </button>
+            );
+        } else {
+            toggleButton = (
+                <button
+                    type="button"
+                    className="btn btn-success btn-sm"
+                    data-toggle="tooltip"
+                    title="Enable reindexing"
+                    onClick={this.handleEnable}
+                >
+                    Enable
+                </button>
+            );
+        }
+
+        let actionButtons = (
+            <div>
+                {toggleButton}{" "}
                 <button
                     type="button"
                     className="btn btn-danger btn-sm"
                     data-toggle="tooltip"
                     title="Stop watching the dataset (keep indexed files)"
+                    onClick={this.handleDelete}
                 >
                     Delete
                 </button>
@@ -83,12 +147,14 @@ class StorageList extends Component {
     render() {
         const storageRows = this.props.storage.map((storage) => (
             <StorageRow
+                id={storage.id}
                 name={storage.name}
                 path={storage.path}
                 taints={storage.taints}
                 lastUpdate={storage.last_update}
                 enabled={storage.enabled}
                 key={storage.id}
+                reload={this.props.reload}
             />
         ));
 

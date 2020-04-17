@@ -1,7 +1,6 @@
 import os
 
 import uvicorn
-from datetime import datetime
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
@@ -32,6 +31,8 @@ from schema import (
     UserAuthSchema,
     BackendStatusSchema,
     BackendStatusDatasetsSchema,
+    StorageRequestSchema,
+    StorageCreateRequestSchema,
 )
 
 db = Database()
@@ -121,17 +122,31 @@ def job_cancel(job_id: str) -> StatusSchema:
 
 @app.get("/api/storage", response_model=List[StorageSchema])
 def storage_list() -> List[StorageSchema]:
-    return [
-        StorageSchema(
-            id="XYZ",
-            name="default",
-            path="/mnt/samples",
-            indexing_job_id=None,
-            last_update=datetime(2020, 4, 12),
-            taints=["malware"],
-            enabled=True,
-        )
-    ]
+    return db.get_storages()
+
+
+@app.post("/api/storage", response_model=StatusSchema)
+def storage_add(data: StorageCreateRequestSchema = Body(...)) -> StatusSchema:
+    db.create_storage(data.name, data.path)
+    return StatusSchema(status="ok")
+
+
+@app.post("/api/storage/enable", response_model=StatusSchema)
+def storage_enable(data: StorageRequestSchema = Body(...)) -> StatusSchema:
+    db.enable_storage(data.id)
+    return StatusSchema(status="ok")
+
+
+@app.post("/api/storage/disable", response_model=StatusSchema)
+def storage_disable(data: StorageRequestSchema = Body(...)) -> StatusSchema:
+    db.disable_storage(data.id)
+    return StatusSchema(status="ok")
+
+
+@app.post("/api/storage/delete", response_model=StatusSchema)
+def storage_delete(data: StorageRequestSchema = Body(...)) -> StatusSchema:
+    db.delete_storage(data.id)
+    return StatusSchema(status="ok")
 
 
 @app.get("/api/user/settings", response_model=UserSettingsSchema)

@@ -9,6 +9,13 @@ from datetime import datetime
 from redis import StrictRedis
 
 
+def random_hash() -> str:
+    return "".join(
+        random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+        for _ in range(12)
+    )
+
+
 def make_redis() -> StrictRedis:
     return StrictRedis(
         host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True
@@ -189,14 +196,7 @@ class Database:
         priority: Optional[str],
         taint: Optional[str],
     ) -> JobId:
-        job = JobId(
-            "".join(
-                random.SystemRandom().choice(
-                    string.ascii_uppercase + string.digits
-                )
-                for _ in range(12)
-            )
-        )
+        job = JobId(random_hash())
         job_obj = {
             "status": "new",
             "rule_name": rule_name,
@@ -241,10 +241,10 @@ class Database:
             id=storage_id,
             name=data["name"],
             path=data["path"],
-            indexing_job_id=None,
-            last_update=datetime.fromtimestamp(data["timestamp"]),
-            taints=data["taints"],
-            enabled=data["enabled"],
+            indexing_job_id=data["indexing_job_id"] or None,
+            last_update=datetime.fromtimestamp(int(data["last_update"])),
+            taints=data["taints"].split(","),
+            enabled=bool(int(data["enabled"])),
         )
 
     def get_storages(self) -> List[StorageSchema]:
@@ -252,3 +252,29 @@ class Database:
             self.get_storage(storage_id)
             for storage_id in self.redis.keys("storage:*")
         ]
+
+    def create_storage(self, name: str, path: str) -> None:
+        self.redis.hmset(
+            f"storage:{random_hash()}",
+            {
+                "name": name,
+                "path": path,
+                "indexing_job_id": "",
+                "last_update": int(time()),
+                "taints": "",
+                "enabled": 1,
+            },
+        )
+
+    def delete_storage(self, id: str) -> None:
+        self.redis.delete(id)
+
+    def disable_storage(self, id: str) -> None:
+        self.redis.hmset(
+            id, {"enabled": 0},
+        )
+
+    def enable_storage(self, id: str) -> None:
+        self.redis.hmset(
+            id, {"enabled": 1},
+        )

@@ -32,6 +32,15 @@ class StorageSchema(BaseModel):
     enabled: bool
 
 
+class StorageCreateRequestSchema(BaseModel):
+    name: str
+    path: str
+
+
+class StorageRequestSchema(BaseModel):
+    id: str
+
+
 class TaskSchema(BaseModel):
     connection_id: str
     epoch_ms: int
