@@ -132,7 +132,9 @@ class Database:
             },
         )
 
-    def update_job(self, job: JobId, files_processed: int, files_matched: int) -> None:
+    def update_job(
+        self, job: JobId, files_processed: int, files_matched: int
+    ) -> None:
         self.redis.hincrby(job.key, "files_processed", files_processed)
         self.redis.hincrby(job.key, "files_matched", files_matched)
 

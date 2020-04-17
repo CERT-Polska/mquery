@@ -80,6 +80,7 @@ class QueryPage extends Component {
             qhash: newQhash,
             matches: [],
             job: [],
+            activePage: 1,
         });
         this.loadJob();
     }
@@ -114,7 +115,7 @@ class QueryPage extends Component {
                     return;
                 }
                 this.timeout = setTimeout(() => this.loadJob(), 1000);
-            })
+            });
     }
 
     callbackResultsActivePage = (pageNumber) => {
@@ -195,6 +196,7 @@ class QueryPage extends Component {
                     job={this.state.job}
                     matches={this.state.matches}
                     parentCallback={this.callbackResultsActivePage}
+                    activePage={this.props.activePage}
                 />
             </div>
         );
