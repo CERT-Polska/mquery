@@ -16,10 +16,9 @@ function MatchItem(props) {
     if (props.matches) {
         matches = Object.values(props.matches).map((v) => (
             <span key={v}>
-                {" "}
-                <span className="badge badge-pill badge-primary ml-1 pull-right ">
+                <div className="badge badge-pill badge-primary ml-1 mt-1">
                     {v}
-                </span>
+                </div>
             </span>
         ));
     }
@@ -33,12 +32,22 @@ function MatchItem(props) {
         "&file_path=" +
         encodeURIComponent(props.file);
 
+    const path = require('path');
+
     return (
         <tr>
             <td>
-                <a href={download_url}>{props.file}</a>
-                {matches}
-                {metadata}
+                <div className="d-flex">
+                    <div className="text-truncate">
+                        <a href={download_url}
+                            data-toggle="tooltip"
+                            title={props.file}
+                        >{path.basename(props.file)}
+                        </a>
+                    </div>
+                    {matches}
+                    {metadata}
+                </div>
             </td>
         </tr>
     );
@@ -50,8 +59,8 @@ function ReturnExpiredJob(job_error) {
             {job_error ? (
                 <div className="alert alert-danger">{job_error}</div>
             ) : (
-                <div />
-            )}
+                    <div />
+                )}
             <div style={{ marginTop: "55px" }}>
                 Search results expired. Please run the query once again.
             </div>
@@ -154,9 +163,12 @@ class QueryResultsStatus extends Component {
             progress = 100;
             results = <div className="alert alert-info">No matches found.</div>;
         } else if (lenMatches !== 0) {
+            const styleFixed = {
+                tableLayout: "fixed"
+            }
             results = (
-                <div class="mquery-scroll-matches">
-                    <table className={"table table-striped table-bordered"}>
+                <div className="mquery-scroll-matches">
+                    <table className={"table table-striped table-bordered"} style={styleFixed}>
                         <thead>
                             <tr>
                                 <th>Matches</th>
@@ -206,8 +218,8 @@ class QueryResultsStatus extends Component {
                         {this.props.job.error}
                     </div>
                 ) : (
-                    <div />
-                )}
+                        <div />
+                    )}
                 {results}
             </div>
         );
