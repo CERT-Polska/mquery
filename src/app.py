@@ -34,9 +34,9 @@ from schema import (
     BackendStatusDatasetsSchema,
 )
 
-redis = Database()
+db = Database()
 app = FastAPI()
-db = UrsaDb(config.BACKEND)
+ursa = UrsaDb(config.BACKEND)
 
 
 @app.middleware("http")
@@ -55,7 +55,7 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 @app.get("/api/download")
 def download(job_id: str, ordinal: str, file_path: str) -> Any:
-    if not redis.job_contains(JobId(job_id), ordinal, file_path):
+    if not db.job_contains(JobId(job_id), ordinal, file_path):
         raise NotFound("No such file in result set.")
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
@@ -91,7 +91,7 @@ def query(
             for rule in rules
         ]
 
-    job = redis.create_search_task(
+    job = db.create_search_task(
         rules[-1].name,
         rules[-1].author,
         data.raw_yara,
@@ -105,17 +105,17 @@ def query(
 def matches(
     hash: str, offset: int = Query(...), limit: int = Query(...)
 ) -> MatchesSchema:
-    return redis.get_job_matches(JobId(hash), offset, limit)
+    return db.get_job_matches(JobId(hash), offset, limit)
 
 
 @app.get("/api/job/{job_id}", response_model=JobSchema)
 def job_info(job_id: str) -> JobSchema:
-    return redis.get_job(JobId(job_id))
+    return db.get_job(JobId(job_id))
 
 
 @app.delete("/api/job/{job_id}", response_model=StatusSchema)
 def job_cancel(job_id: str) -> StatusSchema:
-    redis.cancel_job(JobId(job_id))
+    db.cancel_job(JobId(job_id))
     return StatusSchema(status="ok")
 
 
@@ -165,7 +165,7 @@ def user_jobs(name: str) -> List[JobSchema]:
 
 @app.get("/api/job", response_model=JobsSchema)
 def job_statuses() -> JobsSchema:
-    jobs = [redis.get_job(job) for job in redis.get_job_ids()]
+    jobs = [db.get_job(job) for job in db.get_job_ids()]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
     return JobsSchema(jobs=jobs)
 
@@ -173,7 +173,7 @@ def job_statuses() -> JobsSchema:
 @app.get("/api/backend", response_model=BackendStatusSchema)
 def backend_status() -> BackendStatusSchema:
     db_alive = True
-    status = db.status()
+    status = ursa.status()
     try:
         tasks = status.get("result", {}).get("tasks", [])
         ursadb_version = status.get("result", {}).get(
@@ -199,7 +199,7 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
     db_alive = True
 
     try:
-        datasets = db.topology().get("result", {}).get("datasets", {})
+        datasets = ursa.topology().get("result", {}).get("datasets", {})
     except Again:
         db_alive = False
         datasets = {}
@@ -221,7 +221,7 @@ def serve_index_sub() -> FileResponse:
 
 @app.get("/api/compactall")
 def compact_all() -> StatusSchema:
-    redis.run_command("compact all;")
+    db.run_command("compact all;")
     return StatusSchema(status="ok")
 
 
