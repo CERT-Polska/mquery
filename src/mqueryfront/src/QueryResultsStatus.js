@@ -165,12 +165,12 @@ class QueryResultsStatus extends Component {
             return ReturnExpiredJob(this.props.job.error);
         }
 
-        var indexOfLastMatch = this.state.activePage * this.state.itemPerPage;
-        var indexOfFirstMatch = indexOfLastMatch - this.state.itemPerPage;
-        var renderedMatches = matches.slice(
-            indexOfFirstMatch,
-            indexOfLastMatch
-        );
+        // var indexOfLastMatch = this.state.activePage * this.state.itemPerPage;
+        // var indexOfFirstMatch = indexOfLastMatch - this.state.itemPerPage;
+        // var renderedMatches = matches.slice(
+        //     indexOfFirstMatch,
+        //     indexOfLastMatch
+        // );
 
         // this.sendResultsActivePage()
 
@@ -188,7 +188,7 @@ class QueryResultsStatus extends Component {
                                 <th>Matches</th>
                             </tr>
                         </thead>
-                        <tbody>{renderedMatches}</tbody>
+                        <tbody>{matches}</tbody>
                     </table>
                     <div>
                         <Pagination

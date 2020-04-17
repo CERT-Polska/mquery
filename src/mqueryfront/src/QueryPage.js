@@ -24,6 +24,7 @@ class QueryPage extends Component {
             queryError: null,
             datasets: {},
             activePage: 1,
+            newShouldRequest: true,
         };
 
         this.updateQhash = this.updateQhash.bind(this);
@@ -84,15 +85,14 @@ class QueryPage extends Component {
     }
 
     callbackResultsActivePage = (pageNumber) => {
-        this.setState({activePage: pageNumber})
+        this.setState({activePage: pageNumber},
+            () => {this.loadMatches()})
+        
     }
 
     loadMatches() {
-        const LIMIT = 100;
-
-        if (!this.state.qhash) {
-            return;
-        }
+        const LIMIT = 20;
+        let OFFSET = (this.state.activePage - 1) * 20 + 1
 
         axios
             .get(
@@ -100,42 +100,42 @@ class QueryPage extends Component {
                     "/matches/" +
                     this.state.qhash +
                     "?offset=" +
-                    this.state.matches.length +
+                    OFFSET +
                     "&limit=" +
                     LIMIT
             )
             .then((response) => {
-                let newShouldRequest = true;
+                // let newShouldRequest = true;
 
-                if (
-                    ["done", "cancelled", "failed", "expired"].indexOf(
-                        response.data.job.status
-                    ) !== -1
-                ) {
-                    if (!response.data.matches.length) {
-                        newShouldRequest = false;
-                    }
-                }
+                // if (
+                //     ["done", "cancelled", "failed", "expired"].indexOf(
+                //         response.data.job.status
+                //     ) !== -1
+                // ) {
+                //     if (!response.data.matches.length) {
+                //         newShouldRequest = false;
+                //     }
+                // }
 
                 this.setState({
-                    matches: [...this.state.matches, ...response.data.matches],
+                    matches: response.data.matches,
                     job: response.data.job,
                 });
 
-                if (newShouldRequest) {
-                    let nextTimeout =
-                        response.data.matches.length >= LIMIT ? 50 : 1000;
-                    this.timeout = setTimeout(
-                        () => this.loadMatches(),
-                        nextTimeout
-                    );
-                }
+                // if (newShouldRequest) {
+                //     let nextTimeout =
+                //         response.data.matches.length >= LIMIT ? 50 : 1000;
+                //     this.timeout = setTimeout(
+                //         () => this.loadMatches(),
+                //         nextTimeout
+                //     );
+                // }
             })
-            .catch(() => {
-                this.setState({
-                    shouldRequest: false,
-                });
-            });
+            // .catch(() => {
+            //     this.setState({
+            //         shouldRequest: false,
+            //     });
+            // });
     }
 
     updateQueryError(newError, rawYara) {
