@@ -65,7 +65,7 @@ def try_to_do_task() -> bool:
     queue, task = redis.get_task()
     if task is not None:
         data = task
-        process_task(queue, data)
+        process_task(str(queue), str(data))
         return True
 
     return False

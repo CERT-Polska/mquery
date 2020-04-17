@@ -1,10 +1,11 @@
 from typing import List, Tuple, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema
+from schema import JobSchema, MatchesSchema, StorageSchema
 from time import time
 import json
 import random
 import string
 import config
+from datetime import datetime
 from redis import StrictRedis
 
 
@@ -219,7 +220,7 @@ class Database:
     def run_command(self, command: str) -> None:
         self.redis.rpush("queue-commands", command)
 
-    def get_task(self) -> Tuple[str, str]:
+    def get_task(self) -> Tuple[Optional[str], Optional[str]]:
         task_queues = ["queue-search", "queue-commands"]
         for queue in task_queues:
             task = self.redis.lpop(queue)
@@ -229,3 +230,21 @@ class Database:
 
     def unsafe_get_redis(self) -> Any:
         return self.redis
+
+    def get_storage(self, storage_id: str) -> StorageSchema:
+        data = self.redis.hgetall(storage_id)
+        return StorageSchema(
+            id=storage_id,
+            name=data["name"],
+            path=data["path"],
+            indexing_job_id=None,
+            last_update=datetime.fromtimestamp(data["timestamp"]),
+            taints=data["taints"],
+            enabled=data["enabled"],
+        )
+
+    def get_storages(self) -> List[StorageSchema]:
+        return [
+            self.get_storage(storage_id)
+            for storage_id in self.redis.keys("storage:*")
+        ]

@@ -1,7 +1,7 @@
 import json
 import time
 import zmq  # type: ignore
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 
 Json = Dict[str, Any]
@@ -32,7 +32,7 @@ class UrsaDb:
         socket.connect(self.backend)
         return socket
 
-    def query(self, query: str, taint: str) -> Json:
+    def query(self, query: str, taint: Optional[str]) -> Json:
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
