@@ -36,7 +36,10 @@ The easiest way to start is by using `docker-compose` from the source:
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
-# Copy your malware samples to ./samples directory in the cloned repository
+# now set SAMPLES_DIR to a directory with your files, and INDEX_DIR to
+# empty directory for database files to live in. By default database will
+# expect files in ./samples directory, and keep index in ./index.
+vim .env  
 docker-compose up --scale daemon=3  # building the images will take a while
 ```
 
@@ -53,7 +56,8 @@ $ sudo docker-compose exec ursadb ursacli
 ursadb> index "/mnt/samples";
 ```
 
-In a default docker-compose deployment, `/mnt/samples` point to `./samples` directory relative to the repository root.
+In a default docker-compose deployment, `/mnt/samples` point to the configured
+`SAMPLES_DIR` from the `.env` file.
 
 The command will track the progress.
 Wait until it's finished (this can take a while).

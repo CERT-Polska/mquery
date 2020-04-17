@@ -6,3 +6,4 @@ config.py
 .mypy_cache
 samples/
 index/
+.env
