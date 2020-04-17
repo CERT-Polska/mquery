@@ -94,7 +94,6 @@ jobs:
         run: docker build -t mquery_tests:latest -f src/tests/Dockerfile .
       - name: run unit tests
         run: docker run mquery_tests
-      - name: stop docker compose
   test_e2e:
     name: e2e tests
     runs-on: ubuntu-latest
