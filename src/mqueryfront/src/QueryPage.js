@@ -81,6 +81,7 @@ class QueryPage extends Component {
             matches: [],
             job: [],
         });
+        this.loadJob();
         this.loadMatches();
     }
 
@@ -90,10 +91,60 @@ class QueryPage extends Component {
         
     }
 
+
+    loadJob() {
+        const LIMIT = 50;
+
+        if (!this.state.qhash) {
+            return;
+        }
+
+        axios
+            .get(
+                API_URL +
+                    "/matches/" +
+                    this.state.qhash +
+                    "?offset=" +
+                    0 +
+                    "&limit=" +
+                    LIMIT
+            )
+            .then((response) => {
+                let newShouldRequest = true;
+
+                if (
+                    ["done", "cancelled", "failed", "expired"].indexOf(
+                        response.data.job.status
+                    ) !== -1
+                ) {
+                    if (response.data.job.files_processed >= response.data.job.total_files) {
+                        newShouldRequest = false;
+                    }
+                }
+
+                this.setState({
+                    job: response.data.job,
+                });
+
+                if (newShouldRequest) {
+                    let nextTimeout =
+                        response.data.matches.length >= LIMIT ? 50 : 1000;
+                    this.timeout = setTimeout(
+                        () => this.loadJob(),
+                        nextTimeout
+                    );
+                }
+            })
+            .catch(() => {
+                this.setState({
+                    shouldRequest: false,
+                });
+            });
+    }
+
     loadMatches() {
         const LIMIT = 20;
         let OFFSET = (this.state.activePage - 1) * 20 + 1
-
         axios
             .get(
                 API_URL +
@@ -105,37 +156,11 @@ class QueryPage extends Component {
                     LIMIT
             )
             .then((response) => {
-                // let newShouldRequest = true;
-
-                // if (
-                //     ["done", "cancelled", "failed", "expired"].indexOf(
-                //         response.data.job.status
-                //     ) !== -1
-                // ) {
-                //     if (!response.data.matches.length) {
-                //         newShouldRequest = false;
-                //     }
-                // }
-
                 this.setState({
                     matches: response.data.matches,
-                    job: response.data.job,
                 });
 
-                // if (newShouldRequest) {
-                //     let nextTimeout =
-                //         response.data.matches.length >= LIMIT ? 50 : 1000;
-                //     this.timeout = setTimeout(
-                //         () => this.loadMatches(),
-                //         nextTimeout
-                //     );
-                // }
-            })
-            // .catch(() => {
-            //     this.setState({
-            //         shouldRequest: false,
-            //     });
-            // });
+             })
     }
 
     updateQueryError(newError, rawYara) {
