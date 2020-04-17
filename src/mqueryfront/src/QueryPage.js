@@ -82,18 +82,10 @@ class QueryPage extends Component {
             job: [],
         });
         this.loadJob();
-        this.loadMatches();
     }
-
-    callbackResultsActivePage = (pageNumber) => {
-        this.setState({activePage: pageNumber},
-            () => {this.loadMatches()})
-        
-    }
-
 
     loadJob() {
-        const LIMIT = 50;
+        const LIMIT = 20;
 
         if (!this.state.qhash) {
             return;
@@ -105,7 +97,7 @@ class QueryPage extends Component {
                     "/matches/" +
                     this.state.qhash +
                     "?offset=" +
-                    0 +
+                    1 +
                     "&limit=" +
                     LIMIT
             )
@@ -117,18 +109,22 @@ class QueryPage extends Component {
                         response.data.job.status
                     ) !== -1
                 ) {
-                    if (response.data.job.files_processed >= response.data.job.total_files) {
+                    if (
+                        response.data.job.files_processed >=
+                        response.data.job.total_files
+                    ) {
                         newShouldRequest = false;
                     }
                 }
 
                 this.setState({
                     job: response.data.job,
+                    matches: response.data.matches,
                 });
 
                 if (newShouldRequest) {
                     let nextTimeout =
-                        response.data.matches.length >= LIMIT ? 50 : 1000;
+                        response.data.job.files_matched >= LIMIT ? 20 : 1000;
                     this.timeout = setTimeout(
                         () => this.loadJob(),
                         nextTimeout
@@ -142,9 +138,15 @@ class QueryPage extends Component {
             });
     }
 
+    callbackResultsActivePage = (pageNumber) => {
+        this.setState({ activePage: pageNumber }, () => {
+            this.loadMatches();
+        });
+    };
+
     loadMatches() {
         const LIMIT = 20;
-        let OFFSET = (this.state.activePage - 1) * 20 + 1
+        let OFFSET = (this.state.activePage - 1) * 20 + 1;
         axios
             .get(
                 API_URL +
@@ -159,8 +161,7 @@ class QueryPage extends Component {
                 this.setState({
                     matches: response.data.matches,
                 });
-
-             })
+            });
     }
 
     updateQueryError(newError, rawYara) {
@@ -199,7 +200,7 @@ class QueryPage extends Component {
                 queryError={this.state.queryError}
             />
         );
-        
+
         var queryResults = (
             <div>
                 <button
@@ -214,7 +215,7 @@ class QueryPage extends Component {
                     qhash={this.state.qhash}
                     job={this.state.job}
                     matches={this.state.matches}
-                    parentCallback = {this.callbackResultsActivePage}
+                    parentCallback={this.callbackResultsActivePage}
                 />
             </div>
         );
