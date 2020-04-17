@@ -35,7 +35,7 @@ class JobId:
         self.hash = key[4:]
 
     @property
-    def meta_key(self):
+    def meta_key(self) -> str:
         """ Every job has exactly one related meta key"""
         return f"meta:{self.hash}"
 
@@ -66,7 +66,7 @@ class MatchInfo:
         self.meta = meta
         self.matches = matches
 
-    def to_json(self):
+    def to_json(self) -> str:
         """ Converts match info to json """
         return json.dumps(
             {"file": self.file, "meta": self.meta, "matches": self.matches}
@@ -74,7 +74,7 @@ class MatchInfo:
 
 
 class Database:
-    def __init__(self):
+    def __init__(self) -> None:
         self.redis = make_redis()
 
     def get_yara_by_job(self, job: JobId) -> str:
@@ -98,13 +98,13 @@ class Database:
         self.redis.hset(job.key, "status", "expired")
         self.redis.delete(job.meta_key)
 
-    def fail_job(self, queue: Optional[JobQueue], job: JobId, message: str):
+    def fail_job(self, queue: Optional[JobQueue], job: JobId, message: str) -> None:
         """ Sets the job status to failed, and removes it from job queues """
         self.redis.hmset(job.key, {"status": "failed", "error": message})
         if queue:
             self.redis.lrem(queue.name, 0, job.hash)
 
-    def cancel_job(self, job: JobId):
+    def cancel_job(self, job: JobId) -> None:
         """ Sets the job status to cancelled """
         self.redis.hmset(job.key, {"status": "cancelled"})
 
@@ -228,7 +228,7 @@ class Database:
                 return queue, task
         return None, None
 
-    def unsafe_get_redis(self) -> Any:
+    def unsafe_get_redis(self) -> StrictRedis:
         return self.redis
 
     def get_storage(self, storage_id: str) -> StorageSchema:
