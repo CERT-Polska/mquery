@@ -1,7 +1,9 @@
 import os
 import re
 
-from ..metadata import MetadataPlugin
+from typing import Optional
+
+from metadata import Metadata, MetadataPlugin
 
 
 class CuckooAnalysisMetadata(MetadataPlugin):
@@ -9,13 +11,15 @@ class CuckooAnalysisMetadata(MetadataPlugin):
         super().__init__()
         self.path = path
 
-    def identify(self, matched_fname):
+    def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(r"analyses/([0-9]+)/", matched_fname)
         if not m:
-            return {}
-        return int(m.group(1))
+            return None
+        return m.group(1)
 
-    def extract(self, identifier, matched_fname, current_meta):
+    def extract(
+        self, identifier: str, matched_fname: str, current_meta: Metadata
+    ) -> Metadata:
         try:
             target = os.readlink(self.path + "{}/binary".format(identifier))
         except OSError:

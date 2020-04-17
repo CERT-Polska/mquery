@@ -1,9 +1,11 @@
 import re
 import urllib.parse
 
+from typing import Optional
+
 from mwdblib import Malwarecage
 
-from ..metadata import MetadataPlugin
+from metadata import Metadata, MetadataPlugin
 
 
 class MalwarecageUploadsMetadata(MetadataPlugin):
@@ -20,16 +22,18 @@ class MalwarecageUploadsMetadata(MetadataPlugin):
         self.mwdb = Malwarecage(api_url=mwdb_api_url, api_key=mwdb_api_token)
         self.mwdb_url = mwdb_url
 
-    def identify(self, matched_fname):
+    def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(
             r"/([a-f0-9])/([a-f0-9])/([a-f0-9])/([a-f0-9])/(\1\2\3\4[a-f0-9]+)$",
             matched_fname,
         )
         if not m:
-            return {}
+            return None
         return m.group(5)
 
-    def extract(self, identifier, matched_fname, current_meta):
+    def extract(
+        self, identifier: str, matched_fname: str, current_meta: Metadata
+    ) -> Metadata:
         # '/uploads' Malwarecage directory format
         # /mnt/samples/9/d/c/5/9dc571ae13a62954155999cae9cecc4f0689e2ba9a8940f81d1e564271507a3e
         metadata = {}

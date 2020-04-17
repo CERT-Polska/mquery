@@ -1,8 +1,10 @@
 import json
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, Dict, List, Optional
 
 DEFAULT_CACHE_EXPIRE_TIME = 60 * 60 * 12
+
+Metadata = Dict[str, Any]
 
 
 class MetadataPlugin(ABC):
@@ -20,27 +22,26 @@ class MetadataPlugin(ABC):
     def set_redis(self, redis):
         self.redis = redis
 
-    def __rs_key(self, cache_tag):
-        cls_name = self.__class__.__name__
-        rs_key = "cached:{}:{}".format(cls_name, cache_tag)
-        return rs_key
+    def __rs_key(self, cache_tag: str) -> str:
+        return f"cached:{self.name}:{cache_tag}"
 
-    def _cache_fetch(self, cache_tag):
+    def _cache_fetch(self, cache_tag: str) -> Metadata:
         rs_key = self.__rs_key(cache_tag)
         obj = self.redis.get(rs_key)
 
         if obj:
             self.redis.expire(rs_key, self.__cache_expire_time__)
             return json.loads(obj)
+        return {}
 
-    def _cache_store(self, cache_tag, obj):
+    def _cache_store(self, cache_tag: str, obj: Metadata):
         rs_key = self.__rs_key(cache_tag)
         self.redis.setex(rs_key, self.__cache_expire_time__, json.dumps(obj))
 
-    def identify(self, matched_fname):
+    def identify(self, matched_fname: str) -> Optional[str]:
         return matched_fname
 
-    def run(self, matched_fname, current_meta):
+    def run(self, matched_fname: str, current_meta: Metadata) -> Metadata:
         identifier = self.identify(matched_fname)
         if identifier is None:
             return {}
@@ -57,5 +58,7 @@ class MetadataPlugin(ABC):
         return result
 
     @abstractmethod
-    def extract(self, identifier, matched_fname, current_meta):
+    def extract(
+        self, identifier: str, matched_fname: str, current_meta: Metadata
+    ) -> Metadata:
         raise NotImplementedError

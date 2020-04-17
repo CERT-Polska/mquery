@@ -1,16 +1,20 @@
 import re
 
-from ..metadata import MetadataPlugin
+from typing import Optional
+
+from metadata import Metadata, MetadataPlugin
 
 
 class CuckooBinariesMetadata(MetadataPlugin):
     __cacheable__ = False
 
-    def identify(self, matched_fname):
+    def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(r"/binaries/([a-f0-9]+)$", matched_fname)
         if not m:
             return None
         return m.group(1)
 
-    def extract(self, identifier, matched_fname, current_meta):
+    def extract(
+        self, identifier: str, matched_fname: str, current_meta: Metadata
+    ) -> Metadata:
         return {"cuckoo_hash": {"value": identifier}}
