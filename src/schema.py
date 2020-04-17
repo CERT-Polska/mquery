@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import List, Dict, Optional
 from datetime import datetime
-
 from pydantic import BaseModel
 
 
@@ -15,6 +14,8 @@ class JobSchema(BaseModel):
     priority: str
     files_processed: int
     total_files: int
+    iterator: Optional[str]
+    taint: Optional[str]
 
 
 class JobsSchema(BaseModel):
