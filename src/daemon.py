@@ -162,18 +162,19 @@ def execute_yara(job: JobId, files: List[str]) -> None:
         return
 
     rule = compile_yara(job)
-
+    len_matches = 0
     for sample in files:
         try:
             matches = rule.match(sample)
             if matches:
+                len_matches += 1
                 update_metadata(job, sample, [r.rule for r in matches])
         except yara.Error:
             logging.exception(f"Yara failed to check file {sample}")
         except FileNotFoundError:
             logging.exception(f"Failed to open file for yara check: {sample}")
 
-    db.update_job(job, len(files))
+    db.update_job(job, len(files), len_matches)
 
 
 def execute_search(job_id: JobId) -> None:

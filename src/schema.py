@@ -13,6 +13,7 @@ class JobSchema(BaseModel):
     submitted: int
     priority: str
     files_processed: int
+    files_matched: int
     total_files: int
     iterator: Optional[str]
     taint: Optional[str]

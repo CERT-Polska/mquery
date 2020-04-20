@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
+import Pagination from "react-js-pagination";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -63,11 +64,25 @@ class QueryResultsStatus extends Component {
     constructor(props) {
         super(props);
 
+        this.state = {
+            activePage: 1,
+            itemsPerPage: 20,
+        };
+
         this.handleCancelJob = this.handleCancelJob.bind(this);
     }
 
     handleCancelJob() {
         axios.delete(API_URL + "/job/" + this.props.qhash);
+    }
+
+    sendResultsActivePage = (pageNumber) => {
+        this.props.parentCallback(pageNumber);
+    };
+
+    handlePageChange(pageNumber) {
+        this.setState({ activePage: pageNumber });
+        this.sendResultsActivePage(pageNumber);
     }
 
     renderSwitchStatus(status) {
@@ -83,6 +98,12 @@ class QueryResultsStatus extends Component {
                 return "info";
             default:
                 return "info";
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.qhash !== this.props.qhash) {
+            this.setState({ activePage: 1 });
         }
     }
 
@@ -142,12 +163,11 @@ class QueryResultsStatus extends Component {
             cancel = <span />;
         }
 
-        const lenMatches = this.props.matches.length;
+        const lenMatches = this.props.job.files_matched;
 
         if (this.props.job.status === "expired") {
             return ReturnExpiredJob(this.props.job.error);
         }
-
         let results = <div />;
 
         if (lenMatches === 0 && this.props.job.status === "done") {
@@ -164,6 +184,17 @@ class QueryResultsStatus extends Component {
                         </thead>
                         <tbody>{matches}</tbody>
                     </table>
+                    {lenMatches > 0 && (
+                        <Pagination
+                            activePage={this.state.activePage}
+                            itemsCountPerPage={this.state.itemsPerPage}
+                            totalItemsCount={lenMatches}
+                            pageRangeDisplayed={5}
+                            onChange={this.handlePageChange.bind(this)}
+                            itemClass="page-item"
+                            linkClass="page-link"
+                        />
+                    )}
                 </div>
             );
         }
