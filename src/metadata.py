@@ -12,14 +12,14 @@ class MetadataPlugin(ABC):
     __cacheable__: bool = False
     __cache_expire_time__: int = DEFAULT_CACHE_EXPIRE_TIME
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.redis = None
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
 
-    def set_redis(self, redis):
+    def set_redis(self, redis) -> None:
         self.redis = redis
 
     def __rs_key(self, cache_tag: str) -> str:
@@ -34,7 +34,7 @@ class MetadataPlugin(ABC):
             return json.loads(obj)
         return {}
 
-    def _cache_store(self, cache_tag: str, obj: Metadata):
+    def _cache_store(self, cache_tag: str, obj: Metadata) -> None:
         rs_key = self.__rs_key(cache_tag)
         self.redis.setex(rs_key, self.__cache_expire_time__, json.dumps(obj))
 

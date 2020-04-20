@@ -7,7 +7,7 @@ from metadata import Metadata, MetadataPlugin
 
 
 class CuckooAnalysisMetadata(MetadataPlugin):
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         super().__init__()
         self.path = path
 
