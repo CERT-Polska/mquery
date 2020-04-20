@@ -16,7 +16,7 @@ class QueryField extends Component {
         this.handleEdit = this.handleEdit.bind(this);
     }
 
-    componentDidMount() { }
+    componentDidMount() {}
 
     selectTaint(newTaint) {
         this.setState({
@@ -158,17 +158,17 @@ class QueryField extends Component {
                             <span className="fa fa-clone" /> Edit
                         </button>
                     ) : (
-                            <button
-                                className="btn btn-secondary btn-sm"
-                                name="parse"
-                                type="submit"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "parse", null)
-                                }
-                            >
-                                <span className="fa fa-code" /> Parse
-                            </button>
-                        )}
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            name="parse"
+                            type="submit"
+                            onClick={(event) =>
+                                this.handleQuery(event, "parse", null)
+                            }
+                        >
+                            <span className="fa fa-code" /> Parse
+                        </button>
+                    )}
                     <div className="btn-group" role="group">
                         <button
                             type="button"

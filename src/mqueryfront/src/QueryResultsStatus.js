@@ -32,17 +32,19 @@ function MatchItem(props) {
         "&file_path=" +
         encodeURIComponent(props.file);
 
-    const path = require('path');
+    const path = require("path");
 
     return (
         <tr>
             <td>
                 <div className="d-flex">
-                    <div className="text-truncate">
-                        <a href={download_url}
+                    <div className="text-truncate" style={{ minWidth: 50 }}>
+                        <a
+                            href={download_url}
                             data-toggle="tooltip"
                             title={props.file}
-                        >{path.basename(props.file)}
+                        >
+                            {path.basename(props.file)}
                         </a>
                     </div>
                     {matches}
@@ -59,8 +61,8 @@ function ReturnExpiredJob(job_error) {
             {job_error ? (
                 <div className="alert alert-danger">{job_error}</div>
             ) : (
-                    <div />
-                )}
+                <div />
+            )}
             <div style={{ marginTop: "55px" }}>
                 Search results expired. Please run the query once again.
             </div>
@@ -164,11 +166,14 @@ class QueryResultsStatus extends Component {
             results = <div className="alert alert-info">No matches found.</div>;
         } else if (lenMatches !== 0) {
             const styleFixed = {
-                tableLayout: "fixed"
-            }
+                tableLayout: "fixed",
+            };
             results = (
                 <div className="mquery-scroll-matches">
-                    <table className={"table table-striped table-bordered"} style={styleFixed}>
+                    <table
+                        className={"table table-striped table-bordered"}
+                        style={styleFixed}
+                    >
                         <thead>
                             <tr>
                                 <th>Matches</th>
@@ -218,8 +223,8 @@ class QueryResultsStatus extends Component {
                         {this.props.job.error}
                     </div>
                 ) : (
-                        <div />
-                    )}
+                    <div />
+                )}
                 {results}
             </div>
         );
