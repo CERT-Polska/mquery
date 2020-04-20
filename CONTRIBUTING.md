@@ -44,7 +44,7 @@ $ black src/
 
 ```bash
 $ npm install -g prettier@2.0.4
-$ prettier --tab-width=4 --write "src/mqueryfront/src/**/*.js"
+$ cd src/mqueryfront; prettier --write "."
 ```
 
 - Verify that there are no type errors with [mypy](http://mypy-lang.org/):
