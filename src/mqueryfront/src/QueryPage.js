@@ -80,13 +80,14 @@ class QueryPage extends Component {
             qhash: newQhash,
             matches: [],
             job: [],
-            activePage: 1,
+            activePage:1
         });
         this.loadJob();
     }
 
     loadJob() {
         const LIMIT = 20;
+        let OFFSET = (this.state.activePage - 1) * 20;
 
         if (!this.state.qhash) {
             return;
@@ -98,7 +99,7 @@ class QueryPage extends Component {
                     "/matches/" +
                     this.state.qhash +
                     "?offset=" +
-                    0 +
+                    OFFSET +
                     "&limit=" +
                     LIMIT
             )
@@ -115,7 +116,7 @@ class QueryPage extends Component {
                     return;
                 }
                 this.timeout = setTimeout(() => this.loadJob(), 1000);
-            });
+            })
     }
 
     callbackResultsActivePage = (pageNumber) => {
@@ -196,7 +197,6 @@ class QueryPage extends Component {
                     job={this.state.job}
                     matches={this.state.matches}
                     parentCallback={this.callbackResultsActivePage}
-                    activePage={this.props.activePage}
                 />
             </div>
         );

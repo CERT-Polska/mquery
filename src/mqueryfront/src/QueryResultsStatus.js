@@ -184,18 +184,16 @@ class QueryResultsStatus extends Component {
                         </thead>
                         <tbody>{matches}</tbody>
                     </table>
-                    {lenMatches > 20 && (
-                        <div>
-                            <Pagination
-                                activePage={this.state.activePage}
-                                itemsCountPerPage={this.state.itemsPerPage}
-                                totalItemsCount={lenMatches}
-                                pageRangeDisplayed={5}
-                                onChange={this.handlePageChange.bind(this)}
-                                itemClass="page-item"
-                                linkClass="page-link"
-                            />
-                        </div>
+                    {lenMatches > 0 && (
+                        <Pagination
+                            activePage={this.state.activePage}
+                            itemsCountPerPage={this.state.itemsPerPage}
+                            totalItemsCount={lenMatches}
+                            pageRangeDisplayed={5}
+                            onChange={this.handlePageChange.bind(this)}
+                            itemClass="page-item"
+                            linkClass="page-link"
+                        />
                     )}
                 </div>
             );
