@@ -24,7 +24,6 @@ class QueryPage extends Component {
             queryError: null,
             datasets: {},
             activePage: 1,
-            newShouldRequest: true,
         };
 
         this.updateQhash = this.updateQhash.bind(this);
