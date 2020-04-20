@@ -80,7 +80,7 @@ class QueryPage extends Component {
             qhash: newQhash,
             matches: [],
             job: [],
-            activePage:1
+            activePage: 1,
         });
         this.loadJob();
     }
@@ -116,7 +116,7 @@ class QueryPage extends Component {
                     return;
                 }
                 this.timeout = setTimeout(() => this.loadJob(), 1000);
-            })
+            });
     }
 
     callbackResultsActivePage = (pageNumber) => {
