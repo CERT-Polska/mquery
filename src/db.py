@@ -172,9 +172,9 @@ class Database:
             raw_yara=data.get("raw_yara", "ERROR"),
             submitted=data.get("submitted", 0),
             priority=data.get("priority", "medium"),
-            files_processed=data.get("files_processed", 0),
-            files_matched=data.get("files_matched", 0),
-            total_files=data.get("total_files", 0),
+            files_processed=data.get(int("files_processed", 0)),
+            files_matched=data.get(int("files_matched", 0)),
+            total_files=data.get(int("total_files", 0)),
             iterator=data.get("iterator", None),
             taint=data.get("taint", None),
         )
