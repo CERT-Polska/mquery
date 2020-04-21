@@ -73,8 +73,10 @@ def try_to_do_search() -> bool:
         return False
     yara_list, job = rnd_job
     job_data = db.get_job(job)
-
-    if job_data.files_processed >= job_data.total_files:
+    if (
+        job_data.files_in_progress == 0
+        and job_data.files_processed == job_data.total_files
+    ):
         db.finish_job(yara_list, job)
     try:
         BATCH_SIZE = 500
@@ -164,6 +166,7 @@ def execute_yara(job: JobId, files: List[str]) -> None:
 
     rule = compile_yara(job)
     len_matches = 0
+    db.set_files_in_progress(job, len(files))
     for sample in files:
         try:
             matches = rule.match(sample)
@@ -174,6 +177,7 @@ def execute_yara(job: JobId, files: List[str]) -> None:
             logging.exception(f"Yara failed to check file {sample}")
         except FileNotFoundError:
             logging.exception(f"Failed to open file for yara check: {sample}")
+        db.update_files_in_progress(job)
 
     db.update_job(job, len(files), len_matches)
 

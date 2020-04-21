@@ -128,7 +128,7 @@ class Database:
                 "iterator": iterator,
                 "files_processed": 0,
                 "files_matched": 0,
-                "files_in_progress": file_count,
+                "files_in_progress": 0,
                 "total_files": file_count,
             },
         )
@@ -138,7 +138,14 @@ class Database:
     ) -> None:
         self.redis.hincrby(job.key, "files_processed", files_processed)
         self.redis.hincrby(job.key, "files_matched", files_matched)
-        self.redis.hincrby(job.key, "files_in_progress", -files_processed)
+
+    def set_files_in_progress(
+        self, job: JobId, files_in_progress: int
+    ) -> None:
+        self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
+
+    def update_files_in_progress(self, job: JobId) -> None:
+        self.redis.hincrby(job.key, "files_in_progress", -1)
 
     def set_job_to_parsing(self, job: JobId) -> None:
         """ Sets the job status to parsing """
