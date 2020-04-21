@@ -44,7 +44,7 @@ $ black src/
 
 ```bash
 $ npm install -g prettier@2.0.4
-$ cd src/mqueryfront; prettier --write "."
+$ prettier --write src/mqueryfront/
 ```
 
 - Verify that there are no type errors with [mypy](http://mypy-lang.org/):
