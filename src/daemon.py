@@ -74,6 +74,8 @@ def try_to_do_search() -> bool:
     yara_list, job = rnd_job
     job_data = db.get_job(job)
 
+    if job_data.files_processed >= job_data.total_files:
+        db.finish_job(yara_list, job)
     try:
         BATCH_SIZE = 500
         if job_data.iterator is None:
@@ -89,8 +91,6 @@ def try_to_do_search() -> bool:
                 job_data.iterator,
                 job,
             )
-        if job_data.files_processed < 1:
-            db.finish_job(yara_list, job)
     except Exception as e:
         logging.exception("Failed to execute yara match.")
         db.fail_job(yara_list, job, str(e))
