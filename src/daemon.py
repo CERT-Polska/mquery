@@ -160,7 +160,7 @@ def execute_yara(job: JobId, files: List[str]) -> None:
 
     if len(files) == 0:
         return
-
+        
     rule = compile_yara(job)
     len_matches = 0
     for sample in files:
