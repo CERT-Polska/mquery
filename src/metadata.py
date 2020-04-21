@@ -1,4 +1,5 @@
 import json
+import redis
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
@@ -13,19 +14,21 @@ class MetadataPlugin(ABC):
     __cache_expire_time__: int = DEFAULT_CACHE_EXPIRE_TIME
 
     def __init__(self) -> None:
-        self.redis = None
+        self.redis: Optional[redis.StrictRedis] = None
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
 
-    def set_redis(self, redis) -> None:
+    def set_redis(self, redis: redis.StrictRedis) -> None:
         self.redis = redis
 
     def __rs_key(self, cache_tag: str) -> str:
         return f"cached:{self.name}:{cache_tag}"
 
     def _cache_fetch(self, cache_tag: str) -> Metadata:
+        if not self.redis:
+            return {}
         rs_key = self.__rs_key(cache_tag)
         obj = self.redis.get(rs_key)
 
@@ -35,6 +38,8 @@ class MetadataPlugin(ABC):
         return {}
 
     def _cache_store(self, cache_tag: str, obj: Metadata) -> None:
+        if not self.redis:
+            return
         rs_key = self.__rs_key(cache_tag)
         self.redis.setex(rs_key, self.__cache_expire_time__, json.dumps(obj))
 
