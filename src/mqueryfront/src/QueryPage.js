@@ -108,10 +108,9 @@ class QueryPage extends Component {
                     job: job,
                     matches: response.data.matches,
                 });
-                let doneStatuses = ["cancelled", "failed", "expired"];
+                let doneStatuses = ["done", "cancelled", "failed", "expired"];
                 let isDone = doneStatuses.indexOf(job.status) !== -1;
-                let processedAll = job.files_processed >= job.total_files;
-                if (isDone || processedAll) {
+                if (isDone) {
                     return;
                 }
                 this.timeout = setTimeout(() => this.loadJob(), 1000);

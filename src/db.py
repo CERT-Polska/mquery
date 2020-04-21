@@ -112,11 +112,13 @@ class Database:
         """ Sets the job status to cancelled """
         self.redis.hmset(job.key, {"status": "cancelled"})
 
-    def finish_job(self, queue: Optional[JobQueue], job: JobId) -> None:
-        """ Sets the job status to done, and removes it from job queues """
+    def finish_job(self, job: JobId) -> None:
+        """ Sets the job status to done """
         self.redis.hset(job.key, "status", "done")
-        if queue:
-            self.redis.lrem(queue.name, 0, job.hash)
+
+    def remove_finished_job(self, queue: JobQueue, job: JobId) -> None:
+        """ Remove job from job queues """
+        self.redis.lrem(queue.name, 0, job.hash)
 
     def set_job_to_processing(
         self, job: JobId, iterator: str, file_count: int
@@ -128,6 +130,7 @@ class Database:
                 "iterator": iterator,
                 "files_processed": 0,
                 "files_matched": 0,
+                "files_in_progress": 0,
                 "total_files": file_count,
             },
         )
@@ -137,6 +140,14 @@ class Database:
     ) -> None:
         self.redis.hincrby(job.key, "files_processed", files_processed)
         self.redis.hincrby(job.key, "files_matched", files_matched)
+
+    def set_files_in_progress(
+        self, job: JobId, files_in_progress: int
+    ) -> None:
+        self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
+
+    def update_files_in_progress(self, job: JobId) -> None:
+        self.redis.hincrby(job.key, "files_in_progress", -1)
 
     def set_job_to_parsing(self, job: JobId) -> None:
         """ Sets the job status to parsing """
@@ -174,6 +185,7 @@ class Database:
             priority=data.get("priority", "medium"),
             files_processed=int(data.get("files_processed", 0)),
             files_matched=int(data.get("files_matched", 0)),
+            files_in_progress=int(data.get("files_in_progress", 0)),
             total_files=int(data.get("total_files", 0)),
             iterator=data.get("iterator", None),
             taint=data.get("taint", None),
