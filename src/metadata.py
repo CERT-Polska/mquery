@@ -9,8 +9,11 @@ Metadata = Dict[str, Any]
 
 
 class MetadataPlugin(ABC):
+    #: List of plugin identifiers that plugin depends on
     __depends_on__: List[str] = []
+    #: Enables cache for extracted metadata
     __cacheable__: bool = False
+    #: Overrides default cache expire time
     __cache_expire_time__: int = DEFAULT_CACHE_EXPIRE_TIME
 
     def __init__(self) -> None:
@@ -44,6 +47,11 @@ class MetadataPlugin(ABC):
         self.redis.setex(rs_key, self.__cache_expire_time__, json.dumps(obj))
 
     def identify(self, matched_fname: str) -> Optional[str]:
+        """
+       Returns file unique identifier based on matched path.
+
+       Intended to be overridden by plugin.
+       """
         return matched_fname
 
     def run(self, matched_fname: str, current_meta: Metadata) -> Metadata:
@@ -66,4 +74,16 @@ class MetadataPlugin(ABC):
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
+        """
+       Extracts metadata for matched path
+
+       Intended to be overridden by plugin.
+
+       :param identifier: File identifier returned by overridable
+                          :py:meth:`MetadataPlugin.identify` method
+       :param matched_fname: Matched file path
+       :param current_meta: Metadata extracted so far by dependencies
+       :return: Metadata object. If you can't extract metadata for current file,
+                return empty dict.
+       """
         raise NotImplementedError

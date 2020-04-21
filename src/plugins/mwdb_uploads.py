@@ -15,6 +15,8 @@ class MalwarecageUploadsMetadata(MetadataPlugin):
     :param mwdb_url: Malwarecage URL accessible for mquery users
     """
 
+    __cacheable__ = True
+
     def __init__(
         self, mwdb_api_token: str, mwdb_api_url: str, mwdb_url: str
     ) -> None:
