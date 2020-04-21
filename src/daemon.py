@@ -89,6 +89,7 @@ def try_to_do_search() -> bool:
                 job_data.iterator,
                 job,
             )
+        if job_data.files_processed < 1:
             db.finish_job(yara_list, job)
     except Exception as e:
         logging.exception("Failed to execute yara match.")
@@ -160,7 +161,7 @@ def execute_yara(job: JobId, files: List[str]) -> None:
 
     if len(files) == 0:
         return
-        
+
     rule = compile_yara(job)
     len_matches = 0
     for sample in files:

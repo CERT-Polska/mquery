@@ -138,7 +138,7 @@ class Database:
     ) -> None:
         self.redis.hincrby(job.key, "files_processed", files_processed)
         self.redis.hincrby(job.key, "files_matched", files_matched)
-        self.redis.decrby(job.key, "files_in_progress", files_processed)
+        self.redis.hincrby(job.key, "files_in_progress", -files_processed)
 
     def set_job_to_parsing(self, job: JobId) -> None:
         """ Sets the job status to parsing """
@@ -176,7 +176,7 @@ class Database:
             priority=data.get("priority", "medium"),
             files_processed=int(data.get("files_processed", 0)),
             files_matched=int(data.get("files_matched", 0)),
-            files_in_progress = int(data.get("files_in_progress", 0)),
+            files_in_progress=int(data.get("files_in_progress", 0)),
             total_files=int(data.get("total_files", 0)),
             iterator=data.get("iterator", None),
             taint=data.get("taint", None),
