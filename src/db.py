@@ -112,11 +112,13 @@ class Database:
         """ Sets the job status to cancelled """
         self.redis.hmset(job.key, {"status": "cancelled"})
 
-    def finish_job(self, queue: Optional[JobQueue], job: JobId) -> None:
-        """ Sets the job status to done, and removes it from job queues """
+    def finish_job(self, job: JobId) -> None:
+        """ Sets the job status to done """
         self.redis.hset(job.key, "status", "done")
-        if queue:
-            self.redis.lrem(queue.name, 0, job.hash)
+
+    def remove_finished_job(self, queue: JobQueue, job: JobId) -> None:
+        """ Remove job from job queues """
+        self.redis.lrem(queue.name, 0, job.hash)
 
     def set_job_to_processing(
         self, job: JobId, iterator: str, file_count: int

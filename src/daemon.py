@@ -88,6 +88,7 @@ def try_to_do_search() -> bool:
                 job_data.iterator,
                 job,
             )
+            db.remove_finished_job(yara_list, job)
     except Exception as e:
         logging.exception("Failed to execute yara match.")
         db.fail_job(yara_list, job, str(e))
@@ -178,9 +179,9 @@ def execute_yara(job: JobId, files: List[str]) -> None:
     job_data = db.get_job(job)
     if (
         job_data.files_in_progress == 0
-        and job_data.files_processed == job_data.total_files
+        and job_data.files_processed >= job_data.total_files
     ):
-        db.finish_job(None, job)
+        db.finish_job(job)
 
 
 def execute_search(job_id: JobId) -> None:
@@ -210,7 +211,7 @@ def execute_search(job_id: JobId) -> None:
     if file_count > 0:
         db.push_job_to_queue(job)
     else:
-        db.finish_job(None, job_id)
+        db.finish_job(job_id)
 
 
 if __name__ == "__main__":
