@@ -1,5 +1,5 @@
 from typing import List, Tuple, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema, StorageSchema
+from schema import JobSchema, MatchesSchema, StorageSchema, JobId
 from time import time
 import json
 import random
@@ -22,25 +22,6 @@ def get_list_name(priority: str) -> str:
         return "list-yara-medium"
     else:
         return "list-yara-high"
-
-
-class JobId:
-    """ Represents a unique job ID in redis. Looks like this: `job:IU32AD3` """
-
-    def __init__(self, key: str) -> None:
-        """ Creates a new JobId object. Can take both key and raw hash. """
-        if not key.startswith("job:"):
-            key = f"job:{key}"
-        self.key = key
-        self.hash = key[4:]
-
-    @property
-    def meta_key(self) -> str:
-        """ Every job has exactly one related meta key"""
-        return f"meta:{self.hash}"
-
-    def __repr__(self) -> str:
-        return self.key
 
 
 class JobQueue:
@@ -114,7 +95,6 @@ class Database:
 
     def finish_job(self, job: JobId) -> None:
         """ Sets the job status to done """
-        self.redis.hset(job.key, "status", "done")
 
     def remove_finished_job(self, queue: JobQueue, job: JobId) -> None:
         """ Remove job from job queues """
@@ -141,13 +121,35 @@ class Database:
         self.redis.hincrby(job.key, "files_processed", files_processed)
         self.redis.hincrby(job.key, "files_matched", files_matched)
 
-    def set_files_in_progress(
-        self, job: JobId, files_in_progress: int
-    ) -> None:
+    def job_start_work(self, job: JobId, files_in_progress: int) -> None:
+        """ Updates the numbre of files being processed right now.
+
+        :param job: ID of the job being updated.
+        :type job: JobId
+        :param files_in_progress: Number of files in the current work unit.
+        :type files_in_progress: int
+        """
         self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
 
-    def update_files_in_progress(self, job: JobId) -> None:
-        self.redis.hincrby(job.key, "files_in_progress", -1)
+    def job_update_work(
+        self,
+        job: JobId,
+        files_processed: int,
+        files_matched: int,
+        total_files: int,
+    ) -> None:
+        """ Update progress for the job. This will increment number of files processed
+        and matched, and if as a result all files are processed, will change the job
+        status to `done`
+        """
+        new_processed = self.redis.hincrby(
+            job.key, "files_processed", files_processed
+        )
+        self.redis.hincrby(job.key, "files_matched", files_matched)
+        self.redis.hincrby(job.key, "files_in_progress", -files_processed)
+
+        if new_processed >= total_files:
+            self.redis.hset(job.key, "status", "done")
 
     def set_job_to_parsing(self, job: JobId) -> None:
         """ Sets the job status to parsing """
@@ -232,11 +234,12 @@ class Database:
     def get_job_matches(
         self, job: JobId, offset: int, limit: int
     ) -> MatchesSchema:
-        p = self.redis.pipeline(transaction=False)
-        p.hgetall(job.key)
-        p.lrange("meta:" + job.hash, offset, offset + limit - 1)
-        job, meta = p.execute()
-        return MatchesSchema(job=job, matches=[json.loads(m) for m in meta])
+        meta = self.redis.lrange(
+            "meta:" + job.hash, offset, offset + limit - 1
+        )
+        return MatchesSchema(
+            job=self.get_job(job), matches=[json.loads(m) for m in meta]
+        )
 
     def run_command(self, command: str) -> None:
         self.redis.rpush("queue-commands", command)

@@ -4,6 +4,25 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+class JobId:
+    """ Represents a unique job ID in redis. Looks like this: `job:IU32AD3` """
+
+    def __init__(self, key: str) -> None:
+        """ Creates a new JobId object. Can take both key and raw hash. """
+        if not key.startswith("job:"):
+            key = f"job:{key}"
+        self.key = key
+        self.hash = key[4:]
+
+    @property
+    def meta_key(self) -> str:
+        """ Every job has exactly one related meta key"""
+        return f"meta:{self.hash}"
+
+    def __repr__(self) -> str:
+        return self.key
+
+
 class JobSchema(BaseModel):
     id: str
     status: str
@@ -18,6 +37,9 @@ class JobSchema(BaseModel):
     total_files: int
     iterator: Optional[str]
     taint: Optional[str]
+
+    def get_id(self) -> JobId:
+        return JobId(self.id)
 
 
 class JobsSchema(BaseModel):

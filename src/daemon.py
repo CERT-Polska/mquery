@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+from schema import JobSchema
 import time
 import yara  # type: ignore
 from functools import lru_cache
@@ -81,7 +82,7 @@ def try_to_do_search() -> bool:
         if pop_result.was_locked:
             return True
         if pop_result.files:
-            execute_yara(job, pop_result.files)
+            execute_yara(job_data, pop_result.files)
         if pop_result.should_drop_iterator:
             logging.info(
                 "Iterator %s exhausted, removing job %s",
@@ -150,7 +151,9 @@ def update_metadata(job: JobId, file_path: str, matches: List[str]) -> None:
     db.add_match(job, match)
 
 
-def execute_yara(job: JobId, files: List[str]) -> None:
+def execute_yara(job_data: JobSchema, files: List[str]) -> None:
+    job = job_data.get_id()
+
     if db.get_job_status(job) in [
         "cancelled",
         "failed",
@@ -162,7 +165,7 @@ def execute_yara(job: JobId, files: List[str]) -> None:
 
     rule = compile_yara(job)
     len_matches = 0
-    db.set_files_in_progress(job, len(files))
+    db.job_start_work(job, len(files))
     for sample in files:
         try:
             matches = rule.match(sample)
@@ -173,15 +176,8 @@ def execute_yara(job: JobId, files: List[str]) -> None:
             logging.exception(f"Yara failed to check file {sample}")
         except FileNotFoundError:
             logging.exception(f"Failed to open file for yara check: {sample}")
-        db.update_files_in_progress(job)
 
-    db.update_job(job, len(files), len_matches)
-    job_data = db.get_job(job)
-    if (
-        job_data.files_in_progress == 0
-        and job_data.files_processed >= job_data.total_files
-    ):
-        db.finish_job(job)
+    db.job_update_work(job, len(files), len_matches, job_data.total_files)
 
 
 def execute_search(job_id: JobId) -> None:

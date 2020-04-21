@@ -113,7 +113,7 @@ def request_query(log, i, taint=None):
             break
         time.sleep(1)
 
-    return res
+    return res.json()
 
 
 @pytest.mark.timeout(30)
@@ -140,7 +140,8 @@ def test_query_zero_results(add_files_to_index):
     for i in yara_tests:
         res = request_query(log, i)
 
-        m = res.json()["matches"]
+        m = res["matches"]
+        assert res["files_in_progress"] == 0
         assert len(m) == 0
 
 
@@ -170,7 +171,8 @@ def test_query_one_results(add_files_to_index):
     for i in yara_tests:
         res = request_query(log, i)
 
-        m = res.json()["matches"]
+        m = res["matches"]
+        assert res["files_in_progress"] == 0
         assert len(m) == 1
         with open(m[0]["file"], "r") as file:
             text = file.read()
@@ -201,7 +203,8 @@ def test_query_two_results(add_files_to_index):
     for i in yara_tests:
         res = request_query(log, i)
 
-        m = res.json()["matches"]
+        m = res["matches"]
+        assert res["files_in_progress"] == 0
         assert len(m) == 2
         with open(m[0]["file"], "r") as file:
             text1 = file.read()
@@ -245,16 +248,19 @@ def test_query_with_taints(add_files_to_index):
 
     for i in yara_tests:
         res = request_query(log, i)
-        m = res.json()["matches"]
+        m = res["matches"]
+        assert res["files_in_progress"] == 0
         assert len(m) == 1
         with open(m[0]["file"], "r") as file:
             text = file.read()
         assert text in files_to_detect
 
         res = request_query(log, i, "anothertaint")
-        m = res.json()["matches"]
+        assert res["files_in_progress"] == 0
+        m = res["matches"]
         assert len(m) == 0
 
         res = request_query(log, i, random_taint)
-        m = res.json()["matches"]
+        assert res["files_in_progress"] == 0
+        m = res["matches"]
         assert len(m) == 1
