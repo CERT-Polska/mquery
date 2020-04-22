@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+
+import os
+import logging
+import argparse
+from typing import Set, Iterator, Tuple
+from lib.ursadb import UrsaDb
+from tempfile import NamedTemporaryFile
+from multiprocessing import Pool
+
+
+def all_indexed_files(ursa: UrsaDb) -> Set[str]:
+    iterator = ursa.query("{}", None)["iterator"]
+    result: Set[str] = set()
+    while True:
+        pop_result = ursa.pop(iterator, 5000)
+        if pop_result.should_drop_iterator:
+            break
+        for fpath in pop_result.files:
+            result.add(fpath)
+    return result
+
+
+def find_new_files(
+    existing: Set[str], files_root: str, mounted_as: str
+) -> Iterator[str]:
+    files_root = os.path.abspath(files_root)
+    mounted_as = os.path.abspath(mounted_as)
+    for (_root, _, files) in os.walk(files_root):
+        for f in files:
+            abspath = os.path.join(mounted_as, _root, f)
+            assert abspath.startswith(files_root)
+            relpath = os.path.relpath(abspath, files_root)
+            fpath = os.path.join(mounted_as, relpath)
+            if fpath not in existing:
+                yield fpath
+
+
+def index_files(proc_params: Tuple[str, str]) -> None:
+    ursa_url, mounted_name = proc_params
+    ursa = UrsaDb(ursa_url)
+    logging.info(f"Start: %s", mounted_name)
+    res = ursa.execute_command(f'index from list "{mounted_name}" nocheck;')
+    logging.info(f"Done: %s (%s)", mounted_name, res)
+
+
+def main() -> None:
+    logging.basicConfig(level=logging.INFO)
+
+    parser = argparse.ArgumentParser(description="Reindex local files.")
+    parser.add_argument("path", help="Path of samples to be indexed.")
+    parser.add_argument(
+        "--path-mount",
+        help="Path to the samples to be indexed, as seen by ursadb (if different).",
+        default=None,
+    )
+    parser.add_argument(
+        "--ursadb",
+        help="URL of the ursadb instance.",
+        default="tcp://localhost:9281",
+    )
+    parser.add_argument(
+        "--tmpdir", help="Path to used tmpdir.", default="/tmp"
+    )
+    parser.add_argument(
+        "--tmpdir-mount",
+        help="Path to used tmpdir, as seen by ursadb (if different)",
+        default=None,
+    )
+    parser.add_argument(
+        "--batch", help="Size of indexing batch.", type=int, default=1000
+    )
+    parser.add_argument(
+        "--workers",
+        help="Number of parallel indexing jobs.",
+        type=int,
+        default=2,
+    )
+
+    args = parser.parse_args()
+
+    tmpdir_mount = args.tmpdir_mount or args.tmpdir
+    path_mount = args.path_mount or args.path
+
+    logging.info("Stage 1: load all indexed files into memory.")
+    ursa = UrsaDb(args.ursadb)
+    fileset = all_indexed_files(ursa)
+
+    logging.info("Stage 2: find all new files.")
+
+    tmpfile = None
+    tmpfiles = []
+    current_batch = 10 ** 20  # As good as infinity.
+    new_files = 0
+    for f in find_new_files(fileset, args.path, path_mount):
+        if current_batch > args.batch:
+            current_batch = 0
+            if tmpfile:
+                tmpfile.close()
+            tmpfile = NamedTemporaryFile(
+                mode="w", dir=args.tmpdir, delete=False
+            )
+            tmpfiles.append(tmpfile.name)
+
+        assert tmpfile is not None  # Let mypy know the obvious.
+        tmpfile.write(f"{f}\n")
+        current_batch += 1
+        new_files += 1
+
+    logging.info(
+        "Got %s files in %s batches to index.", new_files, len(tmpfiles)
+    )
+    indexing_jobs = []
+    for tmppath in tmpfiles:
+        mounted_name = os.path.join(
+            tmpdir_mount, os.path.relpath(tmppath, args.tmpdir)
+        )
+        indexing_jobs.append((args.ursadb, mounted_name))
+        logging.info(f" - Next batch: %s", mounted_name)
+
+    logging.info("Stage 3: run index command in parallel")
+    pool = Pool(processes=args.workers)
+    pool.map(index_files, indexing_jobs)
+
+    logging.info("Stage 4: cleanup.")
+    for f in tmpfiles:
+        os.unlink(f)
+
+
+if __name__ == "__main__":
+    main()
