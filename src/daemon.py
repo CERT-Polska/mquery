@@ -4,19 +4,29 @@ import yara  # type: ignore
 import config
 import json
 import sys
-from functools import lru_cache
 from lib.ursadb import UrsaDb
 from util import setup_logging
-from typing import Any, List, Set
+from typing import Any, List, Dict
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo
 
-db = Database()
-ursa = UrsaDb(config.BACKEND)
+
+YARA_CACHE: Dict[str, Any] = {}
 
 
-@lru_cache(maxsize=32)
-def compile_yara(job: JobId) -> Any:
+def compile_yara(db: Database, job: JobId) -> Any:
+    """Gets a compiled yara rule belinging to the provided job. Uses cache
+    to speed up compilation.
+
+    :param job: ID of the job to compile yara for.
+    :type job: JobId
+    :raises SyntaxError: When yara rule has invalid syntax.
+    :return: Compiled yara rule.
+    :rtype: Any
+    """
+    if job.key in YARA_CACHE:
+        return YARA_CACHE[job.key]
+
     yara_rule = db.get_yara_by_job(job)
 
     logging.info("Compiling Yara")
@@ -26,129 +36,172 @@ def compile_yara(job: JobId) -> Any:
         logging.exception("Yara parse error")
         raise e
 
+    YARA_CACHE[job.key] = rule
     return rule
 
 
-def execute_search(agent_id: str, job_id: JobId) -> None:
-    logging.info("Parsing...")
+class Agent:
+    def __init__(self, group_id: str, ursa: UrsaDb, db: Database) -> None:
+        """Creates a new agent instance. Every agents belongs to some group
+        (identified by `group_id`). There may be multiple agents in a
+        single group, but they're all exchangeable (they read and write to the
+        same queues, and they use the same ursadb instance).
 
-    job = db.get_job(job_id)
-    if job.status == "cancelled":
-        return
+        :param group_id: Identifier of the agent group this agent belongs to.
+        :type group_id: str
+        :param ursa: Reference to ursadb instance.
+        :type ursa: UrsaDb
+        :param db: Reference to main database/task queue.
+        :type db: Database
+        """
+        self.group_id = group_id
+        self.ursa = ursa
+        self.db = db
 
-    rules = parse_yara(job.raw_yara)
-    parsed = combine_rules(rules)
+    def __search_task(self, job_id: JobId) -> None:
+        """Do ursadb query for yara belonging to the provided job.
+        If successful, create a new yara tasks to do further processing
+        of the results.
+        """
+        logging.info("Parsing...")
 
-    logging.info("Querying backend...")
-    result = ursa.query(parsed.query, job.taint)
-    if "error" in result:
-        raise RuntimeError(result["error"])
-
-    file_count = result["file_count"]
-    iterator = result["iterator"]
-    logging.info(f"Iterator {iterator} contains {file_count} files")
-
-    db.update_job_files(job_id, file_count)
-    db.agent_start_job(agent_id, job_id, iterator)
-
-
-def update_metadata(job: JobId, file_path: str, matches: List[str]) -> None:
-    match = MatchInfo(file_path, {}, matches)
-    db.add_match(job, match)
-
-
-def execute_yara(job: JobId, files: List[str]) -> None:
-    if db.get_job_status(job) in [
-        "cancelled",
-        "failed",
-    ]:
-        return
-
-    if len(files) == 0:
-        return
-
-    rule = compile_yara(job)
-    num_matches = 0
-    db.job_start_work(job, len(files))
-    for sample in files:
-        try:
-            matches = rule.match(sample)
-            if matches:
-                num_matches += 1
-                update_metadata(job, sample, [r.rule for r in matches])
-        except yara.Error:
-            logging.exception(f"Yara failed to check file {sample}")
-        except FileNotFoundError:
-            logging.exception(f"Failed to open file for yara check: {sample}")
-
-    db.job_update_work(job, len(files), num_matches)
-
-
-def do_search(job: JobId, iterator: str):
-    try:
-        BATCH_SIZE = 500
-        pop_result = ursa.pop(iterator, BATCH_SIZE)
-        if pop_result.was_locked:
-            logging.info(
-                "Iterator %s is locked, retrying in a second", iterator
-            )
-            return False
-        if pop_result.files:
-            execute_yara(job, pop_result.files)
-        if pop_result.should_drop_iterator:
-            logging.info(
-                "Dropping job %s because iterator %s is empty",
-                job.key,
-                iterator,
-            )
-            return True
-    except Exception:
-        logging.exception("Failed to execute yara match.")
-        return True
-    return False
-
-
-def process_task(
-    agent_id: str, task: AgentTask, finished_jobs: Set[str]
-) -> None:
-    if task.type == "search":
-        job = JobId(task.data)
-        logging.info(f"New task: {job.hash}")
-
-        try:
-            execute_search(agent_id, job)
-        except Exception:
-            logging.exception("Failed to execute job.")
-            db.agent_finish_job(agent_id, job)
-    elif task.type == "yara":
-        logging.info("yara task: %s", task.data)
-        data = json.loads(task.data)
-        job = JobId(data["job"])
-        iterator = data["iterator"]
-        if job.key in finished_jobs:
+        job = self.db.get_job(job_id)
+        if job.status == "cancelled":
             return
-        db.agent_start_job(agent_id, job, iterator)
-        if do_search(job, iterator):
-            finished_jobs.add(job.key)
-            db.agent_finish_job(agent_id, job)
-    else:
-        raise RuntimeError("Unsupported quue")
+
+        rules = parse_yara(job.raw_yara)
+        parsed = combine_rules(rules)
+
+        logging.info("Querying backend...")
+        result = self.ursa.query(parsed.query, job.taint)
+        if "error" in result:
+            raise RuntimeError(result["error"])
+
+        file_count = result["file_count"]
+        iterator = result["iterator"]
+        logging.info(f"Iterator {iterator} contains {file_count} files")
+
+        self.db.update_job_files(job_id, file_count)
+        self.db.agent_start_job(self.group_id, job_id, iterator)
+
+    def __update_metadata(
+        self, job: JobId, file_path: str, matches: List[str]
+    ) -> None:
+        """ After finding a match, push it into a database and
+        update the related metadata """
+        match = MatchInfo(file_path, {}, matches)
+        self.db.add_match(job, match)
+
+    def __execute_yara(self, job: JobId, files: List[str]) -> None:
+        rule = compile_yara(self.db, job)
+        num_matches = 0
+        self.db.job_start_work(job, len(files))
+        for sample in files:
+            try:
+                matches = rule.match(sample)
+                if matches:
+                    num_matches += 1
+                    self.__update_metadata(
+                        job, sample, [r.rule for r in matches]
+                    )
+            except yara.Error:
+                logging.exception(f"Yara failed to check file {sample}")
+            except FileNotFoundError:
+                logging.exception(
+                    f"Failed to open file for yara check: {sample}"
+                )
+
+        self.db.job_update_work(job, len(files), num_matches)
+
+    def __yara_task(self, job: JobId, iterator: str) -> None:
+        """Get a next batch of worm from the db. If there are still files
+        left in the iterator, push the task back to the same queue (so
+        that other agents will be able to work on it in parallel). Later,
+        process the obtained files.
+        """
+        final_statuses = ["cancelled", "failed", "done"]
+        if self.db.get_job_status(job) in final_statuses:
+            return
+
+        BATCH_SIZE = 500
+        pop_result = self.ursa.pop(iterator, BATCH_SIZE)
+        if not pop_result.iterator_empty:
+            # The job still have some files, put it back on the queue.
+            self.db.agent_start_job(self.group_id, job, iterator)
+        if pop_result.files:
+            # If there are any files popped iterator, work on them
+            self.__execute_yara(job, pop_result.files)
+        if pop_result.iterator_empty:
+            # The job is over, work of this agent as done.
+            self.db.agent_finish_job(self.group_id, job)
+
+    def __process_task(self, task: AgentTask) -> None:
+        """Dispatches and executes the next incoming task.
+
+        The high level workflow look like this: for every new `search` job,
+        mquery creates a new `search` task for every agent group.
+        One of the agents will pick it up and execute, and create `yara`
+        tasks. `yara` tasks will be executed by workers for every file in
+        iterator, until it's exhausted.
+
+        :param task: Task to be executed.
+        :type task: AgentTask
+        :raises RuntimeError: Task with unsupported type given.
+        """
+        if task.type == "search":
+            job = JobId(task.data)
+            logging.info(f"search: {job.hash}")
+
+            try:
+                self.__search_task(job)
+            except Exception as e:
+                logging.exception("Failed to execute task.")
+                self.db.fail_job(job, str(e))
+                self.db.agent_finish_job(self.group_id, job)
+        elif task.type == "yara":
+            data = json.loads(task.data)
+            job = JobId(data["job"])
+            iterator = data["iterator"]
+            logging.info("yara: iterator %s", iterator)
+
+            try:
+                self.__yara_task(job, iterator)
+            except Exception as e:
+                logging.exception("Failed to execute task.")
+                self.db.fail_job(job, str(e))
+                self.db.agent_finish_job(self.group_id, job)
+        else:
+            raise RuntimeError("Unsupported queue")
+
+    def main_loop(self) -> None:
+        """Starts a main loop of the agent - this is the only intended public
+        method of this class. This will register the agent in the db, then pop
+        tasks from redis as they come, and execute them.
+        """
+        self.db.register_active_agent(self.group_id)
+
+        while True:
+            task = self.db.agent_get_task(self.group_id)
+            self.__process_task(task)
 
 
 def main() -> None:
+    """Spawns a new agent process. Use argv if you want to use a different
+    group_id (it's `default` by default)
+    """
     setup_logging()
     if len(sys.argv) > 1:
-        agent_id = sys.argv[1]
+        agent_group_id = sys.argv[1]
     else:
-        agent_id = "default"
+        agent_group_id = "default"
 
-    logging.info("Agent [%s] running...", agent_id)
-    db.register_active_agent(agent_id)
+    logging.info("Agent [%s] running...", agent_group_id)
 
-    finished_jobs: Set[str] = set()
-    while True:
-        task = db.agent_get_task(agent_id)
-        process_task(agent_id, task, finished_jobs)
+    db = Database()
+    ursa = UrsaDb(config.BACKEND)
+    agent = Agent(agent_group_id, ursa, db)
+
+    agent.main_loop()
 
 
 if __name__ == "__main__":

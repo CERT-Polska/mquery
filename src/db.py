@@ -76,6 +76,10 @@ class Database:
         """ Sets the job status to cancelled """
         self.redis.hmset(job.key, {"status": "cancelled"})
 
+    def fail_job(self, job: JobId, message: str) -> None:
+        """ Sets the job status to failed. """
+        self.redis.hmset(job.key, {"status": "failed", "error": message})
+
     def get_job(self, job: JobId) -> JobSchema:
         data = self.redis.hgetall(job.key)
         return JobSchema(
@@ -102,7 +106,7 @@ class Database:
         return file_list and file_path == json.loads(file_list[0])["file"]
 
     def job_start_work(self, job: JobId, files_in_progress: int) -> None:
-        """ Updates the numbre of files being processed right now.
+        """ Updates the number of files being processed right now.
         :param job: ID of the job being updated.
         :type job: JobId
         :param files_in_progress: Number of files in the current work unit.
