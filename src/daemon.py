@@ -128,7 +128,7 @@ class Agent:
             self.__execute_yara(job, pop_result.files)
         if pop_result.iterator_empty:
             # The job is over, work of this agent as done.
-            self.db.agent_finish_job(self.group_id, job)
+            self.db.agent_finish_job(job)
 
     def __process_task(self, task: AgentTask) -> None:
         """Dispatches and executes the next incoming task.
@@ -152,7 +152,7 @@ class Agent:
             except Exception as e:
                 logging.exception("Failed to execute task.")
                 self.db.fail_job(job, str(e))
-                self.db.agent_finish_job(self.group_id, job)
+                self.db.agent_finish_job(job)
         elif task.type == "yara":
             data = json.loads(task.data)
             job = JobId(data["job"])
@@ -164,7 +164,7 @@ class Agent:
             except Exception as e:
                 logging.exception("Failed to execute task.")
                 self.db.fail_job(job, str(e))
-                self.db.agent_finish_job(self.group_id, job)
+                self.db.agent_finish_job(job)
         else:
             raise RuntimeError("Unsupported queue")
 
