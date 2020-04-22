@@ -13,7 +13,7 @@ class PopResult:
         self.files = files
 
     @property
-    def should_drop_iterator(self) -> bool:
+    def iterator_empty(self) -> bool:
         """ Is it safe to remove the iterator after this operation? """
         if self.was_locked:
             return False

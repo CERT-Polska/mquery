@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import List, Dict, Optional
-from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -22,16 +21,6 @@ class JobSchema(BaseModel):
 
 class JobsSchema(BaseModel):
     jobs: List[JobSchema]
-
-
-class StorageSchema(BaseModel):
-    id: str
-    name: str
-    path: str
-    indexing_job_id: Optional[str]
-    last_update: datetime
-    taints: List[str]
-    enabled: bool
 
 
 class TaskSchema(BaseModel):
