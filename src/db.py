@@ -1,11 +1,10 @@
-from typing import List, Tuple, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema, StorageSchema
+from typing import List, Optional, Dict, Any
+from schema import JobSchema, MatchesSchema
 from time import time
 import json
 import random
 import string
 import config
-from datetime import datetime
 from redis import StrictRedis
 
 
@@ -15,13 +14,10 @@ def make_redis() -> StrictRedis:
     )
 
 
-def get_list_name(priority: str) -> str:
-    if priority == "low":
-        return "list-yara-low"
-    elif priority == "medium":
-        return "list-yara-medium"
-    else:
-        return "list-yara-high"
+class AgentTask:
+    def __init__(self, type: str, data: str):
+        self.type = type
+        self.data = data
 
 
 class JobId:
@@ -41,21 +37,6 @@ class JobId:
 
     def __repr__(self) -> str:
         return self.key
-
-
-class JobQueue:
-    """ Represents one of the available job queues """
-
-    def __init__(self, name: str) -> None:
-        self.name = name
-
-    @classmethod
-    def available(cls) -> List["JobQueue"]:
-        names = ["list-yara-high", "list-yara-medium", "list-yara-low"]
-        return [cls(name) for name in names]
-
-    def __repr__(self) -> str:
-        return f"queue:{self.name}"
 
 
 class MatchInfo:
@@ -83,10 +64,6 @@ class Database:
         """ Gets yara rule associated with job """
         return self.redis.hget(job.key, "raw_yara")
 
-    def get_job_submitted(self, job: JobId) -> int:
-        """ Gets submission date of the job """
-        return int(self.redis.hget(job.key, "submitted"))
-
     def get_job_status(self, job: JobId) -> str:
         """ Gets status of the specified job """
         return self.redis.hget(job.key, "status")
@@ -95,83 +72,9 @@ class Database:
         """ Gets IDs of all jobs in the database """
         return [JobId(key) for key in self.redis.keys("job:*")]
 
-    def expire_job(self, job: JobId) -> None:
-        """ Sets the job status to expired, and removes it from the db """
-        self.redis.hset(job.key, "status", "expired")
-        self.redis.delete(job.meta_key)
-
-    def fail_job(
-        self, queue: Optional[JobQueue], job: JobId, message: str
-    ) -> None:
-        """ Sets the job status to failed, and removes it from job queues """
-        self.redis.hmset(job.key, {"status": "failed", "error": message})
-        if queue:
-            self.redis.lrem(queue.name, 0, job.hash)
-
     def cancel_job(self, job: JobId) -> None:
         """ Sets the job status to cancelled """
         self.redis.hmset(job.key, {"status": "cancelled"})
-
-    def finish_job(self, job: JobId) -> None:
-        """ Sets the job status to done """
-        self.redis.hset(job.key, "status", "done")
-
-    def remove_finished_job(self, queue: JobQueue, job: JobId) -> None:
-        """ Remove job from job queues """
-        self.redis.lrem(queue.name, 0, job.hash)
-
-    def set_job_to_processing(
-        self, job: JobId, iterator: str, file_count: int
-    ) -> None:
-        self.redis.hmset(
-            job.key,
-            {
-                "status": "processing",
-                "iterator": iterator,
-                "files_processed": 0,
-                "files_matched": 0,
-                "files_in_progress": 0,
-                "total_files": file_count,
-            },
-        )
-
-    def update_job(
-        self, job: JobId, files_processed: int, files_matched: int
-    ) -> None:
-        self.redis.hincrby(job.key, "files_processed", files_processed)
-        self.redis.hincrby(job.key, "files_matched", files_matched)
-
-    def set_files_in_progress(
-        self, job: JobId, files_in_progress: int
-    ) -> None:
-        self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
-
-    def update_files_in_progress(self, job: JobId) -> None:
-        self.redis.hincrby(job.key, "files_in_progress", -1)
-
-    def set_job_to_parsing(self, job: JobId) -> None:
-        """ Sets the job status to parsing """
-        self.redis.hmset(job.key, {"status": "parsing", "timestamp": time()})
-
-    def set_job_to_querying(self, job: JobId) -> None:
-        """ Sets the job status to querying """
-        self.redis.hmset(job.key, {"status": "querying", "timestamp": time()})
-
-    def gc_lock(self) -> bool:
-        """ Tries to get a GC lock,and returns ture if succeeded """
-        return bool(self.redis.set("gc-lock", "locked", ex=60, nx=True))
-
-    def push_job_to_queue(self, job: JobSchema) -> None:
-        list_name = get_list_name(job.priority)
-        self.redis.lpush(list_name, job.id)
-
-    def get_random_job_by_priority(self) -> Optional[Tuple[JobQueue, JobId]]:
-        """ Tries to get a random job along with its queue """
-        for queue in JobQueue.available():
-            yara_jobs = self.redis.lrange(queue.name, 0, -1)
-            if yara_jobs:
-                return queue, JobId(random.choice(yara_jobs))
-        return None
 
     def get_job(self, job: JobId) -> JobSchema:
         data = self.redis.hgetall(job.key)
@@ -198,6 +101,26 @@ class Database:
         file_list = self.redis.lrange(job.meta_key, ordinal, ordinal)
         return file_list and file_path == json.loads(file_list[0])["file"]
 
+    def job_start_work(self, job: JobId, files_in_progress: int) -> None:
+        """ Updates the numbre of files being processed right now.
+        :param job: ID of the job being updated.
+        :type job: JobId
+        :param files_in_progress: Number of files in the current work unit.
+        :type files_in_progress: int
+        """
+        self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
+
+    def job_update_work(
+        self, job: JobId, files_processed: int, files_matched: int,
+    ) -> None:
+        """ Update progress for the job. This will increment number of files processed
+        and matched, and if as a result all files are processed, will change the job
+        status to `done`
+        """
+        self.redis.hincrby(job.key, "files_processed", files_processed)
+        self.redis.hincrby(job.key, "files_matched", files_matched)
+        self.redis.hincrby(job.key, "files_in_progress", -files_processed)
+
     def create_search_task(
         self,
         rule_name: str,
@@ -205,6 +128,7 @@ class Database:
         raw_yara: str,
         priority: Optional[str],
         taint: Optional[str],
+        agents: List[str],
     ) -> JobId:
         job = JobId(
             "".join(
@@ -215,57 +139,69 @@ class Database:
             )
         )
         job_obj = {
-            "status": "new",
+            "status": "processing",
             "rule_name": rule_name,
             "rule_author": rule_author,
             "raw_yara": raw_yara,
             "submitted": int(time()),
             "priority": priority,
+            "files_in_progress": 0,
+            "files_processed": 0,
+            "files_matched": 0,
+            "total_files": 0,
+            "agents_left": len(agents),
         }
         if taint is not None:
             job_obj["taint"] = taint
 
         self.redis.hmset(job.key, job_obj)
-        self.redis.rpush("queue-search", job.hash)
+        for agent in agents:
+            self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
         return job
 
     def get_job_matches(
         self, job: JobId, offset: int, limit: int
     ) -> MatchesSchema:
-        p = self.redis.pipeline(transaction=False)
-        p.hgetall(job.key)
-        p.lrange("meta:" + job.hash, offset, offset + limit - 1)
-        job, meta = p.execute()
-        return MatchesSchema(job=job, matches=[json.loads(m) for m in meta])
-
-    def run_command(self, command: str) -> None:
-        self.redis.rpush("queue-commands", command)
-
-    def get_task(self) -> Optional[Tuple[str, str]]:
-        task_queues = ["queue-search", "queue-commands"]
-        for queue in task_queues:
-            task = self.redis.lpop(queue)
-            if task is not None:
-                return queue, task
-        return None
-
-    def unsafe_get_redis(self) -> StrictRedis:
-        return self.redis
-
-    def get_storage(self, storage_id: str) -> StorageSchema:
-        data = self.redis.hgetall(storage_id)
-        return StorageSchema(
-            id=storage_id,
-            name=data["name"],
-            path=data["path"],
-            indexing_job_id=None,
-            last_update=datetime.fromtimestamp(data["timestamp"]),
-            taints=data["taints"],
-            enabled=data["enabled"],
+        meta = self.redis.lrange(
+            "meta:" + job.hash, offset, offset + limit - 1
+        )
+        return MatchesSchema(
+            job=self.get_job(job), matches=[json.loads(m) for m in meta]
         )
 
-    def get_storages(self) -> List[StorageSchema]:
-        return [
-            self.get_storage(storage_id)
-            for storage_id in self.redis.keys("storage:*")
+    def agent_get_task(self, agent_id: str) -> AgentTask:
+        agent_prefix = f"agent:{agent_id}"
+        task_queues = [
+            f"{agent_prefix}:queue-search",
+            f"{agent_prefix}:queue-yara",
         ]
+        queue_task: Any = self.redis.blpop(task_queues)
+        queue, task = queue_task
+
+        if queue.endswith(":queue-search"):
+            return AgentTask("search", task)
+
+        if queue.endswith(":queue-yara"):
+            return AgentTask("yara", task)
+
+        raise RuntimeError("Unexpected queue")
+
+    def update_job_files(self, job: JobId, total_files: int) -> None:
+        self.redis.hincrby(job.key, "total_files", total_files)
+
+    def agent_start_job(
+        self, agent_id: str, job: JobId, iterator: str
+    ) -> None:
+        job_data = json.dumps({"job": job.key, "iterator": iterator})
+        self.redis.rpush(f"agent:{agent_id}:queue-yara", job_data)
+
+    def agent_finish_job(self, agent_id: str, job: JobId) -> None:
+        new_agents = self.redis.hincrby(job.key, "agents_left", -1)
+        if new_agents <= 0:
+            self.redis.hmset(job.key, {"status": "done"})
+
+    def register_active_agent(self, agent_id: str) -> None:
+        self.redis.sadd("agents", agent_id)
+
+    def get_active_agents(self) -> List[str]:
+        return self.redis.smembers("agents")

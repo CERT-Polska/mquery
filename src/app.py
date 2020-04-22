@@ -1,7 +1,6 @@
 import os
 
 import uvicorn
-from datetime import datetime
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
@@ -26,7 +25,6 @@ from schema import (
     ParseResponseSchema,
     MatchesSchema,
     StatusSchema,
-    StorageSchema,
     UserSettingsSchema,
     UserInfoSchema,
     UserAuthSchema,
@@ -91,12 +89,14 @@ def query(
             for rule in rules
         ]
 
+    active_agents = db.get_active_agents()
     job = db.create_search_task(
         rules[-1].name,
         rules[-1].author,
         data.raw_yara,
         data.priority,
         data.taint,
+        active_agents,
     )
     return QueryResponseSchema(query_hash=job.hash)
 
@@ -117,21 +117,6 @@ def job_info(job_id: str) -> JobSchema:
 def job_cancel(job_id: str) -> StatusSchema:
     db.cancel_job(JobId(job_id))
     return StatusSchema(status="ok")
-
-
-@app.get("/api/storage", response_model=List[StorageSchema])
-def storage_list() -> List[StorageSchema]:
-    return [
-        StorageSchema(
-            id="XYZ",
-            name="default",
-            path="/mnt/samples",
-            indexing_job_id=None,
-            last_update=datetime(2020, 4, 12),
-            taints=["malware"],
-            enabled=True,
-        )
-    ]
 
 
 @app.get("/api/user/settings", response_model=UserSettingsSchema)
@@ -217,12 +202,6 @@ def serve_index(path: str) -> FileResponse:
 @app.get("/query", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     return FileResponse("mqueryfront/build/index.html")
-
-
-@app.get("/api/compactall")
-def compact_all() -> StatusSchema:
-    db.run_command("compact all;")
-    return StatusSchema(status="ok")
 
 
 app.mount(
