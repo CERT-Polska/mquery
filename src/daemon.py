@@ -6,14 +6,13 @@ import json
 import sys
 from lib.ursadb import UrsaDb
 from util import setup_logging
-from typing import Any, List, Dict
+from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo
+from cachetools import cached, LRUCache
 
 
-YARA_CACHE: Dict[str, Any] = {}
-
-
+@cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
 def compile_yara(db: Database, job: JobId) -> Any:
     """Gets a compiled yara rule belinging to the provided job. Uses cache
     to speed up compilation.
@@ -24,9 +23,6 @@ def compile_yara(db: Database, job: JobId) -> Any:
     :return: Compiled yara rule.
     :rtype: Any
     """
-    if job.key in YARA_CACHE:
-        return YARA_CACHE[job.key]
-
     yara_rule = db.get_yara_by_job(job)
 
     logging.info("Compiling Yara")
@@ -36,7 +32,6 @@ def compile_yara(db: Database, job: JobId) -> Any:
         logging.exception("Yara parse error")
         raise e
 
-    YARA_CACHE[job.key] = rule
     return rule
 
 
