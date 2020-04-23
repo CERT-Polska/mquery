@@ -74,13 +74,6 @@ class DatabaseTopology extends Component {
             });
     }
 
-    runCompactAll = () => {
-        axios.get(API_URL + "/compactall").catch((error) => {
-            this.setState({ error: error });
-        });
-        this.setState({ compacting: true });
-    };
-
     render() {
         const datasetRows = Object.keys(
             this.state.datasets
@@ -94,19 +87,7 @@ class DatabaseTopology extends Component {
 
         return (
             <ErrorBoundary error={this.state.error}>
-                <h2 className="text-center mq-bottom">
-                    Topology
-                    <button
-                        className="btn btn-danger btn-sm float-right"
-                        name="query"
-                        type="submit"
-                        disabled={this.state.compacting}
-                        onClick={this.runCompactAll}
-                        title="Compact the db. Warning: this may take a long time"
-                    >
-                        DB Compact
-                    </button>
-                </h2>
+                <h2 className="text-center mq-bottom">Topology</h2>
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>

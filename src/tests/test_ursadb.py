@@ -42,7 +42,7 @@ def test_successful_iterator_pop(db_context: UrsadbTestContext):
     )
 
     result = db_context.ursadb.pop("iter_id", 3)
-    assert not result.should_drop_iterator
+    assert not result.iterator_empty
     assert result.files == ["hmm", "xyz", "www"]
     assert not result.was_locked
 
@@ -53,7 +53,7 @@ def test_incomplete_iterator_pop(db_context: UrsadbTestContext):
     )
 
     result = db_context.ursadb.pop("iter_id", 3)
-    assert not result.should_drop_iterator
+    assert not result.iterator_empty
     assert result.files == ["hmm"]
     assert not result.was_locked
 
@@ -65,7 +65,7 @@ def test_iterator_pop_error(db_context: UrsadbTestContext):
     )
 
     result = db_context.ursadb.pop("iter_id", 3)
-    assert result.should_drop_iterator
+    assert result.iterator_empty
     assert result.files == []
     assert not result.was_locked
 
@@ -77,6 +77,6 @@ def test_locked_iterator(db_context: UrsadbTestContext):
     )
 
     result = db_context.ursadb.pop("iter_id", 3)
-    assert not result.should_drop_iterator
+    assert not result.iterator_empty
     assert result.files == []
     assert result.was_locked
