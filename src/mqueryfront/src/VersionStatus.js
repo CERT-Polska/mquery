@@ -2,8 +2,6 @@ import React, { Component } from "react";
 
 class VersionStatus extends Component {
     render() {
-        console.log(this.props.components);
-        console.log(Object.entries(this.props.components));
         let rows = Object.keys(this.props.components).map((component) => (
             <tr key={component}>
                 <td>{component}</td>
