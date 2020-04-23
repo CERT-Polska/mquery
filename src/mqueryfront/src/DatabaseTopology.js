@@ -108,7 +108,6 @@ class DatabaseTopology extends Component {
                                     Dataset ID
                                 </th>
                                 <th data-toggle="tooltip" title={filesTooltip}>
-                                    {" "}
                                     # Files (size)
                                 </th>
                             </tr>

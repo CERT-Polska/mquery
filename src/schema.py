@@ -93,5 +93,4 @@ class BackendStatusSchema(BaseModel):
 
 
 class BackendStatusDatasetsSchema(BaseModel):
-    db_alive: bool
     datasets: Dict

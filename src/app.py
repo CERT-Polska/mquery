@@ -189,7 +189,7 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
         except Again:
             pass
 
-    return BackendStatusDatasetsSchema(db_alive=True, datasets=datasets)
+    return BackendStatusDatasetsSchema(datasets=datasets)
 
 
 @app.get("/query/{path}", include_in_schema=False)
