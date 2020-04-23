@@ -3,7 +3,8 @@
 import os
 import logging
 import argparse
-from typing import Set, Iterator, Tuple
+from typing import Set, Iterator, Tuple, List
+from pathlib import Path
 from lib.ursadb import UrsaDb
 from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
@@ -21,19 +22,32 @@ def all_indexed_files(ursa: UrsaDb) -> Set[str]:
     return result
 
 
+def walk_directory(dir: Path, ignores: List[str]) -> Iterator[Path]:
+    """Recursively walks the current directory, while respecting .ursadbignore
+    files to selectively ignore some elements """
+    if (dir / ".ursaignore").exists():
+        new_ignores = (dir / ".ursaignore").read_text().strip().split("\n")
+        ignores = ignores + new_ignores
+    for elem in dir.iterdir():
+        if any(elem.match(ignore) for ignore in ignores):
+            continue
+        elif elem.is_file():
+            yield elem
+        elif elem.is_dir():
+            for elem in walk_directory(elem, ignores):
+                yield elem
+
+
 def find_new_files(
     existing: Set[str], files_root: str, mounted_as: str
 ) -> Iterator[str]:
     files_root = os.path.abspath(files_root)
     mounted_as = os.path.abspath(mounted_as)
-    for (_root, _, files) in os.walk(files_root):
-        for f in files:
-            abspath = os.path.join(mounted_as, _root, f)
-            assert abspath.startswith(files_root)
-            relpath = os.path.relpath(abspath, files_root)
-            fpath = os.path.join(mounted_as, relpath)
-            if fpath not in existing:
-                yield fpath
+    for abspath in walk_directory(Path(files_root), [".ursaignore"]):
+        relpath = os.path.relpath(str(abspath), files_root)
+        fpath = os.path.join(mounted_as, relpath)
+        if fpath not in existing:
+            yield fpath
 
 
 def index_files(proc_params: Tuple[str, str]) -> None:
@@ -93,6 +107,8 @@ def main() -> None:
     current_batch = 10 ** 20  # As good as infinity.
     new_files = 0
     for f in find_new_files(fileset, args.path, path_mount):
+        print(f)
+        continue
         if current_batch > args.batch:
             current_batch = 0
             if tmpfile:
