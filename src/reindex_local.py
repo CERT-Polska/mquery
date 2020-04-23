@@ -90,6 +90,11 @@ def main() -> None:
         type=int,
         default=2,
     )
+    parser.add_argument(
+        "--dry-run",
+        help="Don't index, only print filenames.",
+        action="store_true",
+    )
 
     args = parser.parse_args()
 
@@ -107,8 +112,9 @@ def main() -> None:
     current_batch = 10 ** 20  # As good as infinity.
     new_files = 0
     for f in find_new_files(fileset, args.path, path_mount):
-        print(f)
-        continue
+        if args.dry_run:
+            print(f)
+            continue
         if current_batch > args.batch:
             current_batch = 0
             if tmpfile:
@@ -126,6 +132,9 @@ def main() -> None:
     logging.info(
         "Got %s files in %s batches to index.", new_files, len(tmpfiles)
     )
+    if args.dry_run:
+        return
+
     indexing_jobs = []
     for tmppath in tmpfiles:
         mounted_name = os.path.join(
