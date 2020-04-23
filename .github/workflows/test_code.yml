@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: No "console.log" please
         run: git diff master -- "*.js" | grep "^[+][^+]" | grep -v "noqa" | grep "console.log" && false
   test_python_types:
