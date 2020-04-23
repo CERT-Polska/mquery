@@ -7,6 +7,13 @@ on:
     branches:
     - master
 jobs:
+  expression_blacklist:
+    name: python mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: No "console.log" please
+        run: git diff master -- "*.js" | grep "^[+][^+]" | grep -v "noqa" | grep "console.log" && false
   test_python_types:
     name: python mypy
     runs-on: ubuntu-latest
