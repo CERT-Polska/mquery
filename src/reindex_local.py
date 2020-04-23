@@ -15,7 +15,7 @@ def all_indexed_files(ursa: UrsaDb) -> Set[str]:
     result: Set[str] = set()
     while True:
         pop_result = ursa.pop(iterator, 5000)
-        if pop_result.should_drop_iterator:
+        if pop_result.iterator_empty:
             break
         for fpath in pop_result.files:
             result.add(fpath)
