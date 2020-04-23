@@ -8,14 +8,13 @@ on:
     - master
 jobs:
   expression_blacklist:
-    name: python mypy
+    name: expressoin blacklist
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        run: git fetch origin master
       - name: No "console.log" please
-        run: git diff master -- "*.js" | grep "^[+][^+]" | grep -v "noqa" | grep "console.log" && false
+        run: git diff origin/master -- "*.js" | grep "^[+][^+]" | grep -v "noqa" | grep "console.log" && false
   test_python_types:
     name: python mypy
     runs-on: ubuntu-latest
