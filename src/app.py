@@ -1,6 +1,8 @@
+from lib.ursadb import UrsaDb
 import os
 
 import uvicorn
+import config
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse
@@ -8,12 +10,10 @@ from starlette.staticfiles import StaticFiles
 from werkzeug.exceptions import NotFound
 from zmq import Again
 
-from lib.ursadb import UrsaDb
 from lib.yaraparse import parse_yara
 
 from util import mquery_version
 from db import Database, JobId
-import config
 from typing import Any, Callable, List, Union
 
 from schema import (
@@ -32,9 +32,8 @@ from schema import (
     BackendStatusDatasetsSchema,
 )
 
-db = Database()
+db = Database(config.REDIS_HOST, config.REDIS_PORT)
 app = FastAPI()
-ursa = UrsaDb(config.BACKEND)
 
 
 @app.middleware("http")
@@ -89,7 +88,7 @@ def query(
             for rule in rules
         ]
 
-    active_agents = db.get_active_agents()
+    active_agents = list(db.get_active_agents().keys())
     job = db.create_search_task(
         rules[-1].name,
         rules[-1].author,
@@ -157,39 +156,40 @@ def job_statuses() -> JobsSchema:
 
 @app.get("/api/backend", response_model=BackendStatusSchema)
 def backend_status() -> BackendStatusSchema:
-    db_alive = True
-    status = ursa.status()
-    try:
-        tasks = status.get("result", {}).get("tasks", [])
-        ursadb_version = status.get("result", {}).get(
-            "ursadb_version", "unknown"
-        )
-    except Again:
-        db_alive = False
-        tasks = []
-        ursadb_version = []
+    agents = []
+    components = {
+        "mquery": mquery_version(),
+    }
+    for name, url in db.get_active_agents().items():
+        try:
+            ursa = UrsaDb(url)
+            status = ursa.status()
+            tasks = status["result"]["tasks"]
+            ursadb_version = status["result"]["ursadb_version"]
+            agents.append(
+                {"name": name, "alive": True, "tasks": tasks, "url": url}
+            )
+            components[f"ursadb ({name})"] = ursadb_version
+        except Again:
+            agents.append(
+                {"name": name, "alive": False, "tasks": [], "url": url}
+            )
+            components[f"ursadb ({name})"] = "unknown"
 
-    return BackendStatusSchema(
-        db_alive=db_alive,
-        tasks=tasks,
-        components={
-            "mquery": mquery_version(),
-            "ursadb": str(ursadb_version),
-        },
-    )
+    return BackendStatusSchema(agents=agents, components=components,)
 
 
 @app.get("/api/backend/datasets", response_model=BackendStatusDatasetsSchema)
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
-    db_alive = True
+    datasets = {}
+    for url in db.get_active_agents().values():
+        try:
+            ursa = UrsaDb(url)
+            datasets.update(ursa.topology()["result"]["datasets"])
+        except Again:
+            pass
 
-    try:
-        datasets = ursa.topology().get("result", {}).get("datasets", {})
-    except Again:
-        db_alive = False
-        datasets = {}
-
-    return BackendStatusDatasetsSchema(db_alive=db_alive, datasets=datasets)
+    return BackendStatusDatasetsSchema(datasets=datasets)
 
 
 @app.get("/query/{path}", include_in_schema=False)

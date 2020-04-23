@@ -85,6 +85,15 @@ class DatabaseTopology extends Component {
             />
         ));
 
+        let datasets = Object.values(this.state.datasets);
+        let datasetTooltip = `Number of datasets: ${datasets.length}`;
+        let totalCount = datasets
+            .map((x) => x.file_count)
+            .reduce((a, b) => a + b, 0);
+        let totalBytes = datasets.map((x) => x.size).reduce((a, b) => a + b, 0);
+        let totalSize = filesize(totalBytes, { standard: "iec" });
+        let filesTooltip = `Total files: ${totalCount} (${totalSize})`;
+
         return (
             <ErrorBoundary error={this.state.error}>
                 <h2 className="text-center mq-bottom">Topology</h2>
@@ -92,8 +101,15 @@ class DatabaseTopology extends Component {
                     <table className="table table-bordered table-topology">
                         <thead>
                             <tr>
-                                <th>Dataset ID</th>
-                                <th> # Files (size)</th>
+                                <th
+                                    data-toggle="tooltip"
+                                    title={datasetTooltip}
+                                >
+                                    Dataset ID
+                                </th>
+                                <th data-toggle="tooltip" title={filesTooltip}>
+                                    # Files (size)
+                                </th>
                             </tr>
                         </thead>
                         <tbody>{datasetRows}</tbody>
