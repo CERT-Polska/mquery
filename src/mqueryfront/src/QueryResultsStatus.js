@@ -232,7 +232,7 @@ class QueryResultsStatus extends Component {
                     </div>
                     {this.props.job.total_files > 0 && processing > 0 && (
                         <div
-                            className={"progress-bar warning"}
+                            className={"progress-bar"}
                             role="progressbar"
                             style={{ width: Math.max(3, processing) + "%" }}
                         >
