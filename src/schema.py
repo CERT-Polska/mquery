@@ -80,10 +80,16 @@ class UserAuthSchema(BaseModel):
     password: str
 
 
+class AgentSchema(BaseModel):
+    name: str
+    alive: bool
+    tasks: List
+    url: str
+
+
 class BackendStatusSchema(BaseModel):
-    db_alive: bool
-    tasks: List[TaskSchema]
-    components: Dict
+    agents: List[AgentSchema]
+    components: Dict[str, str]
 
 
 class BackendStatusDatasetsSchema(BaseModel):

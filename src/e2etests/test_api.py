@@ -26,11 +26,7 @@ def check_operational(request):
         try:
             res = requests.get("http://web:5000/api/backend", timeout=1)
             res.raise_for_status()
-
-            if res.json()["db_alive"]:
-                return
-            else:
-                log.info("Database backend is not active.")
+            return
         except requests.exceptions.ConnectionError:
             if attempt % 15 == 0:
                 log.info(

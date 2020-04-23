@@ -4,14 +4,7 @@ from time import time
 import json
 import random
 import string
-import config
 from redis import StrictRedis
-
-
-def make_redis() -> StrictRedis:
-    return StrictRedis(
-        host=config.REDIS_HOST, port=config.REDIS_PORT, decode_responses=True
-    )
 
 
 class AgentTask:
@@ -57,8 +50,10 @@ class MatchInfo:
 
 
 class Database:
-    def __init__(self) -> None:
-        self.redis = make_redis()
+    def __init__(self, redis_host: str, redis_port: int) -> None:
+        self.redis = StrictRedis(
+            host=redis_host, port=redis_port, decode_responses=True
+        )
 
     def get_yara_by_job(self, job: JobId) -> str:
         """ Gets yara rule associated with job """
@@ -204,8 +199,8 @@ class Database:
         if new_agents <= 0:
             self.redis.hmset(job.key, {"status": "done"})
 
-    def register_active_agent(self, agent_id: str) -> None:
-        self.redis.sadd("agents", agent_id)
+    def register_active_agent(self, agent_id: str, ursadb_url: str) -> None:
+        self.redis.hset("agents", agent_id, ursadb_url)
 
-    def get_active_agents(self) -> List[str]:
-        return self.redis.smembers("agents")
+    def get_active_agents(self) -> Dict[str, str]:
+        return self.redis.hgetall("agents")

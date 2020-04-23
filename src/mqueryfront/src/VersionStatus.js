@@ -2,7 +2,14 @@ import React, { Component } from "react";
 
 class VersionStatus extends Component {
     render() {
-        const VersionRows = Object(this.props.components);
+        console.log(this.props.components);
+        console.log(Object.entries(this.props.components));
+        let rows = Object.keys(this.props.components).map((component) => (
+            <tr key={component}>
+                <td>{component}</td>
+                <td>{this.props.components[component]}</td>
+            </tr>
+        ));
 
         return (
             <div>
@@ -15,16 +22,7 @@ class VersionStatus extends Component {
                                 <th>Version</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>mquery-web</td>
-                                <td>{VersionRows.mquery}</td>
-                            </tr>
-                            <tr>
-                                <td>ursadb</td>
-                                <td>{VersionRows.ursadb}</td>
-                            </tr>
-                        </tbody>
+                        <tbody>{rows}</tbody>
                     </table>
                 </div>
             </div>

@@ -36,7 +36,7 @@ def compile_yara(db: Database, job: JobId) -> Any:
 
 
 class Agent:
-    def __init__(self, group_id: str, ursa: UrsaDb, db: Database) -> None:
+    def __init__(self, group_id: str, ursa_url: str, db: Database) -> None:
         """Creates a new agent instance. Every agents belongs to some group
         (identified by `group_id`). There may be multiple agents in a
         single group, but they're all exchangeable (they read and write to the
@@ -44,14 +44,16 @@ class Agent:
 
         :param group_id: Identifier of the agent group this agent belongs to.
         :type group_id: str
-        :param ursa: Reference to ursadb instance.
-        :type ursa: UrsaDb
+        :param ursa_url: URL to connected ursadb instance. Ideally this should
+            be public, because this will allow mquery to collect measurements.
+        :type ursa_url: str
         :param db: Reference to main database/task queue.
         :type db: Database
         """
         self.group_id = group_id
-        self.ursa = ursa
+        self.ursa_url = ursa_url
         self.db = db
+        self.ursa = UrsaDb(self.ursa_url)
 
     def __search_task(self, job_id: JobId) -> None:
         """Do ursadb query for yara belonging to the provided job.
@@ -173,7 +175,7 @@ class Agent:
         method of this class. This will register the agent in the db, then pop
         tasks from redis as they come, and execute them.
         """
-        self.db.register_active_agent(self.group_id)
+        self.db.register_active_agent(self.group_id, self.ursa_url)
 
         while True:
             task = self.db.agent_get_task(self.group_id)
@@ -192,9 +194,8 @@ def main() -> None:
 
     logging.info("Agent [%s] running...", agent_group_id)
 
-    db = Database()
-    ursa = UrsaDb(config.BACKEND)
-    agent = Agent(agent_group_id, ursa, db)
+    db = Database(config.REDIS_HOST, config.REDIS_PORT)
+    agent = Agent(agent_group_id, config.BACKEND, db)
 
     agent.main_loop()
 

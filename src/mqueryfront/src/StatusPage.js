@@ -12,7 +12,7 @@ class StatusPage extends Component {
 
         this.state = {
             backend: {
-                tasks: [],
+                agents: [],
                 components: [],
             },
             error: null,
@@ -37,10 +37,10 @@ class StatusPage extends Component {
                     <h1 className="text-center mq-bottom">Status</h1>
                     <div className="row">
                         <div className="col-md-6">
-                            <BackendStatus jobs={this.state.backend.tasks} />
                             <VersionStatus
                                 components={this.state.backend.components}
                             />
+                            <BackendStatus agents={this.state.backend.agents} />
                         </div>
                         <div className="col-md-6">
                             <DatabaseTopology />
