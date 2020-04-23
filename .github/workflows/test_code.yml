@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        run: git fetch origin master
+      - run: git fetch origin master
       - name: No "console.log" please
         run: git diff origin/master -- "*.js" | grep "^[+][^+]" | grep -v "noqa" | grep "console.log" && false
   test_python_types:
