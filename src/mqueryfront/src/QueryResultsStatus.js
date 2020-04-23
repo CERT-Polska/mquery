@@ -148,10 +148,6 @@ class QueryResultsStatus extends Component {
         );
         let processed =
             this.props.job.files_processed + " / " + this.props.job.total_files;
-
-        if (processing > 0 && processing < 3) {
-            processing = 3;
-        }
         let cancel = (
             <button
                 className="btn btn-danger btn-sm"
@@ -234,7 +230,7 @@ class QueryResultsStatus extends Component {
                     >
                         {progress}%
                     </div>
-                    {processing > 0 && (
+                    {this.props.job.total_files > 0 && processing > 2 && (
                         <div
                             className={"progress-bar warning"}
                             role="progressbar"
