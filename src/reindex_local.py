@@ -6,8 +6,8 @@ import argparse
 from typing import Set, Iterator, Tuple, List
 from pathlib import Path
 from lib.ursadb import UrsaDb
-from tempfile import NamedTemporaryFile
 from multiprocessing import Pool
+from tempfile import NamedTemporaryFile
 
 
 def all_indexed_files(ursa: UrsaDb) -> Set[str]:
