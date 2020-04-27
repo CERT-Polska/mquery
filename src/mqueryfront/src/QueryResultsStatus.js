@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
+import CountDownTimer from "./CountDownTimer"
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -78,6 +79,8 @@ class QueryResultsStatus extends Component {
         this.state = {
             activePage: 1,
             itemsPerPage: 20,
+            // setTimer: true,
+            // countDown: 0
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
@@ -116,6 +119,7 @@ class QueryResultsStatus extends Component {
         if (prevProps.qhash !== this.props.qhash) {
             this.setState({ activePage: 1 });
         }
+
     }
 
     render() {
@@ -162,6 +166,19 @@ class QueryResultsStatus extends Component {
             processed = "-";
         }
 
+        let countDown;
+        let duration;
+        let clock = <span/>
+
+        if (this.props.job.files_processed > 0 && this.props.job.submitted){
+            let processedFiles = this.props.job.total_files/this.props.job.files_processed
+            let processedTime = Math.floor(Date.now()/1000 - this.props.job.submitted)
+            countDown =  Math.round(processedFiles*processedTime - processedTime)
+            duration = Math.floor(Date.now()/1000 - this.props.job.submitted)
+            clock = (
+                <i>{duration}s (~{countDown}s left) </i>
+                )
+        }
         const matches = this.props.matches.map((match, index) => (
             <MatchItem
                 {...match}
@@ -176,6 +193,7 @@ class QueryResultsStatus extends Component {
         let finishedStatuses = ["done", "cancelled", "expired"];
         if (finishedStatuses.includes(this.props.job.status)) {
             cancel = <span />;
+            clock = <span />;
         }
 
         const lenMatches = this.props.job.files_matched;
@@ -241,7 +259,7 @@ class QueryResultsStatus extends Component {
                     )}
                 </div>
                 <div className="row m-0 pt-3">
-                    <div className="col-md-2">
+                    <div className="col-md-3">
                         <p>
                             Matches: <span>{lenMatches}</span>
                         </p>
@@ -257,10 +275,12 @@ class QueryResultsStatus extends Component {
                             {this.props.job.status}
                         </span>
                     </div>
-                    <div className="col-md-5">
+                    <div className="col-md-3">
                         Processed: <span>{processed}</span>
                     </div>
-                    <div className="col-md-2">{cancel}</div>
+                    <div className="col-md-3">
+                    {clock} {cancel}
+                    </div>
                 </div>
                 {this.props.job.error ? (
                     <div className="alert alert-danger">
