@@ -21,7 +21,7 @@ When in src of main mquery directory:
 python3 -m tests.yararules.generate_yaraparse_result_files {file_name}
 ```
 
-\* in {} give name of the file you want to generate txt from
+\* In {} give name of the file you want to generate txt file from.
 
 All result files will be generated in tests/yararules/testdata directory.
 
