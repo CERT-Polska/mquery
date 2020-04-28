@@ -38,7 +38,13 @@ def db_context(request):
 def test_successful_iterator_pop(db_context: UrsadbTestContext):
     db_context.expect(
         'iterator "iter_id" pop 3;',
-        {"result": {"files": ["hmm", "xyz", "www"]}},
+        {
+            "result": {
+                "files": ["hmm", "xyz", "www"],
+                "iterator_position": 3,
+                "total_files": 100,
+            }
+        },
     )
 
     result = db_context.ursadb.pop("iter_id", 3)
@@ -49,7 +55,14 @@ def test_successful_iterator_pop(db_context: UrsadbTestContext):
 
 def test_incomplete_iterator_pop(db_context: UrsadbTestContext):
     db_context.expect(
-        'iterator "iter_id" pop 3;', {"result": {"files": ["hmm"]}}
+        'iterator "iter_id" pop 3;',
+        {
+            "result": {
+                "files": ["hmm"],
+                "iterator_position": 3,
+                "total_files": 100,
+            }
+        },
     )
 
     result = db_context.ursadb.pop("iter_id", 3)
