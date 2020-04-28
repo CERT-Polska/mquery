@@ -142,8 +142,7 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
         if last_end is not None:
             output.append(part[last_end:])
 
-    core = "} & {".join(output)
-    return UrsaExpression.literal(core)
+    return UrsaExpression.and_(*[UrsaExpression.literal(f) for f in output])
 
 
 def ursify_plain_string(string: PlainString) -> UrsaExpression:
