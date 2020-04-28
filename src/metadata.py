@@ -48,9 +48,9 @@ class MetadataPlugin(ABC):
 
     def identify(self, matched_fname: str) -> Optional[str]:
         """
-       Returns file unique identifier based on matched path.
+        Returns file unique identifier based on matched path.
 
-       Intended to be overridden by plugin.
+        Intended to be overridden by plugin.
        """
         return matched_fname
 
@@ -75,15 +75,15 @@ class MetadataPlugin(ABC):
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
         """
-       Extracts metadata for matched path
+        Extracts metadata for matched path
 
-       Intended to be overridden by plugin.
+        Intended to be overridden by plugin.
 
-       :param identifier: File identifier returned by overridable
-                          :py:meth:`MetadataPlugin.identify` method
-       :param matched_fname: Matched file path
-       :param current_meta: Metadata extracted so far by dependencies
-       :return: Metadata object. If you can't extract metadata for current file,
-                return empty dict.
+        :param identifier: File identifier returned by overridable
+                           :py:meth:`MetadataPlugin.identify` method
+        :param matched_fname: Matched file path
+        :param current_meta: Metadata extracted so far by dependencies
+        :return: Metadata object. If you can't extract metadata for current file,
+                 return empty dict.
        """
         raise NotImplementedError
