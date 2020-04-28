@@ -2,7 +2,6 @@ import argparse
 import itertools
 import re
 from typing import Dict, List, Optional
-
 from yaramod import (  # type: ignore
     AndExpression,
     EqExpression,
@@ -46,6 +45,14 @@ class UrsaExpression:
 
     def __init__(self, query: str) -> None:
         self.query = query
+
+    @classmethod
+    def literal(cls, some_string):
+        return cls(f"{{{some_string}}}")
+
+    @classmethod
+    def literal_to_hex(cls, some_string):
+        return cls(f"{{{some_string.hex()}}}")
 
     @classmethod
     def and_(cls, *args: "UrsaExpression") -> "UrsaExpression":
@@ -135,16 +142,15 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
         if last_end is not None:
             output.append(part[last_end:])
 
-    core = "} & {".join(output)
-    return UrsaExpression(f"{{{core}}}")
+    return UrsaExpression.and_(*[UrsaExpression.literal(f) for f in output])
 
 
 def ursify_plain_string(string: PlainString) -> UrsaExpression:
     text_ascii = string.pure_text
     text_wide = bytes(x for y in text_ascii for x in [y, 0])
 
-    ursa_ascii = UrsaExpression(f"{{{text_ascii.hex()}}}")
-    ursa_wide = UrsaExpression(f"{{{text_wide.hex()}}}")
+    ursa_ascii = UrsaExpression.literal_to_hex(text_ascii)
+    ursa_wide = UrsaExpression.literal_to_hex(text_wide)
 
     if string.is_wide and not string.is_ascii:
         return ursa_wide
@@ -164,9 +170,9 @@ def ursify_xor_string(string: PlainString) -> UrsaExpression:
         xored_wide = bytes(x ^ xor_key for y in text_ascii for x in [y, 0])
 
         if string.is_ascii:
-            xored_strings.append(UrsaExpression(f"{{{xored_ascii.hex()}}}"))
+            xored_strings.append(UrsaExpression.literal_to_hex(xored_ascii))
         if string.is_wide:
-            xored_strings.append(UrsaExpression(f"{{{xored_wide.hex()}}}"))
+            xored_strings.append(UrsaExpression.literal_to_hex(xored_wide))
 
     return UrsaExpression.or_(*xored_strings)
 

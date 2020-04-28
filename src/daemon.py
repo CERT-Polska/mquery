@@ -128,7 +128,9 @@ class Agent:
         if pop_result.files:
             # If there are any files popped iterator, work on them
             self.__execute_yara(job, pop_result.files)
-        if pop_result.iterator_empty:
+
+        j = self.db.get_job(job)
+        if j.status == "processing" and j.files_processed == j.total_files:
             # The job is over, work of this agent as done.
             self.db.agent_finish_job(job)
 

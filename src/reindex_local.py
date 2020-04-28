@@ -50,12 +50,10 @@ def find_new_files(
             yield fpath
 
 
-def index_files(proc_params: Tuple[str, str]) -> None:
-    ursa_url, mounted_name = proc_params
+def index_files(proc_params: Tuple[str, str, int]) -> None:
+    ursa_url, mounted_name, ndx = proc_params
     ursa = UrsaDb(ursa_url)
-    logging.info(f"Start: %s", mounted_name)
-    res = ursa.execute_command(f'index from list "{mounted_name}" nocheck;')
-    logging.info(f"Done: %s (%s)", mounted_name, res)
+    ursa.execute_command(f'index from list "{mounted_name}" nocheck;')
 
 
 def main() -> None:
@@ -134,20 +132,27 @@ def main() -> None:
     )
     if args.dry_run:
         return
+    del fileset
 
     indexing_jobs = []
-    for tmppath in tmpfiles:
+    for ndx, tmppath in enumerate(tmpfiles):
         mounted_name = os.path.join(
             tmpdir_mount, os.path.relpath(tmppath, args.tmpdir)
         )
-        indexing_jobs.append((args.ursadb, mounted_name))
-        logging.info(f" - Next batch: %s", mounted_name)
+        indexing_jobs.append((args.ursadb, mounted_name, ndx))
+        logging.info(f"Batch %s: %s", ndx, mounted_name)
 
-    logging.info("Stage 3: run index command in parallel")
+    logging.info("Stage 3: Run index command in parallel.")
     pool = Pool(processes=args.workers)
-    pool.map(index_files, indexing_jobs)
+    done = 0
+    total = len(indexing_jobs)
+    for batchid in pool.imap_unordered(
+        index_files, indexing_jobs, chunksize=1
+    ):
+        done += 1
+        logging.info(f"Batch %s done [%s/%s].", batchid, done, total)
 
-    logging.info("Stage 4: cleanup.")
+    logging.info("Stage 4: Cleanup.")
     for f in tmpfiles:
         os.unlink(f)
 
