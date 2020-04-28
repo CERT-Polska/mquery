@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import ErrorBoundary from "./ErrorBoundary";
 import axios from "axios";
 import { API_URL } from "./config";
+import PriorityIcon from "./components/PriorityIcon";
+import ActionClose from "./components/ActionClose";
+import ActionCancel from "./components/ActionCancel";
+import StatusProgress from "./components/StatusProgress";
 
 class SearchJobRow extends Component {
     constructor(props) {
@@ -25,50 +29,23 @@ class SearchJobRow extends Component {
         const submittedDate = new Date(
             this.props.submitted * 1000
         ).toISOString();
-        let rowClass;
 
-        switch (this.props.status) {
-            case "done":
-                rowClass = "table-success";
-                break;
-            case "processing":
-                rowClass = "table-info";
-                break;
-            case "querying":
-                rowClass = "table-info";
-                break;
-            case "cancelled":
-                rowClass = "table-danger";
-                break;
-            case "expired":
-                rowClass = "table-warning";
-                break;
-            default:
-                rowClass = "";
-                break;
-        }
-
-        let status = this.props.status;
-        let cancelBtn = (
-            <button
-                className="btn btn-sm btn-danger"
-                onClick={this.handleCancelJob}
-            >
-                cancel
-            </button>
-        );
-
-        if (this.props.status === "cancelled" || this.state.cancelled) {
+        let status;
+        if (this.state.cancelled) {
             status = "cancelled";
-            cancelBtn = <span />;
+        } else {
+            status = this.props.status;
         }
 
-        if (this.props.status === "expired") {
-            cancelBtn = "";
-        }
-
-        if (this.props.status === "done") {
-            cancelBtn = "";
+        let actionBtn;
+        if (
+            status === "cancelled" ||
+            status === "expired" ||
+            status === "done"
+        ) {
+            actionBtn = <ActionClose onClick={this.props.onClose} />;
+        } else {
+            actionBtn = <ActionCancel onClick={this.handleCancelJob} />;
         }
 
         let rule_author = this.props.rule_author
@@ -76,25 +53,39 @@ class SearchJobRow extends Component {
             : "(no author)";
 
         return (
-            <tr className={rowClass}>
+            <tr>
                 <td>
-                    <Link
-                        to={"/query/" + this.props.id}
-                        style={{ fontFamily: "monospace" }}
-                    >
-                        {this.props.rule_name}
-                    </Link>
-                    <p style={{ fontSize: "11px" }}>
+                    <div className="d-flex">
+                        <div
+                            className="text-truncate"
+                            style={{ minWidth: 50, maxWidth: 800 }}
+                        >
+                            <Link
+                                to={"/query/" + this.props.id}
+                                style={{ fontFamily: "monospace" }}
+                            >
+                                {this.props.rule_name}
+                            </Link>
+                        </div>
+                        <span className="ml-2">
+                            <PriorityIcon priority={this.props.priority} />
+                        </span>
+                    </div>
+                    <p style={{ fontSize: 11 }}>
                         [{rule_author}] {submittedDate}
                     </p>
                 </td>
-                <td>{this.props.priority}</td>
-                <td>{this.props.taint}</td>
-                <td>{status}</td>
-                <td>
-                    {this.props.files_processed} / {this.props.total_files}
+                <td className="align-middle text-center">
+                    {this.props.files_matched}
                 </td>
-                <td>{cancelBtn}</td>
+                <td className="text-center align-middle">
+                    <StatusProgress
+                        status={status}
+                        total_files={this.props.total_files}
+                        files_processed={this.props.files_processed}
+                    />
+                </td>
+                <td className="text-center align-middle">{actionBtn}</td>
             </tr>
         );
     }
@@ -108,6 +99,16 @@ class SearchJobs extends Component {
             jobs: [],
             error: null,
         };
+
+        this.handleClose = this.handleClose.bind(this);
+    }
+
+    handleClose(id) {
+        const jobs = Object.assign([], this.state.jobs).filter(
+            (job) => job.id !== id
+        );
+
+        this.setState({ jobs: jobs });
     }
 
     componentDidMount() {
@@ -123,21 +124,23 @@ class SearchJobs extends Component {
 
     render() {
         const backendJobRows = this.state.jobs.map((job) => (
-            <SearchJobRow {...job} key={job.id} />
+            <SearchJobRow
+                {...job}
+                key={job.id}
+                onClose={() => this.handleClose(job.id)}
+            />
         ));
 
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="table-responsive">
-                    <table className="table table-striped table-bordered">
+                    <table className="table table-striped table-bordered w-auto">
                         <thead>
                             <tr>
                                 <th>Job name</th>
-                                <th>Priority</th>
-                                <th>Taints</th>
-                                <th>Status</th>
-                                <th>Progress</th>
-                                <th>Actions</th>
+                                <th className="text-center">Matches</th>
+                                <th className="text-center">Status/Progress</th>
+                                <th className="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>{backendJobRows}</tbody>

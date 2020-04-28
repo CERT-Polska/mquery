@@ -4,10 +4,10 @@ import SearchJobs from "./SearchJobs";
 class RecentPage extends Component {
     render() {
         return (
-            <div className="container-fluid">
+            <div>
                 <h1 className="text-center mq-bottom">Recent jobs</h1>
-                <div className="row">
-                    <div className="col-md-6 offset-md-3">
+                <div className="d-flex justify-content-center">
+                    <div className="">
                         <SearchJobs />
                     </div>
                 </div>
