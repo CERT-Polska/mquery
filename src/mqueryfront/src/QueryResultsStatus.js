@@ -3,6 +3,7 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
+import { finishedStatuses } from "./QueryUtils";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -174,7 +175,6 @@ class QueryResultsStatus extends Component {
 
         let progressBg = "bg-" + this.renderSwitchStatus(this.props.job.status);
 
-        const finishedStatuses = ["done", "cancelled", "failed", "expired"];
         if (finishedStatuses.includes(this.props.job.status)) {
             cancel = <span />;
         }
