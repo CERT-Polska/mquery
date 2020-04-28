@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
-import CountDownTimer from "./CountDownTimer"
+import QueryTimer from "./QueryTimer";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -119,7 +119,6 @@ class QueryResultsStatus extends Component {
         if (prevProps.qhash !== this.props.qhash) {
             this.setState({ activePage: 1 });
         }
-
     }
 
     render() {
@@ -166,19 +165,6 @@ class QueryResultsStatus extends Component {
             processed = "-";
         }
 
-        let countDown;
-        let duration;
-        let clock = <span/>
-
-        if (this.props.job.files_processed > 0 && this.props.job.submitted){
-            let processedFiles = this.props.job.total_files/this.props.job.files_processed
-            let processedTime = Math.floor(Date.now()/1000 - this.props.job.submitted)
-            countDown =  Math.round(processedFiles*processedTime - processedTime)
-            duration = Math.floor(Date.now()/1000 - this.props.job.submitted)
-            clock = (
-                <i>{duration}s (~{countDown}s left) </i>
-                )
-        }
         const matches = this.props.matches.map((match, index) => (
             <MatchItem
                 {...match}
@@ -193,7 +179,6 @@ class QueryResultsStatus extends Component {
         let finishedStatuses = ["done", "cancelled", "expired"];
         if (finishedStatuses.includes(this.props.job.status)) {
             cancel = <span />;
-            clock = <span />;
         }
 
         const lenMatches = this.props.job.files_matched;
@@ -279,7 +264,15 @@ class QueryResultsStatus extends Component {
                         Processed: <span>{processed}</span>
                     </div>
                     <div className="col-md-3">
-                    {clock} {cancel}
+                        <span className="pull-right">
+                            <QueryTimer
+                                qhash={this.state.qhash}
+                                job={this.props.job}
+                                duration={true}
+                                eta={true}
+                            />{" "}
+                            {cancel}
+                        </span>
                     </div>
                 </div>
                 {this.props.job.error ? (
