@@ -261,16 +261,14 @@ class QueryResultsStatus extends Component {
                     <div className="col-md-3">
                         Processed: <span>{processed}</span>
                     </div>
-                    <div className="col-md-3">
-                        <span className="pull-right">
-                            <QueryTimer
-                                job={this.props.job}
-                                finishStatus={finishedStatuses}
-                                duration={true}
-                                eta={true}
-                            />{" "}
-                            {cancel}
-                        </span>
+                    <div className="col-md-3" style={{ "text-align": "right" }}>
+                        <QueryTimer
+                            job={this.props.job}
+                            finishStatus={finishedStatuses}
+                            duration={true}
+                            eta={true}
+                        />{" "}
+                        {cancel}
                     </div>
                 </div>
                 {this.props.job.error ? (
