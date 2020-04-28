@@ -1,30 +1,40 @@
 {
-  "name": "mqueryfront",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "axios": "^0.18.0",
-    "bootstrap": "^4.2.1",
-    "filesize": "^4.0.0",
-    "font-awesome": "^4.7.0",
-    "jquery": "^3.3.1",
-    "merge": "^1.2.1",
-    "popper.js": "^1.14.6",
-    "react": "^16.7.0",
-    "react-dom": "^16.7.0",
-    "react-router-dom": "^4.3.1",
-    "react-scripts": "1.1.4",
-    "webpack-dev-server": "^3.1.14"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
-  },
-  "proxy": {
-    "/api": { "target": "http://dev-web:5000" },
-    "/docs": { "target": "http://dev-web:5000" },
-    "/openapi.json": { "target": "http://dev-web:5000" }
-  }
+    "name": "mqueryfront",
+    "version": "0.1.0",
+    "private": true,
+    "dependencies": {
+        "axios": "^0.18.0",
+        "bootstrap": "^4.2.1",
+        "filesize": "^4.0.0",
+        "font-awesome": "^4.7.0",
+        "jquery": "^3.3.1",
+        "merge": "^1.2.1",
+        "popper.js": "^1.14.6",
+        "react": "^16.7.0",
+        "react-dom": "^16.7.0",
+        "react-router-dom": "^4.3.1",
+        "react-scripts": "1.1.4",
+        "webpack-dev-server": "^3.1.14",
+        "react-js-pagination": "^3.0.3"
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test --env=jsdom",
+        "eject": "react-scripts eject"
+    },
+    "proxy": {
+        "/api": {
+            "target": "http://dev-web:5000"
+        },
+        "/docs": {
+            "target": "http://dev-web:5000"
+        },
+        "/openapi.json": {
+            "target": "http://dev-web:5000"
+        }
+    },
+    "prettier": {
+        "tabWidth": 4
+    }
 }

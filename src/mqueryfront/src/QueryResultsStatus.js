@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
+import Pagination from "react-js-pagination";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -16,10 +17,9 @@ function MatchItem(props) {
     if (props.matches) {
         matches = Object.values(props.matches).map((v) => (
             <span key={v}>
-                {" "}
-                <span className="badge badge-pill badge-primary ml-1 pull-right ">
+                <div className="badge badge-pill badge-primary ml-1 mt-1">
                     {v}
-                </span>
+                </div>
             </span>
         ));
     }
@@ -33,12 +33,24 @@ function MatchItem(props) {
         "&file_path=" +
         encodeURIComponent(props.file);
 
+    const path = require("path");
+
     return (
         <tr>
             <td>
-                <a href={download_url}>{props.file}</a>
-                {matches}
-                {metadata}
+                <div className="d-flex">
+                    <div className="text-truncate" style={{ minWidth: 50 }}>
+                        <a
+                            href={download_url}
+                            data-toggle="tooltip"
+                            title={props.file}
+                        >
+                            {path.basename(props.file)}
+                        </a>
+                    </div>
+                    {matches}
+                    {metadata}
+                </div>
             </td>
         </tr>
     );
@@ -63,11 +75,25 @@ class QueryResultsStatus extends Component {
     constructor(props) {
         super(props);
 
+        this.state = {
+            activePage: 1,
+            itemsPerPage: 20,
+        };
+
         this.handleCancelJob = this.handleCancelJob.bind(this);
     }
 
     handleCancelJob() {
         axios.delete(API_URL + "/job/" + this.props.qhash);
+    }
+
+    sendResultsActivePage = (pageNumber) => {
+        this.props.parentCallback(pageNumber);
+    };
+
+    handlePageChange(pageNumber) {
+        this.setState({ activePage: pageNumber });
+        this.sendResultsActivePage(pageNumber);
     }
 
     renderSwitchStatus(status) {
@@ -83,6 +109,12 @@ class QueryResultsStatus extends Component {
                 return "info";
             default:
                 return "info";
+        }
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.qhash !== this.props.qhash) {
+            this.setState({ activePage: 1 });
         }
     }
 
@@ -109,6 +141,10 @@ class QueryResultsStatus extends Component {
 
         let progress = Math.floor(
             (this.props.job.files_processed * 100) / this.props.job.total_files
+        );
+        let processing = Math.round(
+            (this.props.job.files_in_progress * 100) /
+                this.props.job.total_files
         );
         let processed =
             this.props.job.files_processed + " / " + this.props.job.total_files;
@@ -142,21 +178,26 @@ class QueryResultsStatus extends Component {
             cancel = <span />;
         }
 
-        const lenMatches = this.props.matches.length;
+        const lenMatches = this.props.job.files_matched;
 
         if (this.props.job.status === "expired") {
             return ReturnExpiredJob(this.props.job.error);
         }
-
         let results = <div />;
 
         if (lenMatches === 0 && this.props.job.status === "done") {
             progress = 100;
             results = <div className="alert alert-info">No matches found.</div>;
         } else if (lenMatches !== 0) {
+            const styleFixed = {
+                tableLayout: "fixed",
+            };
             results = (
-                <div class="mquery-scroll-matches">
-                    <table className={"table table-striped table-bordered"}>
+                <div className="mquery-scroll-matches">
+                    <table
+                        className={"table table-striped table-bordered"}
+                        style={styleFixed}
+                    >
                         <thead>
                             <tr>
                                 <th>Matches</th>
@@ -164,6 +205,17 @@ class QueryResultsStatus extends Component {
                         </thead>
                         <tbody>{matches}</tbody>
                     </table>
+                    {lenMatches > 0 && (
+                        <Pagination
+                            activePage={this.state.activePage}
+                            itemsCountPerPage={this.state.itemsPerPage}
+                            totalItemsCount={lenMatches}
+                            pageRangeDisplayed={5}
+                            onChange={this.handlePageChange.bind(this)}
+                            itemClass="page-item"
+                            linkClass="page-link"
+                        />
+                    )}
                 </div>
             );
         }
@@ -178,6 +230,15 @@ class QueryResultsStatus extends Component {
                     >
                         {progress}%
                     </div>
+                    {this.props.job.total_files > 0 && processing > 0 && (
+                        <div
+                            className={"progress-bar bg-warning"}
+                            role="progressbar"
+                            style={{ width: Math.max(3, processing) + "%" }}
+                        >
+                            {processing}%
+                        </div>
+                    )}
                 </div>
                 <div className="row m-0 pt-3">
                     <div className="col-md-2">

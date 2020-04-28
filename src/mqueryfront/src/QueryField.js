@@ -61,7 +61,6 @@ class QueryField extends Component {
                 }
             })
             .catch((error) => {
-                console.log(error);
                 let err = error.toString();
 
                 if (error.response) {
@@ -122,33 +121,30 @@ class QueryField extends Component {
                             aria-expanded="false"
                         />
                         <div className="dropdown-menu">
-                            <a
+                            <button
                                 className="dropdown-item"
-                                href="#"
                                 onClick={(event) =>
                                     this.handleQuery(event, "query", "low")
                                 }
                             >
                                 Low Priority Query
-                            </a>
-                            <a
+                            </button>
+                            <button
                                 className="dropdown-item"
-                                href="#"
                                 onClick={(event) =>
                                     this.handleQuery(event, "query", "medium")
                                 }
                             >
                                 Standard Priority Query
-                            </a>
-                            <a
+                            </button>
+                            <button
                                 className="dropdown-item"
-                                href="#"
                                 onClick={(event) =>
                                     this.handleQuery(event, "query", "high")
                                 }
                             >
                                 High Priority Query
-                            </a>
+                            </button>
                         </div>
                     </div>
                     {this.state.isLocked ? (
@@ -183,24 +179,22 @@ class QueryField extends Component {
                             Search: {this.describeTaint()}
                         </button>
                         <div className="dropdown-menu">
-                            <a
+                            <button
                                 className="dropdown-item"
-                                href="#"
                                 onClick={(event) => this.selectTaint(null)}
                             >
                                 everywhere
-                            </a>
+                            </button>
                             {this.props.availableTaints.map((taint) => {
                                 return (
-                                    <a
+                                    <button
                                         className="dropdown-item"
-                                        href="#"
                                         onClick={(event) =>
                                             this.selectTaint(taint)
                                         }
                                     >
                                         {taint}
-                                    </a>
+                                    </button>
                                 );
                             })}
                         </div>
