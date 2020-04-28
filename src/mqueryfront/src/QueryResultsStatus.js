@@ -174,7 +174,7 @@ class QueryResultsStatus extends Component {
 
         let progressBg = "bg-" + this.renderSwitchStatus(this.props.job.status);
 
-        let finishedStatuses = ["done", "cancelled", "expired"];
+        const finishedStatuses = ["done", "cancelled", "failed", "expired"];
         if (finishedStatuses.includes(this.props.job.status)) {
             cancel = <span />;
         }
@@ -265,6 +265,7 @@ class QueryResultsStatus extends Component {
                         <span className="pull-right">
                             <QueryTimer
                                 job={this.props.job}
+                                finishStatus={finishedStatuses}
                                 duration={true}
                                 eta={true}
                             />{" "}

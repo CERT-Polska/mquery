@@ -23,11 +23,9 @@ class QueryTimer extends Component {
     render() {
         if (
             !this.props.job.submitted ||
-            ["done", "cancelled", "failed", "expired"].includes(
-                this.props.job.status
-            )
+            this.props.finishStatus.includes(this.props.job.status)
         ) {
-            return <span />;
+            return null;
         }
         let durationTime;
         if (this.props.duration) {
@@ -43,20 +41,18 @@ class QueryTimer extends Component {
                 processedFiles * processedTime - processedTime
             );
         }
-        let clock;
+
         if (this.props.duration && this.props.eta) {
-            clock = (
+            return (
                 <i>
                     {durationTime}s (~{countDownTime}s left)
                 </i>
             );
         } else if (this.props.duration && !this.props.eta) {
-            clock = <i>{durationTime}s</i>;
+            return <i>{durationTime}s</i>;
         } else if (!this.props.duration && this.props.eta) {
-            clock = <i>~{countDownTime}s</i>;
+            return <i>~{countDownTime}s</i>;
         }
-
-        return <span>{clock}</span>;
     }
 }
 export default QueryTimer;
