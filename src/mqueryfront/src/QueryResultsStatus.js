@@ -79,8 +79,6 @@ class QueryResultsStatus extends Component {
         this.state = {
             activePage: 1,
             itemsPerPage: 20,
-            // setTimer: true,
-            // countDown: 0
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
@@ -266,7 +264,6 @@ class QueryResultsStatus extends Component {
                     <div className="col-md-3">
                         <span className="pull-right">
                             <QueryTimer
-                                qhash={this.state.qhash}
                                 job={this.props.job}
                                 duration={true}
                                 eta={true}
