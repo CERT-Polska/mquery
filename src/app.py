@@ -123,24 +123,12 @@ def job_cancel(job_id: str) -> StatusSchema:
 
 @app.get("/api/config", response_model=List[ConfigSchema])
 def config_list() -> List[ConfigSchema]:
-    return [
-        ConfigSchema(
-            plugin="default",
-            key="mwdb_url",
-            value="http://mwdb.cert.pl",
-            description="URL of a a mwdb service.",
-        ),
-        ConfigSchema(
-            plugin="default",
-            key="stuff",
-            value="1337",
-            description="Important configuration key.",
-        ),
-    ]
+    return db.get_active_plugins_config()
 
 
 @app.post("/api/config/edit", response_model=StatusSchema)
 def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
+    db.set_plugin_configuration_key(data.plugin, data.key, data.value)
     return StatusSchema(status="ok")
 
 

@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema, AgentSpecSchema
+from schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
 from time import time
 import json
 import random
@@ -175,9 +175,9 @@ class Database:
     def agent_get_task(self, agent_id: str) -> AgentTask:
         agent_prefix = f"agent:{agent_id}"
         task_queues = [
+            f"{agent_prefix}:queue-reload",
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
-            f"{agent_prefix}:queue-reload",
         ]
         queue_task: Any = self.redis.blpop(task_queues)
         queue, task = queue_task
@@ -227,13 +227,42 @@ class Database:
             ).items()
         }
 
+    def get_active_plugins_config(self) -> List[ConfigSchema]:
+        config_fields = {}
+        # Merge all config fields
+        for agent_spec in self.get_active_agents().values():
+            for name, fields in agent_spec.plugins.items():
+                config_fields[name].update(fields)
+        # Transform fields into ConfigSchema
+        plugin_configs = {
+            plugin: {
+                key: ConfigSchema(
+                    plugin=plugin, key=key, value="", description=description
+                )
+                for key, description in spec.items()
+            }
+            for plugin, spec in config_fields.items()
+        }
+        # Get configuration values for each plugin
+        for plugin, spec in plugin_configs.items():
+            config = self.get_plugin_configuration(plugin)
+            for key, value in config:
+                if key in plugin_configs[plugin]:
+                    plugin_configs[plugin][key].value = value
+        # Flatten to the target form
+        return [
+            plugin_configs[plugin][key]
+            for plugin in sorted(plugin_configs.keys())
+            for key in sorted(plugin_configs[plugin].keys())
+        ]
+
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
 
-    def set_plugin_configuration(
-        self, plugin_name: str, config: Dict[str, str]
+    def set_plugin_configuration_key(
+        self, plugin_name: str, key: str, value: str
     ):
-        self.redis.hmset(f"plugin:{plugin_name}", config)
+        self.redis.hset(f"plugin:{plugin_name}", key, value)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")
