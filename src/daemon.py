@@ -196,6 +196,7 @@ class Agent:
                 self.db.agent_finish_job(job)
         elif task.type == "reload":
             # Reload plugins and reset agent registration
+            logging.info("reload: Reloading plugins")
             self.__initialize_agent()
         else:
             raise RuntimeError("Unsupported queue")

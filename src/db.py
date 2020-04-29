@@ -158,6 +158,10 @@ class Database:
             self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
         return job
 
+    def create_reload_task(self, agents: List[str]):
+        for agent in agents:
+            self.redis.rpush(f"agent:{agent}:queue-reload", "all")
+
     def get_job_matches(
         self, job: JobId, offset: int, limit: int
     ) -> MatchesSchema:
@@ -173,6 +177,7 @@ class Database:
         task_queues = [
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
+            f"{agent_prefix}:queue-reload"
         ]
         queue_task: Any = self.redis.blpop(task_queues)
         queue, task = queue_task
@@ -182,6 +187,9 @@ class Database:
 
         if queue.endswith(":queue-yara"):
             return AgentTask("yara", task)
+
+        if queue.endswith(":queue-reload"):
+            return AgentTask("reload", task)
 
         raise RuntimeError("Unexpected queue")
 
