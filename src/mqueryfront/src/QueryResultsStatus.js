@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
+import QueryTimer from "./QueryTimer";
+import { finishedStatuses } from "./QueryUtils";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -173,7 +175,6 @@ class QueryResultsStatus extends Component {
 
         let progressBg = "bg-" + this.renderSwitchStatus(this.props.job.status);
 
-        let finishedStatuses = ["done", "cancelled", "expired"];
         if (finishedStatuses.includes(this.props.job.status)) {
             cancel = <span />;
         }
@@ -241,7 +242,7 @@ class QueryResultsStatus extends Component {
                     )}
                 </div>
                 <div className="row m-0 pt-3">
-                    <div className="col-md-2">
+                    <div className="col-md-3">
                         <p>
                             Matches: <span>{lenMatches}</span>
                         </p>
@@ -257,10 +258,18 @@ class QueryResultsStatus extends Component {
                             {this.props.job.status}
                         </span>
                     </div>
-                    <div className="col-md-5">
+                    <div className="col-md-3">
                         Processed: <span>{processed}</span>
                     </div>
-                    <div className="col-md-2">{cancel}</div>
+                    <div className="col-md-3" style={{ "text-align": "right" }}>
+                        <QueryTimer
+                            job={this.props.job}
+                            finishStatus={finishedStatuses}
+                            duration={true}
+                            countDown={true}
+                        />{" "}
+                        {cancel}
+                    </div>
                 </div>
                 {this.props.job.error ? (
                     <div className="alert alert-danger">

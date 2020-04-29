@@ -4,6 +4,7 @@ import QueryResultsStatus from "./QueryResultsStatus";
 import QueryParseStatus from "./QueryParseStatus";
 import axios from "axios";
 import { API_URL } from "./config";
+import { finishedStatuses } from "./QueryUtils";
 
 class QueryPage extends Component {
     constructor(props) {
@@ -108,8 +109,7 @@ class QueryPage extends Component {
                     job: job,
                     matches: response.data.matches,
                 });
-                let doneStatuses = ["done", "cancelled", "failed", "expired"];
-                let isDone = doneStatuses.indexOf(job.status) !== -1;
+                let isDone = finishedStatuses.indexOf(job.status) !== -1;
                 if (isDone) {
                     return;
                 }
