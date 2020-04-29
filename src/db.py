@@ -231,7 +231,7 @@ class Database:
         }
 
     def get_plugins_config(self) -> List[ConfigSchema]:
-        config_fields = {}
+        config_fields: Dict[str, Dict[str, str]] = {}
         # Merge all config fields
         for agent_spec in self.get_active_agents().values():
             for name, fields in agent_spec.plugins_spec.items():

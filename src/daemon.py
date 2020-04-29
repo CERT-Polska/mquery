@@ -10,7 +10,7 @@ from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo
 from cachetools import cached, LRUCache
-from metadata import MetadataPlugin
+from metadata import MetadataPlugin, Metadata
 from plugins import METADATA_PLUGINS
 
 
@@ -117,7 +117,7 @@ class Agent:
     ) -> None:
         """ After finding a match, push it into a database and
         update the related metadata """
-        metadata = {}
+        metadata: Metadata = {}
         for plugin in self.active_plugins:
             extracted_meta = plugin.run(file_path, metadata)
             metadata.update(extracted_meta)
