@@ -10,8 +10,6 @@ MetadataPluginConfig = Dict[str, str]
 
 
 class MetadataPlugin(ABC):
-    #: List of plugin identifiers that plugin depends on
-    __depends_on__: List[str] = []
     #: Enables cache for extracted metadata
     __cacheable__: bool = False
     #: Overrides default cache expire time

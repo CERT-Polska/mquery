@@ -119,8 +119,13 @@ class Agent:
         update the related metadata """
         metadata: Metadata = {}
         for plugin in self.active_plugins:
-            extracted_meta = plugin.run(file_path, metadata)
-            metadata.update(extracted_meta)
+            try:
+                extracted_meta = plugin.run(file_path, metadata)
+                metadata.update(extracted_meta)
+            except Exception:
+                logging.exception(
+                    f"Failed to launch plugin {plugin.get_name()} for {file_path}"
+                )
         match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)
 
