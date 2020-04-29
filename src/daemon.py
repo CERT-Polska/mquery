@@ -10,6 +10,7 @@ from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo
 from cachetools import cached, LRUCache
+from metadata import MetadataPlugin
 from plugins import METADATA_PLUGINS
 
 
@@ -55,7 +56,7 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
-        self.active_plugins = []
+        self.active_plugins: List[MetadataPlugin] = []
 
     def __search_task(self, job_id: JobId) -> None:
         """Do ursadb query for yara belonging to the provided job.
@@ -89,13 +90,21 @@ class Agent:
             plugin_name = plugin_class.get_name()
             plugin_config = self.db.get_plugin_configuration(plugin_name)
             try:
-                active_plugins.append(
-                    plugin_class(self.db, plugin_config)
-                )
+                active_plugins.append(plugin_class(self.db, plugin_config))
                 logging.info(f"Loaded {plugin_name} plugin")
             except Exception:
                 logging.exception(f"Failed to load {plugin_name} plugin")
         self.active_plugins = active_plugins
+
+    def __initialize_agent(self) -> None:
+        self.__load_plugins()
+        plugin_spec = {
+            plugin.get_name(): plugin.__config_fields__
+            for plugin in self.active_plugins
+        }
+        self.db.register_active_agent(
+            self.group_id, self.ursa_url, plugin_spec
+        )
 
     def __update_metadata(
         self, job: JobId, file_path: str, matches: List[str]
@@ -185,6 +194,9 @@ class Agent:
                 logging.exception("Failed to execute task.")
                 self.db.fail_job(job, str(e))
                 self.db.agent_finish_job(job)
+        elif task.type == "reload":
+            # Reload plugins and reset agent registration
+            self.__initialize_agent()
         else:
             raise RuntimeError("Unsupported queue")
 
@@ -193,12 +205,7 @@ class Agent:
         method of this class. This will register the agent in the db, then pop
         tasks from redis as they come, and execute them.
         """
-        self.__load_plugins()
-        plugin_spec = {
-            plugin.get_name(): plugin.__config_keys__
-            for plugin in self.active_plugins
-        }
-        self.db.register_active_agent(self.group_id, self.ursa_url, plugin_spec)
+        self.__initialize_agent()
 
         while True:
             task = self.db.agent_get_task(self.group_id)

@@ -16,12 +16,12 @@ class MetadataPlugin(ABC):
     __cacheable__: bool = False
     #: Overrides default cache expire time
     __cache_expire_time__: int = DEFAULT_CACHE_EXPIRE_TIME
-    #: Configuration keys required by plugin
-    __config_keys__: List[str] = []
+    #: Configuration keys required by plugin with description as a value
+    __config_fields__: Dict[str, str] = {}
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         self.db = db
-        for key in self.__config_keys__:
+        for key in self.__config_fields__.keys():
             if key not in config:
                 raise KeyError(f"Required configuration key {key} is not set")
 
@@ -33,17 +33,20 @@ class MetadataPlugin(ABC):
         return f"{self.get_name()}:{cache_tag}"
 
     def _cache_fetch(self, cache_tag: str) -> Metadata:
-        obj = self.db.cache_get(self.__cache_key(cache_tag),
-                                expire=self.__cache_expire_time__)
+        obj = self.db.cache_get(
+            self.__cache_key(cache_tag), expire=self.__cache_expire_time__
+        )
 
         if obj:
             return json.loads(obj)
         return {}
 
     def _cache_store(self, cache_tag: str, obj: Metadata) -> None:
-        self.db.cache_store(self.__cache_key(cache_tag),
-                            json.dumps(obj),
-                            expire=self.__cache_expire_time__)
+        self.db.cache_store(
+            self.__cache_key(cache_tag),
+            json.dumps(obj),
+            expire=self.__cache_expire_time__,
+        )
 
     def identify(self, matched_fname: str) -> Optional[str]:
         """

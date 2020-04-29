@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema
+from schema import JobSchema, MatchesSchema, AgentSpecSchema
 from time import time
 import json
 import random
@@ -199,14 +199,25 @@ class Database:
         if new_agents <= 0:
             self.redis.hmset(job.key, {"status": "done"})
 
-    def register_active_agent(self, agent_id: str, ursadb_url: str, plugin_spec: Dict[str, List[str]]) -> None:
-        self.redis.hset("agents", agent_id, json.dumps({
-            "ursadb": ursadb_url,
-            "plugins": plugin_spec
-        }))
+    def register_active_agent(
+        self,
+        agent_id: str,
+        ursadb_url: str,
+        plugin_spec: Dict[str, Dict[str, str]],
+    ) -> None:
+        self.redis.hset(
+            "agents",
+            agent_id,
+            AgentSpecSchema(ursadb_url=ursadb_url, plugins=plugin_spec).json(),
+        )
 
-    def get_active_agents(self) -> Dict[str, str]:
-        return self.redis.hgetall("agents")
+    def get_active_agents(self) -> Dict[str, AgentSpecSchema]:
+        return {
+            plugin_name: AgentSpecSchema.parse_raw(plugin_spec)
+            for plugin_name, plugin_spec in self.redis.hgetall(
+                "agents"
+            ).items()
+        }
 
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
@@ -219,5 +230,3 @@ class Database:
 
     def cache_store(self, key: str, value: str, expire: int):
         self.redis.setex(f"cached:{key}", value, expire)
-
-

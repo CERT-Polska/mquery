@@ -32,6 +32,7 @@ from schema import (
     UserAuthSchema,
     BackendStatusSchema,
     BackendStatusDatasetsSchema,
+    AgentSchema,
 )
 
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
@@ -185,19 +186,21 @@ def backend_status() -> BackendStatusSchema:
     components = {
         "mquery": mquery_version(),
     }
-    for name, url in db.get_active_agents().items():
+    for name, agent_spec in db.get_active_agents().items():
         try:
-            ursa = UrsaDb(url)
+            ursa = UrsaDb(agent_spec.ursadb_url)
             status = ursa.status()
             tasks = status["result"]["tasks"]
             ursadb_version = status["result"]["ursadb_version"]
             agents.append(
-                {"name": name, "alive": True, "tasks": tasks, "url": url}
+                AgentSchema(
+                    name=name, alive=True, tasks=tasks, spec=agent_spec
+                )
             )
             components[f"ursadb ({name})"] = ursadb_version
         except Again:
             agents.append(
-                {"name": name, "alive": False, "tasks": [], "url": url}
+                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)
             )
             components[f"ursadb ({name})"] = "unknown"
 
@@ -207,9 +210,9 @@ def backend_status() -> BackendStatusSchema:
 @app.get("/api/backend/datasets", response_model=BackendStatusDatasetsSchema)
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
     datasets = {}
-    for url in db.get_active_agents().values():
+    for agent_spec in db.get_active_agents().values():
         try:
-            ursa = UrsaDb(url)
+            ursa = UrsaDb(agent_spec.ursadb_url)
             datasets.update(ursa.topology()["result"]["datasets"])
         except Again:
             pass
