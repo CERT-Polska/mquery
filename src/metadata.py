@@ -22,8 +22,10 @@ class MetadataPlugin(ABC):
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         self.db = db
         for key in self.__config_fields__.keys():
-            if key not in config:
-                raise KeyError(f"Required configuration key {key} is not set")
+            if key not in config or not config[key]:
+                raise KeyError(
+                    f"Required configuration key '{key}' is not set"
+                )
 
     @classmethod
     def get_name(cls) -> str:
