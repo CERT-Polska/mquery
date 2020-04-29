@@ -266,7 +266,7 @@ class QueryResultsStatus extends Component {
                             job={this.props.job}
                             finishStatus={finishedStatuses}
                             duration={true}
-                            eta={true}
+                            countDown={true}
                         />{" "}
                         {cancel}
                     </div>

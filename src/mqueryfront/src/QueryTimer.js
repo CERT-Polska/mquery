@@ -28,12 +28,19 @@ class QueryTimer extends Component {
         ) {
             return null;
         }
+
         let durationTime;
         if (this.props.duration) {
             durationTime = this.state.currentTime - this.props.job.submitted;
         }
+        let durationMin;
+        if (durationTime >= 60) {
+            durationMin = Math.floor(durationTime / 60);
+            durationTime = durationTime % 60;
+        }
+
         let countDownTime;
-        if (this.props.job.files_processed > 0 && this.props.eta) {
+        if (this.props.job.files_processed > 0 && this.props.countDown) {
             let processedFiles =
                 this.props.job.total_files / this.props.job.files_processed;
             let processedTime =
@@ -42,17 +49,57 @@ class QueryTimer extends Component {
                 processedFiles * processedTime - processedTime
             );
         }
+        let countdowmMin;
+        if (countDownTime >= 60) {
+            countdowmMin = Math.floor(countDownTime / 60);
+            countDownTime = countDownTime % 60;
+        }
 
-        if (this.props.duration && this.props.eta) {
+        if (this.props.duration && this.props.countDown) {
             return (
                 <i>
-                    {durationTime}s (~{countDownTime}s left)
+                    {durationMin ? (
+                        <span>
+                            {durationMin}m {durationTime}s
+                        </span>
+                    ) : (
+                        <span>{durationTime}s</span>
+                    )}{" "}
+                    (~
+                    {countdowmMin ? (
+                        <span>
+                            {countdowmMin}m {countDownTime}s
+                        </span>
+                    ) : (
+                        countDownTime >= 0 && <span>{countDownTime}s</span>
+                    )}{" "}
+                    left)
                 </i>
             );
-        } else if (this.props.duration && !this.props.eta) {
-            return <i>{durationTime}s</i>;
-        } else if (!this.props.duration && this.props.eta) {
-            return <i>~{countDownTime}s</i>;
+        } else if (this.props.duration && !this.props.countDown) {
+            return (
+                <i>
+                    {durationMin ? (
+                        <span>
+                            {durationMin}m {durationTime}s
+                        </span>
+                    ) : (
+                        <span>{durationTime}s</span>
+                    )}
+                </i>
+            );
+        } else if (!this.props.duration && this.props.countDown) {
+            return (
+                <i>
+                    {countdowmMin ? (
+                        <span>
+                            {countdowmMin}m {countDownTime}s
+                        </span>
+                    ) : (
+                        countDownTime >= 0 && <span>{countDownTime}s</span>
+                    )}
+                </i>
+            );
         }
     }
 }
