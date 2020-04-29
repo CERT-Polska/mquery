@@ -74,13 +74,6 @@ class DatabaseTopology extends Component {
             });
     }
 
-    runCompactAll = () => {
-        axios.get(API_URL + "/compactall").catch((error) => {
-            this.setState({ error: error });
-        });
-        this.setState({ compacting: true });
-    };
-
     render() {
         const datasetRows = Object.keys(
             this.state.datasets
@@ -92,27 +85,31 @@ class DatabaseTopology extends Component {
             />
         ));
 
+        let datasets = Object.values(this.state.datasets);
+        let datasetTooltip = `Number of datasets: ${datasets.length}`;
+        let totalCount = datasets
+            .map((x) => x.file_count)
+            .reduce((a, b) => a + b, 0);
+        let totalBytes = datasets.map((x) => x.size).reduce((a, b) => a + b, 0);
+        let totalSize = filesize(totalBytes, { standard: "iec" });
+        let filesTooltip = `Total files: ${totalCount} (${totalSize})`;
+
         return (
             <ErrorBoundary error={this.state.error}>
-                <h2 className="text-center mq-bottom">
-                    Topology
-                    <button
-                        className="btn btn-danger btn-sm float-right"
-                        name="query"
-                        type="submit"
-                        disabled={this.state.compacting}
-                        onClick={this.runCompactAll}
-                        title="Compact the db. Warning: this may take a long time"
-                    >
-                        DB Compact
-                    </button>
-                </h2>
+                <h2 className="text-center mq-bottom">Topology</h2>
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>
                             <tr>
-                                <th>Dataset ID</th>
-                                <th> # Files (size)</th>
+                                <th
+                                    data-toggle="tooltip"
+                                    title={datasetTooltip}
+                                >
+                                    Dataset ID
+                                </th>
+                                <th data-toggle="tooltip" title={filesTooltip}>
+                                    # Files (size)
+                                </th>
                             </tr>
                         </thead>
                         <tbody>{datasetRows}</tbody>

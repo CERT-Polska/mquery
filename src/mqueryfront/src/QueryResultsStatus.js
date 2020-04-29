@@ -142,6 +142,10 @@ class QueryResultsStatus extends Component {
         let progress = Math.floor(
             (this.props.job.files_processed * 100) / this.props.job.total_files
         );
+        let processing = Math.round(
+            (this.props.job.files_in_progress * 100) /
+                this.props.job.total_files
+        );
         let processed =
             this.props.job.files_processed + " / " + this.props.job.total_files;
         let cancel = (
@@ -226,6 +230,15 @@ class QueryResultsStatus extends Component {
                     >
                         {progress}%
                     </div>
+                    {this.props.job.total_files > 0 && processing > 0 && (
+                        <div
+                            className={"progress-bar bg-warning"}
+                            role="progressbar"
+                            style={{ width: Math.max(3, processing) + "%" }}
+                        >
+                            {processing}%
+                        </div>
+                    )}
                 </div>
                 <div className="row m-0 pt-3">
                     <div className="col-md-2">

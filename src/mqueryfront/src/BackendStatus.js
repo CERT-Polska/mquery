@@ -17,15 +17,28 @@ class BackendJobRow extends Component {
     }
 }
 
-class BackendStatus extends Component {
+class AgentStatus extends Component {
     render() {
-        const backendJobRows = this.props.jobs.map((job) => (
-            <BackendJobRow {...job} key={job.id} />
+        const backendJobRows = this.props.tasks.map((task) => (
+            <BackendJobRow {...task} key={task.id} />
         ));
+
+        let badge = null;
+        if (!this.props.alive) {
+            badge = (
+                <span className="badge badge-secondary badge-sm">offline</span>
+            );
+        }
 
         return (
             <div>
-                <h2 className="text-center mq-bottom">Current Connections</h2>
+                <h2
+                    className="text-center mq-bottom"
+                    data-toggle="tooltip"
+                    title={this.props.url}
+                >
+                    Agent: {this.props.name} {badge}
+                </h2>
                 <div className="table-responsive">
                     <table className="table table-striped table-bordered">
                         <thead>
@@ -41,6 +54,21 @@ class BackendStatus extends Component {
                 </div>
             </div>
         );
+    }
+}
+
+class BackendStatus extends Component {
+    render() {
+        const agentRows = this.props.agents.map((agent) => (
+            <AgentStatus
+                name={agent.name}
+                alive={agent.alive}
+                tasks={agent.tasks}
+                url={agent.url}
+            />
+        ));
+
+        return <div>{agentRows}</div>;
     }
 }
 

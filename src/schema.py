@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import List, Dict, Optional
-from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -14,6 +13,7 @@ class JobSchema(BaseModel):
     priority: str
     files_processed: int
     files_matched: int
+    files_in_progress: int
     total_files: int
     iterator: Optional[str]
     taint: Optional[str]
@@ -21,16 +21,6 @@ class JobSchema(BaseModel):
 
 class JobsSchema(BaseModel):
     jobs: List[JobSchema]
-
-
-class StorageSchema(BaseModel):
-    id: str
-    name: str
-    path: str
-    indexing_job_id: Optional[str]
-    last_update: datetime
-    taints: List[str]
-    enabled: bool
 
 
 class TaskSchema(BaseModel):
@@ -90,12 +80,17 @@ class UserAuthSchema(BaseModel):
     password: str
 
 
+class AgentSchema(BaseModel):
+    name: str
+    alive: bool
+    tasks: List
+    url: str
+
+
 class BackendStatusSchema(BaseModel):
-    db_alive: bool
-    tasks: List[TaskSchema]
-    components: Dict
+    agents: List[AgentSchema]
+    components: Dict[str, str]
 
 
 class BackendStatusDatasetsSchema(BaseModel):
-    db_alive: bool
     datasets: Dict

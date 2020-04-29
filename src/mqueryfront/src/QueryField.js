@@ -61,7 +61,6 @@ class QueryField extends Component {
                 }
             })
             .catch((error) => {
-                console.log(error);
                 let err = error.toString();
 
                 if (error.response) {
