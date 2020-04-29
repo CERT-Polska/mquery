@@ -98,12 +98,18 @@ class Agent:
 
     def __initialize_agent(self) -> None:
         self.__load_plugins()
-        plugin_spec = {
-            plugin.get_name(): plugin.__config_fields__
-            for plugin in self.active_plugins
+        plugins_spec = {
+            plugin_class.get_name(): plugin_class.__config_fields__
+            for plugin_class in METADATA_PLUGINS
         }
         self.db.register_active_agent(
-            self.group_id, self.ursa_url, plugin_spec
+            self.group_id,
+            self.ursa_url,
+            plugins_spec,
+            [
+                active_plugin.get_name()
+                for active_plugin in self.active_plugins
+            ],
         )
 
     def __update_metadata(
@@ -111,7 +117,11 @@ class Agent:
     ) -> None:
         """ After finding a match, push it into a database and
         update the related metadata """
-        match = MatchInfo(file_path, {}, matches)
+        metadata = {}
+        for plugin in self.active_plugins:
+            extracted_meta = plugin.run(file_path, metadata)
+            metadata.update(extracted_meta)
+        match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)
 
     def __execute_yara(self, job: JobId, files: List[str]) -> None:

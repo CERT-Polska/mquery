@@ -95,7 +95,8 @@ class UserAuthSchema(BaseModel):
 
 class AgentSpecSchema(BaseModel):
     ursadb_url: str
-    plugins: Dict[str, Dict[str, str]]
+    plugins_spec: Dict[str, Dict[str, str]]
+    active_plugins: List[str]
 
 
 class AgentSchema(BaseModel):

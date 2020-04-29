@@ -123,7 +123,7 @@ def job_cancel(job_id: str) -> StatusSchema:
 
 @app.get("/api/config", response_model=List[ConfigSchema])
 def config_list() -> List[ConfigSchema]:
-    return db.get_active_plugins_config()
+    return db.get_plugins_config()
 
 
 @app.post("/api/config/edit", response_model=StatusSchema)

@@ -211,27 +211,32 @@ class Database:
         self,
         agent_id: str,
         ursadb_url: str,
-        plugin_spec: Dict[str, Dict[str, str]],
+        plugins_spec: Dict[str, Dict[str, str]],
+        active_plugins: List[str],
     ) -> None:
         self.redis.hset(
             "agents",
             agent_id,
-            AgentSpecSchema(ursadb_url=ursadb_url, plugins=plugin_spec).json(),
+            AgentSpecSchema(
+                ursadb_url=ursadb_url,
+                plugins_spec=plugins_spec,
+                active_plugins=active_plugins,
+            ).json(),
         )
 
     def get_active_agents(self) -> Dict[str, AgentSpecSchema]:
         return {
-            plugin_name: AgentSpecSchema.parse_raw(plugin_spec)
-            for plugin_name, plugin_spec in self.redis.hgetall(
-                "agents"
-            ).items()
+            name: AgentSpecSchema.parse_raw(spec)
+            for name, spec in self.redis.hgetall("agents").items()
         }
 
-    def get_active_plugins_config(self) -> List[ConfigSchema]:
+    def get_plugins_config(self) -> List[ConfigSchema]:
         config_fields = {}
         # Merge all config fields
         for agent_spec in self.get_active_agents().values():
-            for name, fields in agent_spec.plugins.items():
+            for name, fields in agent_spec.plugins_spec.items():
+                if name not in config_fields:
+                    config_fields[name] = {}
                 config_fields[name].update(fields)
         # Transform fields into ConfigSchema
         plugin_configs = {
@@ -246,7 +251,7 @@ class Database:
         # Get configuration values for each plugin
         for plugin, spec in plugin_configs.items():
             config = self.get_plugin_configuration(plugin)
-            for key, value in config:
+            for key, value in config.items():
                 if key in plugin_configs[plugin]:
                     plugin_configs[plugin][key].value = value
         # Flatten to the target form
@@ -271,4 +276,4 @@ class Database:
         return value
 
     def cache_store(self, key: str, value: str, expire: int):
-        self.redis.setex(f"cached:{key}", value, expire)
+        self.redis.setex(f"cached:{key}", expire, value)

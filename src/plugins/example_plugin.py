@@ -18,4 +18,9 @@ class ExampleTagPlugin(MetadataPlugin):
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
-        return {"example_tag": {"display_text": self.tag, "url": self.tag_url + self.tag}}
+        return {
+            "example_tag": {
+                "display_text": self.tag,
+                "url": self.tag_url + self.tag,
+            }
+        }

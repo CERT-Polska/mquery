@@ -25,7 +25,7 @@ class ConfigRow extends Component {
         axios.post(API_URL + "/config/edit", {
             plugin: this.props.plugin,
             key: this.props.keyName,
-            value: this.props.value,
+            value: this.state.value,
         });
     }
 
@@ -44,7 +44,7 @@ class ConfigRow extends Component {
 
     handleEdit(event) {
         this.setState({
-            value: event.value,
+            value: event.target.value,
         });
     }
 
@@ -84,7 +84,7 @@ class ConfigRow extends Component {
                 </div>
             );
         } else {
-            valueControl = <span>{this.props.value}</span>;
+            valueControl = <span>{this.state.value}</span>;
             editToggle = (
                 <button
                     type="button"
