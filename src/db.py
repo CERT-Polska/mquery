@@ -199,8 +199,25 @@ class Database:
         if new_agents <= 0:
             self.redis.hmset(job.key, {"status": "done"})
 
-    def register_active_agent(self, agent_id: str, ursadb_url: str) -> None:
-        self.redis.hset("agents", agent_id, ursadb_url)
+    def register_active_agent(self, agent_id: str, ursadb_url: str, plugin_spec: Dict[str, List[str]]) -> None:
+        self.redis.hset("agents", agent_id, json.dumps({
+            "ursadb": ursadb_url,
+            "plugins": plugin_spec
+        }))
 
     def get_active_agents(self) -> Dict[str, str]:
         return self.redis.hgetall("agents")
+
+    def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
+        return self.redis.hgetall(f"plugin:{plugin_name}")
+
+    def cache_get(self, key: str, expire: int) -> Optional[str]:
+        value = self.redis.get(f"cached:{key}")
+        if value is not None:
+            self.redis.expire(f"cached:{key}", expire)
+        return value
+
+    def cache_store(self, key: str, value: str, expire: int):
+        self.redis.setex(f"cached:{key}", value, expire)
+
+

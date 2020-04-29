@@ -10,6 +10,7 @@ from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo
 from cachetools import cached, LRUCache
+from plugins import METADATA_PLUGINS
 
 
 @cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
@@ -54,6 +55,7 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
+        self.active_plugins = []
 
     def __search_task(self, job_id: JobId) -> None:
         """Do ursadb query for yara belonging to the provided job.
@@ -80,6 +82,20 @@ class Agent:
 
         self.db.update_job_files(job_id, file_count)
         self.db.agent_start_job(self.group_id, job_id, iterator)
+
+    def __load_plugins(self) -> None:
+        active_plugins = []
+        for plugin_class in METADATA_PLUGINS:
+            plugin_name = plugin_class.get_name()
+            plugin_config = self.db.get_plugin_configuration(plugin_name)
+            try:
+                active_plugins.append(
+                    plugin_class(self.db, plugin_config)
+                )
+                logging.info(f"Loaded {plugin_name} plugin")
+            except Exception:
+                logging.exception(f"Failed to load {plugin_name} plugin")
+        self.active_plugins = active_plugins
 
     def __update_metadata(
         self, job: JobId, file_path: str, matches: List[str]
@@ -177,7 +193,12 @@ class Agent:
         method of this class. This will register the agent in the db, then pop
         tasks from redis as they come, and execute them.
         """
-        self.db.register_active_agent(self.group_id, self.ursa_url)
+        self.__load_plugins()
+        plugin_spec = {
+            plugin.get_name(): plugin.__config_keys__
+            for plugin in self.active_plugins
+        }
+        self.db.register_active_agent(self.group_id, self.ursa_url, plugin_spec)
 
         while True:
             task = self.db.agent_get_task(self.group_id)

@@ -1,11 +1,12 @@
 import json
-import redis
 from abc import ABC, abstractmethod
+from db import Database
 from typing import Any, Dict, List, Optional
 
 DEFAULT_CACHE_EXPIRE_TIME = 60 * 60 * 12
 
 Metadata = Dict[str, Any]
+MetadataPluginConfig = Dict[str, str]
 
 
 class MetadataPlugin(ABC):
@@ -15,36 +16,34 @@ class MetadataPlugin(ABC):
     __cacheable__: bool = False
     #: Overrides default cache expire time
     __cache_expire_time__: int = DEFAULT_CACHE_EXPIRE_TIME
+    #: Configuration keys required by plugin
+    __config_keys__: List[str] = []
 
-    def __init__(self) -> None:
-        self.redis: Optional[redis.StrictRedis] = None
+    def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
+        self.db = db
+        for key in self.__config_keys__:
+            if key not in config:
+                raise KeyError(f"Required configuration key {key} is not set")
 
-    @property
-    def name(self) -> str:
-        return self.__class__.__name__
+    @classmethod
+    def get_name(cls) -> str:
+        return cls.__name__
 
-    def set_redis(self, redis: redis.StrictRedis) -> None:
-        self.redis = redis
-
-    def __rs_key(self, cache_tag: str) -> str:
-        return f"cached:{self.name}:{cache_tag}"
+    def __cache_key(self, cache_tag: str) -> str:
+        return f"{self.get_name()}:{cache_tag}"
 
     def _cache_fetch(self, cache_tag: str) -> Metadata:
-        if not self.redis:
-            return {}
-        rs_key = self.__rs_key(cache_tag)
-        obj = self.redis.get(rs_key)
+        obj = self.db.cache_get(self.__cache_key(cache_tag),
+                                expire=self.__cache_expire_time__)
 
         if obj:
-            self.redis.expire(rs_key, self.__cache_expire_time__)
             return json.loads(obj)
         return {}
 
     def _cache_store(self, cache_tag: str, obj: Metadata) -> None:
-        if not self.redis:
-            return
-        rs_key = self.__rs_key(cache_tag)
-        self.redis.setex(rs_key, self.__cache_expire_time__, json.dumps(obj))
+        self.db.cache_store(self.__cache_key(cache_tag),
+                            json.dumps(obj),
+                            expire=self.__cache_expire_time__)
 
     def identify(self, matched_fname: str) -> Optional[str]:
         """
