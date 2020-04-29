@@ -230,6 +230,9 @@ class Database:
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
 
+    def set_plugin_configuration(self, plugin_name: str, config: Dict[str, str]):
+        self.redis.hmset(f"plugin:{plugin_name}", config)
+
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")
         if value is not None:
