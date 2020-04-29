@@ -29,77 +29,59 @@ class QueryTimer extends Component {
             return null;
         }
 
-        let durationTime;
+        let durationSec;
         if (this.props.duration) {
-            durationTime = this.state.currentTime - this.props.job.submitted;
+            durationSec = this.state.currentTime - this.props.job.submitted;
         }
         let durationMin;
-        if (durationTime >= 60) {
-            durationMin = Math.floor(durationTime / 60);
-            durationTime = durationTime % 60;
+        if (durationSec >= 60) {
+            durationMin = Math.floor(durationSec / 60);
+            durationSec = durationSec % 60;
         }
 
-        let countDownTime;
+        let countDownSec;
         if (this.props.job.files_processed > 0 && this.props.countDown) {
             let processedFiles =
                 this.props.job.total_files / this.props.job.files_processed;
             let processedTime =
                 this.state.currentTime - this.props.job.submitted;
-            countDownTime = Math.round(
+            countDownSec = Math.round(
                 processedFiles * processedTime - processedTime
             );
         }
         let countdowmMin;
-        if (countDownTime >= 60) {
-            countdowmMin = Math.floor(countDownTime / 60);
-            countDownTime = countDownTime % 60;
+        if (countDownSec >= 60) {
+            countdowmMin = Math.floor(countDownSec / 60);
+            countDownSec = countDownSec % 60;
         }
+
+        let durationTime = durationMin ? (
+            <span>
+                {durationMin}m {durationSec}s
+            </span>
+        ) : (
+            <span>{durationSec}s</span>
+        );
+
+        let countDownTime = countdowmMin ? (
+            <span>
+                {countdowmMin}m {countDownSec}s
+            </span>
+        ) : (
+            countDownSec >= 0 && <span>{countDownSec}s</span>
+        );
 
         if (this.props.duration && this.props.countDown) {
             return (
                 <i>
-                    {durationMin ? (
-                        <span>
-                            {durationMin}m {durationTime}s
-                        </span>
-                    ) : (
-                        <span>{durationTime}s</span>
-                    )}{" "}
-                    (~
-                    {countdowmMin ? (
-                        <span>
-                            {countdowmMin}m {countDownTime}s
-                        </span>
-                    ) : (
-                        countDownTime >= 0 && <span>{countDownTime}s</span>
-                    )}{" "}
-                    left)
+                    {durationTime} (~
+                    {countDownTime} left)
                 </i>
             );
-        } else if (this.props.duration && !this.props.countDown) {
-            return (
-                <i>
-                    {durationMin ? (
-                        <span>
-                            {durationMin}m {durationTime}s
-                        </span>
-                    ) : (
-                        <span>{durationTime}s</span>
-                    )}
-                </i>
-            );
-        } else if (!this.props.duration && this.props.countDown) {
-            return (
-                <i>
-                    {countdowmMin ? (
-                        <span>
-                            {countdowmMin}m {countDownTime}s
-                        </span>
-                    ) : (
-                        countDownTime >= 0 && <span>{countDownTime}s</span>
-                    )}
-                </i>
-            );
+        } else if (this.props.duration) {
+            return <i>{durationTime}</i>;
+        } else if (this.props.countDown) {
+            return <i>{countDownTime}</i>;
         }
     }
 }
