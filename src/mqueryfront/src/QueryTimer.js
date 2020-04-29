@@ -21,20 +21,20 @@ class QueryTimer extends Component {
         clearInterval(this.interval);
     }
 
-    getRenderTime(seconds){
+    getRenderTime(seconds) {
         let minutes;
         if (seconds >= 60) {
             minutes = Math.floor(seconds / 60);
             seconds = seconds % 60;
         }
 
-        return( minutes ? (
+        return minutes ? (
             <span>
                 {minutes}m {seconds}s
             </span>
         ) : (
             seconds >= 0 && <span>{seconds}s</span>
-        ));
+        );
     }
 
     render() {
