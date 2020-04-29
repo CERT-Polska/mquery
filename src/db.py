@@ -177,7 +177,7 @@ class Database:
         task_queues = [
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
-            f"{agent_prefix}:queue-reload"
+            f"{agent_prefix}:queue-reload",
         ]
         queue_task: Any = self.redis.blpop(task_queues)
         queue, task = queue_task
@@ -230,7 +230,9 @@ class Database:
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
 
-    def set_plugin_configuration(self, plugin_name: str, config: Dict[str, str]):
+    def set_plugin_configuration(
+        self, plugin_name: str, config: Dict[str, str]
+    ):
         self.redis.hmset(f"plugin:{plugin_name}", config)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
