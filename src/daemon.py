@@ -117,11 +117,28 @@ class Agent:
         process the obtained files.
         """
         final_statuses = ["cancelled", "failed", "done"]
-        if self.db.get_job_status(job) in final_statuses:
+        j = self.db.get_job(job)
+        if j.status in final_statuses:
             return
 
-        BATCH_SIZE = 500
-        pop_result = self.ursa.pop(iterator, BATCH_SIZE)
+        MIN_BATCH_SIZE = 10
+        MAX_BATCH_SIZE = 500
+
+        taken_files = j.files_processed + j.files_in_progress
+
+        # Never do more than MAX_BATCH_SIZE files at once.
+        batch_size = MAX_BATCH_SIZE
+
+        # Take small batches of work at first, so the db appears to run faster.
+        batch_size = min(batch_size, taken_files)
+
+        # Don't take more than 1/4 of files left at once (to speed up finishes).
+        batch_size = min(batch_size, (j.total_files - taken_files) // 4)
+
+        # Finally, always process at least MIN_BATCH_SIZE files.
+        batch_size = max(batch_size, MIN_BATCH_SIZE)
+
+        pop_result = self.ursa.pop(iterator, batch_size)
         if not pop_result.iterator_empty:
             # The job still have some files, put it back on the queue.
             self.db.agent_start_job(self.group_id, job, iterator)
