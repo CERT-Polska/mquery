@@ -9,7 +9,7 @@ testdir = current_path + "/testdata/"
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Geenerating result files or file from yara rule file."
+        description="Generate result files or file from yara rule file."
     )
 
     parser.add_argument("file_name", nargs="?", help="File name", default="")
