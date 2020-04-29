@@ -21,6 +21,22 @@ class QueryTimer extends Component {
         clearInterval(this.interval);
     }
 
+    getRenderTime(seconds) {
+        let minutes;
+        if (seconds >= 60) {
+            minutes = Math.floor(seconds / 60);
+            seconds = seconds % 60;
+        }
+
+        return minutes ? (
+            <span>
+                {minutes}m {seconds}s
+            </span>
+        ) : (
+            seconds >= 0 && <span>{seconds}s</span>
+        );
+    }
+
     render() {
         if (
             !this.props.job.submitted ||
@@ -33,11 +49,11 @@ class QueryTimer extends Component {
         if (this.props.duration) {
             durationSec = this.state.currentTime - this.props.job.submitted;
         }
-        let durationMin;
-        if (durationSec >= 60) {
-            durationMin = Math.floor(durationSec / 60);
-            durationSec = durationSec % 60;
-        }
+        // let durationMin;
+        // if (durationSec >= 60) {
+        //     durationMin = Math.floor(durationSec / 60);
+        //     durationSec = durationSec % 60;
+        // }
 
         let countDownSec;
         if (this.props.job.files_processed > 0 && this.props.countDown) {
@@ -49,39 +65,39 @@ class QueryTimer extends Component {
                 processedFiles * processedTime - processedTime
             );
         }
-        let countdowmMin;
-        if (countDownSec >= 60) {
-            countdowmMin = Math.floor(countDownSec / 60);
-            countDownSec = countDownSec % 60;
-        }
+        // let countdowmMin;
+        // if (countDownSec >= 60) {
+        //     countdowmMin = Math.floor(countDownSec / 60);
+        //     countDownSec = countDownSec % 60;
+        // }
 
-        let durationTime = durationMin ? (
-            <span>
-                {durationMin}m {durationSec}s
-            </span>
-        ) : (
-            <span>{durationSec}s</span>
-        );
+        // let durationTime = durationMin ? (
+        //     <span>
+        //         {durationMin}m {durationSec}s
+        //     </span>
+        // ) : (
+        //     <span>{durationSec}s</span>
+        // );
 
-        let countDownTime = countdowmMin ? (
-            <span>
-                {countdowmMin}m {countDownSec}s
-            </span>
-        ) : (
-            countDownSec >= 0 && <span>{countDownSec}s</span>
-        );
+        // let countDownTime = countdowmMin ? (
+        //     <span>
+        //         {countdowmMin}m {countDownSec}s
+        //     </span>
+        // ) : (
+        //     countDownSec >= 0 && <span>{countDownSec}s</span>
+        // );
 
         if (this.props.duration && this.props.countDown) {
             return (
                 <i>
-                    {durationTime} (~
-                    {countDownTime} left)
+                    {this.getRenderTime(durationSec)} (~
+                    {this.getRenderTime(countDownSec)} left)
                 </i>
             );
         } else if (this.props.duration) {
-            return <i>{durationTime}</i>;
+            return <i>{this.getRenderTime(durationSec)}</i>;
         } else if (this.props.countDown) {
-            return <i>{countDownTime}</i>;
+            return <i>{this.getRenderTime(countDownSec)}</i>;
         }
     }
 }
