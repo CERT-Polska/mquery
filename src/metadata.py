@@ -1,7 +1,7 @@
 import json
 from abc import ABC, abstractmethod
 from db import Database
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 DEFAULT_CACHE_EXPIRE_TIME = 60 * 60 * 12
 
