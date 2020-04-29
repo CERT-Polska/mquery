@@ -19,12 +19,14 @@ from typing import Any, Callable, List, Union
 from schema import (
     JobsSchema,
     JobSchema,
+    RequestConfigEdit,
     RequestQueryMethod,
     QueryRequestSchema,
     QueryResponseSchema,
     ParseResponseSchema,
     MatchesSchema,
     StatusSchema,
+    ConfigSchema,
     UserSettingsSchema,
     UserInfoSchema,
     UserAuthSchema,
@@ -115,6 +117,29 @@ def job_info(job_id: str) -> JobSchema:
 @app.delete("/api/job/{job_id}", response_model=StatusSchema)
 def job_cancel(job_id: str) -> StatusSchema:
     db.cancel_job(JobId(job_id))
+    return StatusSchema(status="ok")
+
+
+@app.get("/api/config", response_model=List[ConfigSchema])
+def config_list() -> List[ConfigSchema]:
+    return [
+        ConfigSchema(
+            plugin="default",
+            key="mwdb_url",
+            value="http://mwdb.cert.pl",
+            description="URL of a a mwdb service.",
+        ),
+        ConfigSchema(
+            plugin="default",
+            key="stuff",
+            value="1337",
+            description="Important configuration key.",
+        ),
+    ]
+
+
+@app.post("/api/config/edit", response_model=StatusSchema)
+def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
     return StatusSchema(status="ok")
 
 
