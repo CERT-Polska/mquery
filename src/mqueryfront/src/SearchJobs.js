@@ -75,10 +75,10 @@ class SearchJobRow extends Component {
                         [{rule_author}] {submittedDate}
                     </p>
                 </td>
-                <td className="align-middle text-center w-50">
+                <td className="align-middle text-center">
                     {this.props.files_matched}
                 </td>
-                <td className="text-center align-middle">
+                <td className="text-center align-middle w-50">
                     <StatusProgress
                         status={status}
                         total_files={this.props.total_files}
