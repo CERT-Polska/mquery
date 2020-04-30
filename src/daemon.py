@@ -6,7 +6,7 @@ import json
 import sys
 from lib.ursadb import UrsaDb
 from util import setup_logging
-from typing import Any, List
+from typing import Any, List, Optional
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo
 from cachetools import cached, LRUCache
@@ -56,6 +56,7 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
+        self.plugin_config_version: Optional[str] = None
         self.active_plugins: List[MetadataPlugin] = []
 
     def __search_task(self, job_id: JobId) -> None:
@@ -85,6 +86,7 @@ class Agent:
         self.db.agent_start_job(self.group_id, job_id, iterator)
 
     def __load_plugins(self) -> None:
+        self.plugin_config_version = self.db.get_plugin_config_version()
         active_plugins = []
         for plugin_class in METADATA_PLUGINS:
             plugin_name = plugin_class.get_name()
@@ -117,6 +119,9 @@ class Agent:
     ) -> None:
         """ After finding a match, push it into a database and
         update the related metadata """
+        if self.db.get_plugin_config_version() != self.plugin_config_version:
+            logging.info("Configuration changed - reloading plugins.")
+            self.__initialize_agent()
         metadata: Metadata = {}
         for plugin in self.active_plugins:
             try:
@@ -209,10 +214,6 @@ class Agent:
                 logging.exception("Failed to execute task.")
                 self.db.fail_job(job, str(e))
                 self.db.agent_finish_job(job)
-        elif task.type == "reload":
-            # Reload plugins and reset agent registration
-            logging.info("reload: Reloading plugins")
-            self.__initialize_agent()
         else:
             raise RuntimeError("Unsupported queue")
 

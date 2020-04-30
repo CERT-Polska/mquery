@@ -158,10 +158,6 @@ class Database:
             self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
         return job
 
-    def create_reload_task(self, agents: List[str]):
-        for agent in agents:
-            self.redis.rpush(f"agent:{agent}:queue-reload", "all")
-
     def get_job_matches(
         self, job: JobId, offset: int, limit: int
     ) -> MatchesSchema:
@@ -175,7 +171,6 @@ class Database:
     def agent_get_task(self, agent_id: str) -> AgentTask:
         agent_prefix = f"agent:{agent_id}"
         task_queues = [
-            f"{agent_prefix}:queue-reload",
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
         ]
@@ -187,9 +182,6 @@ class Database:
 
         if queue.endswith(":queue-yara"):
             return AgentTask("yara", task)
-
-        if queue.endswith(":queue-reload"):
-            return AgentTask("reload", task)
 
         raise RuntimeError("Unexpected queue")
 
@@ -261,6 +253,9 @@ class Database:
             for key in sorted(plugin_configs[plugin].keys())
         ]
 
+    def get_plugin_config_version(self) -> str:
+        return self.redis.get("plugin-version")
+
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
 
@@ -268,6 +263,7 @@ class Database:
         self, plugin_name: str, key: str, value: str
     ):
         self.redis.hset(f"plugin:{plugin_name}", key, value)
+        self.redis.set("plugin-version", self.redis.time()[0])
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")

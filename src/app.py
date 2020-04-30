@@ -129,9 +129,6 @@ def config_list() -> List[ConfigSchema]:
 @app.post("/api/config/edit", response_model=StatusSchema)
 def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
     db.set_plugin_configuration_key(data.plugin, data.key, data.value)
-    # Reload agents to propagate new configuration
-    active_agents = list(db.get_active_agents().keys())
-    db.create_reload_task(active_agents)
     return StatusSchema(status="ok")
 
 
