@@ -134,7 +134,7 @@ class SearchJobs extends Component {
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="table-responsive">
-                    <table className="table table-striped table-bordered w-auto">
+                    <table className="table table-striped table-bordered">
                         <thead>
                             <tr>
                                 <th>Job name</th>
