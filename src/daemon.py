@@ -119,9 +119,6 @@ class Agent:
     ) -> None:
         """ After finding a match, push it into a database and
         update the related metadata """
-        if self.db.get_plugin_config_version() != self.plugin_config_version:
-            logging.info("Configuration changed - reloading plugins.")
-            self.__initialize_agent()
         metadata: Metadata = {}
         for plugin in self.active_plugins:
             try:
@@ -137,6 +134,9 @@ class Agent:
         self.db.add_match(job, match)
 
     def __execute_yara(self, job: JobId, files: List[str]) -> None:
+        if self.db.get_plugin_config_version() != self.plugin_config_version:
+            logging.info("Configuration changed - reloading plugins.")
+            self.__initialize_agent()
         rule = compile_yara(self.db, job)
         num_matches = 0
         self.db.job_start_work(job, len(files))
