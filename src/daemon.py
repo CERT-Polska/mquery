@@ -101,7 +101,7 @@ class Agent:
     def __initialize_agent(self) -> None:
         self.__load_plugins()
         plugins_spec = {
-            plugin_class.get_name(): plugin_class.__config_fields__
+            plugin_class.get_name(): plugin_class.config_fields
             for plugin_class in METADATA_PLUGINS
         }
         self.db.register_active_agent(

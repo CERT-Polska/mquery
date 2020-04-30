@@ -8,8 +8,8 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 
 class CuckooAnalysisMetadata(MetadataPlugin):
-    __cacheable__ = True
-    __config_fields__ = {"path": "Root of cuckoo analysis directory."}
+    cacheable = True
+    config_fields = {"path": "Root of cuckoo analysis directory."}
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         super().__init__(db, config)

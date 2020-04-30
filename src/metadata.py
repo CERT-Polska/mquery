@@ -11,15 +11,15 @@ MetadataPluginConfig = Dict[str, str]
 
 class MetadataPlugin(ABC):
     #: Enables cache for extracted metadata
-    __cacheable__: bool = False
+    cacheable: bool = False
     #: Overrides default cache expire time
-    __cache_expire_time__: int = DEFAULT_CACHE_EXPIRE_TIME
+    cache_expire_time: int = DEFAULT_CACHE_EXPIRE_TIME
     #: Configuration keys required by plugin with description as a value
-    __config_fields__: Dict[str, str] = {}
+    config_fields: Dict[str, str] = {}
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         self.db = db
-        for key in self.__config_fields__.keys():
+        for key in self.config_fields.keys():
             if key not in config or not config[key]:
                 raise KeyError(
                     f"Required configuration key '{key}' is not set"
@@ -34,7 +34,7 @@ class MetadataPlugin(ABC):
 
     def _cache_fetch(self, cache_tag: str) -> Metadata:
         obj = self.db.cache_get(
-            self.__cache_key(cache_tag), expire=self.__cache_expire_time__
+            self.__cache_key(cache_tag), expire=self.cache_expire_time
         )
 
         if obj:
@@ -45,7 +45,7 @@ class MetadataPlugin(ABC):
         self.db.cache_store(
             self.__cache_key(cache_tag),
             json.dumps(obj),
-            expire=self.__cache_expire_time__,
+            expire=self.cache_expire_time,
         )
 
     def identify(self, matched_fname: str) -> Optional[str]:
@@ -61,14 +61,14 @@ class MetadataPlugin(ABC):
         if identifier is None:
             return {}
         # If plugin allows to cache data: try to fetch from cache
-        if self.__cacheable__:
+        if self.cacheable:
             cached = self._cache_fetch(identifier)
             if cached:
                 return cached
         # Extract data
         result = self.extract(identifier, matched_fname, current_meta)
 
-        if self.__cacheable__:
+        if self.cacheable:
             self._cache_store(identifier, result)
         return result
 

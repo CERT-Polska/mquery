@@ -10,8 +10,8 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 
 class MalwarecageUploadsMetadata(MetadataPlugin):
-    __cacheable__ = True
-    __config_fields__ = {
+    cacheable = True
+    config_fields = {
         "mwdb_url": "Malwarecage URL accessible for mquery users",
         "mwdb_api_url": "API URL accessible from mquery daemon",
         "mwdb_api_token": "API key for 'mquery' user in Malwarecage",
