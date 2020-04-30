@@ -12,9 +12,9 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 class MalwarecageUploadsMetadata(MetadataPlugin):
     cacheable = True
     config_fields = {
-        "mwdb_url": "Malwarecage URL accessible for mquery users",
-        "mwdb_api_url": "API URL accessible from mquery daemon",
-        "mwdb_api_token": "API key for 'mquery' user in Malwarecage",
+        "mwdb_url": "URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/)",
+        "mwdb_api_url": "API URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/api/)",
+        "mwdb_api_token": "API key for 'mquery' user in Malwarecage (base64-encoded, starts with ey...)",
     }
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
