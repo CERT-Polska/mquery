@@ -58,7 +58,7 @@ class SearchJobRow extends Component {
                     <div className="d-flex">
                         <div
                             className="text-truncate"
-                            style={{ minWidth: 50, maxWidth: 800 }}
+                            style={{ minWidth: 50, maxWidth: "20vw" }}
                         >
                             <Link
                                 to={"/query/" + this.props.id}
