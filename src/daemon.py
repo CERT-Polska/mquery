@@ -129,7 +129,9 @@ class Agent:
                 metadata.update(extracted_meta)
             except Exception:
                 logging.exception(
-                    "Failed to launch plugin %s for %s", plugin.get_name(), file_path
+                    "Failed to launch plugin %s for %s",
+                    plugin.get_name(),
+                    file_path,
                 )
         match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)

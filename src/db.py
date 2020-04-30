@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List, Optional, Dict, Any
 from schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
 from time import time
@@ -223,14 +224,14 @@ class Database:
         }
 
     def get_plugins_config(self) -> List[ConfigSchema]:
-        config_fields: Dict[str, Dict[str, str]] = {}
+        # { plugin_name: { field: description } }
+        config_fields: Dict[str, Dict[str, str]] = defaultdict(dict)
         # Merge all config fields
         for agent_spec in self.get_active_agents().values():
             for name, fields in agent_spec.plugins_spec.items():
-                if name not in config_fields:
-                    config_fields[name] = {}
                 config_fields[name].update(fields)
         # Transform fields into ConfigSchema
+        # { plugin_name: { field: ConfigSchema } }
         plugin_configs = {
             plugin: {
                 key: ConfigSchema(
