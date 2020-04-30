@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 import logging
 import argparse
@@ -50,10 +48,13 @@ def find_new_files(
             yield fpath
 
 
-def index_files(proc_params: Tuple[str, str, int]) -> None:
-    ursa_url, mounted_name, ndx = proc_params
+def index_files(proc_params: Tuple[str, List[str], str, int]) -> None:
+    ursa_url, types, mounted_name, ndx = proc_params
     ursa = UrsaDb(ursa_url)
-    ursa.execute_command(f'index from list "{mounted_name}" nocheck;')
+    with_ = ", ".join(types)
+    ursa.execute_command(
+        f'index from list "{mounted_name}" with [{with_}] nocheck;'
+    )
 
 
 def main() -> None:
@@ -81,6 +82,14 @@ def main() -> None:
     )
     parser.add_argument(
         "--batch", help="Size of indexing batch.", type=int, default=1000
+    )
+    parser.add_argument(
+        "--type",
+        dest="types",
+        help="Additional index types.",
+        action="append",
+        default=["gram3"],
+        choices=["gram3", "text4", "hash4", "wide8"],
     )
     parser.add_argument(
         "--workers",
@@ -139,7 +148,7 @@ def main() -> None:
         mounted_name = os.path.join(
             tmpdir_mount, os.path.relpath(tmppath, args.tmpdir)
         )
-        indexing_jobs.append((args.ursadb, mounted_name, ndx))
+        indexing_jobs.append((args.ursadb, args.types, mounted_name, ndx))
         logging.info(f"Batch %s: %s", ndx, mounted_name)
 
     logging.info("Stage 3: Run index command in parallel.")
