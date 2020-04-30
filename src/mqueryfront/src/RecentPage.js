@@ -6,8 +6,8 @@ class RecentPage extends Component {
         return (
             <div>
                 <h1 className="text-center mq-bottom">Recent jobs</h1>
-                <div className="d-flex justify-content-center">
-                    <div className="">
+                <div className="row">
+                    <div className="col-md-8 offset-md-2">
                         <SearchJobs />
                     </div>
                 </div>
