@@ -75,7 +75,7 @@ class SearchJobRow extends Component {
                         [{rule_author}] {submittedDate}
                     </p>
                 </td>
-                <td className="align-middle text-center">
+                <td className="align-middle text-center w-50">
                     {this.props.files_matched}
                 </td>
                 <td className="text-center align-middle">
