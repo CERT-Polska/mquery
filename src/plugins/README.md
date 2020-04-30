@@ -9,10 +9,6 @@ If you want to enable plugin, go to `__init__.py` file and add it to `METADATA_P
 from .mwdb_uploads import MalwarecageUploadsMetadata
 
 METADATA_PLUGINS = [
-    MalwarecageUploadsMetadata(
-        mwdb_api_token="<token>",
-        mwdb_api_url="https://mwdb.cert.pl/api/",
-        mwdb_url="https://mwdb.cert.pl/"
-    )
+    MalwarecageUploadsMetadata
 ]
 ```

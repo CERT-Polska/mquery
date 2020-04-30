@@ -93,11 +93,17 @@ class UserAuthSchema(BaseModel):
     password: str
 
 
+class AgentSpecSchema(BaseModel):
+    ursadb_url: str
+    plugins_spec: Dict[str, Dict[str, str]]
+    active_plugins: List[str]
+
+
 class AgentSchema(BaseModel):
     name: str
     alive: bool
     tasks: List
-    url: str
+    spec: AgentSpecSchema
 
 
 class BackendStatusSchema(BaseModel):

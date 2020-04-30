@@ -5,24 +5,24 @@ from typing import Optional
 
 from mwdblib import Malwarecage
 
-from metadata import Metadata, MetadataPlugin
+from db import Database
+from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 
 class MalwarecageUploadsMetadata(MetadataPlugin):
-    """
-    :param mwdb_api_token: API key for 'mquery' user in Malwarecage
-    :param mwdb_api_url: API URL accessible from mquery daemon
-    :param mwdb_url: Malwarecage URL accessible for mquery users
-    """
+    cacheable = True
+    config_fields = {
+        "mwdb_url": "URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/)",
+        "mwdb_api_url": "API URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/api/)",
+        "mwdb_api_token": "API key for 'mquery' user in Malwarecage (base64-encoded, starts with ey...)",
+    }
 
-    __cacheable__ = True
-
-    def __init__(
-        self, mwdb_api_token: str, mwdb_api_url: str, mwdb_url: str
-    ) -> None:
-        super().__init__()
-        self.mwdb = Malwarecage(api_url=mwdb_api_url, api_key=mwdb_api_token)
-        self.mwdb_url = mwdb_url
+    def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
+        super().__init__(db, config)
+        self.mwdb = Malwarecage(
+            api_url=config["mwdb_api_url"], api_key=config["mwdb_api_token"]
+        )
+        self.mwdb_url = config["mwdb_url"]
 
     def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(

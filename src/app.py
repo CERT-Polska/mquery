@@ -32,6 +32,7 @@ from schema import (
     UserAuthSchema,
     BackendStatusSchema,
     BackendStatusDatasetsSchema,
+    AgentSchema,
 )
 
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
@@ -122,24 +123,12 @@ def job_cancel(job_id: str) -> StatusSchema:
 
 @app.get("/api/config", response_model=List[ConfigSchema])
 def config_list() -> List[ConfigSchema]:
-    return [
-        ConfigSchema(
-            plugin="default",
-            key="mwdb_url",
-            value="http://mwdb.cert.pl",
-            description="URL of a a mwdb service.",
-        ),
-        ConfigSchema(
-            plugin="default",
-            key="stuff",
-            value="1337",
-            description="Important configuration key.",
-        ),
-    ]
+    return db.get_plugins_config()
 
 
 @app.post("/api/config/edit", response_model=StatusSchema)
 def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
+    db.set_plugin_configuration_key(data.plugin, data.key, data.value)
     return StatusSchema(status="ok")
 
 
@@ -185,19 +174,21 @@ def backend_status() -> BackendStatusSchema:
     components = {
         "mquery": mquery_version(),
     }
-    for name, url in db.get_active_agents().items():
+    for name, agent_spec in db.get_active_agents().items():
         try:
-            ursa = UrsaDb(url)
+            ursa = UrsaDb(agent_spec.ursadb_url)
             status = ursa.status()
             tasks = status["result"]["tasks"]
             ursadb_version = status["result"]["ursadb_version"]
             agents.append(
-                {"name": name, "alive": True, "tasks": tasks, "url": url}
+                AgentSchema(
+                    name=name, alive=True, tasks=tasks, spec=agent_spec
+                )
             )
             components[f"ursadb ({name})"] = ursadb_version
         except Again:
             agents.append(
-                {"name": name, "alive": False, "tasks": [], "url": url}
+                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)
             )
             components[f"ursadb ({name})"] = "unknown"
 
@@ -207,9 +198,9 @@ def backend_status() -> BackendStatusSchema:
 @app.get("/api/backend/datasets", response_model=BackendStatusDatasetsSchema)
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
     datasets = {}
-    for url in db.get_active_agents().values():
+    for agent_spec in db.get_active_agents().values():
         try:
-            ursa = UrsaDb(url)
+            ursa = UrsaDb(agent_spec.ursadb_url)
             datasets.update(ursa.topology()["result"]["datasets"])
         except Again:
             pass

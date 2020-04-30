@@ -6,7 +6,7 @@ from metadata import Metadata, MetadataPlugin
 
 
 class CuckooBinariesMetadata(MetadataPlugin):
-    __cacheable__ = False
+    cacheable = False
 
     def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(r"/binaries/([a-f0-9]+)$", matched_fname)

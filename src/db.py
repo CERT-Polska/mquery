@@ -1,5 +1,6 @@
+from collections import defaultdict
 from typing import List, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema
+from schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
 from time import time
 import json
 import random
@@ -199,8 +200,77 @@ class Database:
         if new_agents <= 0:
             self.redis.hmset(job.key, {"status": "done"})
 
-    def register_active_agent(self, agent_id: str, ursadb_url: str) -> None:
-        self.redis.hset("agents", agent_id, ursadb_url)
+    def register_active_agent(
+        self,
+        agent_id: str,
+        ursadb_url: str,
+        plugins_spec: Dict[str, Dict[str, str]],
+        active_plugins: List[str],
+    ) -> None:
+        self.redis.hset(
+            "agents",
+            agent_id,
+            AgentSpecSchema(
+                ursadb_url=ursadb_url,
+                plugins_spec=plugins_spec,
+                active_plugins=active_plugins,
+            ).json(),
+        )
 
-    def get_active_agents(self) -> Dict[str, str]:
-        return self.redis.hgetall("agents")
+    def get_active_agents(self) -> Dict[str, AgentSpecSchema]:
+        return {
+            name: AgentSpecSchema.parse_raw(spec)
+            for name, spec in self.redis.hgetall("agents").items()
+        }
+
+    def get_plugins_config(self) -> List[ConfigSchema]:
+        # { plugin_name: { field: description } }
+        config_fields: Dict[str, Dict[str, str]] = defaultdict(dict)
+        # Merge all config fields
+        for agent_spec in self.get_active_agents().values():
+            for name, fields in agent_spec.plugins_spec.items():
+                config_fields[name].update(fields)
+        # Transform fields into ConfigSchema
+        # { plugin_name: { field: ConfigSchema } }
+        plugin_configs = {
+            plugin: {
+                key: ConfigSchema(
+                    plugin=plugin, key=key, value="", description=description
+                )
+                for key, description in spec.items()
+            }
+            for plugin, spec in config_fields.items()
+        }
+        # Get configuration values for each plugin
+        for plugin, spec in plugin_configs.items():
+            config = self.get_plugin_configuration(plugin)
+            for key, value in config.items():
+                if key in plugin_configs[plugin]:
+                    plugin_configs[plugin][key].value = value
+        # Flatten to the target form
+        return [
+            plugin_configs[plugin][key]
+            for plugin in sorted(plugin_configs.keys())
+            for key in sorted(plugin_configs[plugin].keys())
+        ]
+
+    def get_plugin_config_version(self) -> str:
+        return self.redis.get("plugin-version")
+
+    def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
+        return self.redis.hgetall(f"plugin:{plugin_name}")
+
+    def set_plugin_configuration_key(
+        self, plugin_name: str, key: str, value: str
+    ) -> None:
+        self.redis.hset(f"plugin:{plugin_name}", key, value)
+        self.redis.set("plugin-version", self.redis.time()[0])
+
+    def cache_get(self, key: str, expire: int) -> Optional[str]:
+        value = self.redis.get(f"cached:{key}")
+        if value is not None:
+            self.redis.expire(f"cached:{key}", expire)
+        return value
+
+    def cache_store(self, key: str, value: str, expire: int) -> None:
+        self.redis.setex(f"cached:{key}", expire, value)
