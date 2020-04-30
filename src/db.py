@@ -261,7 +261,7 @@ class Database:
 
     def set_plugin_configuration_key(
         self, plugin_name: str, key: str, value: str
-    ):
+    ) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
         self.redis.set("plugin-version", self.redis.time()[0])
 
@@ -271,5 +271,5 @@ class Database:
             self.redis.expire(f"cached:{key}", expire)
         return value
 
-    def cache_store(self, key: str, value: str, expire: int):
+    def cache_store(self, key: str, value: str, expire: int) -> None:
         self.redis.setex(f"cached:{key}", expire, value)

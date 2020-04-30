@@ -93,9 +93,9 @@ class Agent:
             plugin_config = self.db.get_plugin_configuration(plugin_name)
             try:
                 active_plugins.append(plugin_class(self.db, plugin_config))
-                logging.info(f"Loaded {plugin_name} plugin")
+                logging.info("Loaded %s plugin", plugin_name)
             except Exception:
-                logging.exception(f"Failed to load {plugin_name} plugin")
+                logging.exception("Failed to load %s plugin", plugin_name)
         self.active_plugins = active_plugins
 
     def __initialize_agent(self) -> None:
@@ -129,7 +129,7 @@ class Agent:
                 metadata.update(extracted_meta)
             except Exception:
                 logging.exception(
-                    f"Failed to launch plugin {plugin.get_name()} for {file_path}"
+                    "Failed to launch plugin %s for %s", plugin.get_name(), file_path
                 )
         match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)
