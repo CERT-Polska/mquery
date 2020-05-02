@@ -6,10 +6,16 @@ import json
 import random
 import string
 from redis import StrictRedis
+from enum import Enum
+
+
+class TaskType(Enum):
+    SEARCH = "search"
+    YARA = "yara"
 
 
 class AgentTask:
-    def __init__(self, type: str, data: str):
+    def __init__(self, type: TaskType, data: str):
         self.type = type
         self.data = data
 
@@ -139,7 +145,7 @@ class Database:
             )
         )
         job_obj = {
-            "status": "processing",
+            "status": "new",
             "rule_name": rule_name,
             "rule_author": rule_author,
             "raw_yara": raw_yara,
@@ -158,6 +164,21 @@ class Database:
         for agent in agents:
             self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
         return job
+
+    def init_job_datasets(
+        self, agent_id: str, job: JobId, datasets: List[str]
+    ) -> None:
+        if datasets:
+            self.redis.lpush(f"job-ds:{agent_id}:{job.hash}", *datasets)
+        self.redis.hset(job.key, "status", "processing")
+
+    def get_next_search_dataset(
+        self, agent_id: str, job: JobId
+    ) -> Optional[str]:
+        return self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
+
+    def agent_continue_search(self, agent_id: str, job: JobId) -> None:
+        self.redis.rpush(f"agent:{agent_id}:queue-search", job.hash)
 
     def get_job_matches(
         self, job: JobId, offset: int, limit: int
@@ -179,10 +200,10 @@ class Database:
         queue, task = queue_task
 
         if queue.endswith(":queue-search"):
-            return AgentTask("search", task)
+            return AgentTask(TaskType.SEARCH, task)
 
         if queue.endswith(":queue-yara"):
-            return AgentTask("yara", task)
+            return AgentTask(TaskType.YARA, task)
 
         raise RuntimeError("Unexpected queue")
 
@@ -199,6 +220,9 @@ class Database:
         new_agents = self.redis.hincrby(job.key, "agents_left", -1)
         if new_agents <= 0:
             self.redis.hmset(job.key, {"status": "done"})
+
+    def has_pending_search_tasks(self, agent_id: str, job: JobId) -> bool:
+        return self.redis.llen(f"job-ds:{agent_id}:{job.hash}") == 0
 
     def register_active_agent(
         self,

@@ -9,7 +9,7 @@ from tempfile import NamedTemporaryFile
 
 
 def all_indexed_files(ursa: UrsaDb) -> Set[str]:
-    iterator = ursa.query("{}", None)["iterator"]
+    iterator = ursa.query("{}")["iterator"]
     result: Set[str] = set()
     while True:
         pop_result = ursa.pop(iterator, 5000)

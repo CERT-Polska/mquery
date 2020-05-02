@@ -8,7 +8,7 @@ from lib.ursadb import UrsaDb
 from util import setup_logging
 from typing import Any, List, Optional
 from lib.yaraparse import parse_yara, combine_rules
-from db import AgentTask, JobId, Database, MatchInfo
+from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
 from metadata import MetadataPlugin, Metadata
 from plugins import METADATA_PLUGINS
@@ -68,13 +68,32 @@ class Agent:
 
         job = self.db.get_job(job_id)
         if job.status == "cancelled":
+            logging.info("Job was cancelled, returning...")
+            return
+
+        if job.status == "new":
+            # First search request - find datasets to query
+            logging.info("New job, generate subtasks...")
+            result = self.ursa.topology()
+            if "error" in result:
+                raise RuntimeError(result["error"])
+            self.db.init_job_datasets(
+                self.group_id,
+                job_id,
+                list(result["result"]["datasets"].keys()),
+            )
+
+        logging.info("Get next dataset to query...")
+        dataset = self.db.get_next_search_dataset(self.group_id, job_id)
+        if dataset is None:
+            logging.info("Nothing to query, returning...")
             return
 
         rules = parse_yara(job.raw_yara)
         parsed = combine_rules(rules)
 
         logging.info("Querying backend...")
-        result = self.ursa.query(parsed.query, job.taint)
+        result = self.ursa.query(parsed.query, job.taint, dataset)
         if "error" in result:
             raise RuntimeError(result["error"])
 
@@ -84,6 +103,7 @@ class Agent:
 
         self.db.update_job_files(job_id, file_count)
         self.db.agent_start_job(self.group_id, job_id, iterator)
+        self.db.agent_continue_search(self.group_id, job_id)
 
     def __load_plugins(self) -> None:
         self.plugin_config_version = self.db.get_plugin_config_version()
@@ -211,7 +231,7 @@ class Agent:
         :type task: AgentTask
         :raises RuntimeError: Task with unsupported type given.
         """
-        if task.type == "search":
+        if task.type == TaskType.SEARCH:
             job = JobId(task.data)
             logging.info(f"search: {job.hash}")
 
@@ -219,9 +239,9 @@ class Agent:
                 self.__search_task(job)
             except Exception as e:
                 logging.exception("Failed to execute task.")
-                self.db.fail_job(job, str(e))
                 self.db.agent_finish_job(job)
-        elif task.type == "yara":
+                self.db.fail_job(job, str(e))
+        elif task.type == TaskType.YARA:
             data = json.loads(task.data)
             job = JobId(data["job"])
             iterator = data["iterator"]
@@ -231,8 +251,8 @@ class Agent:
                 self.__yara_task(job, iterator)
             except Exception as e:
                 logging.exception("Failed to execute task.")
-                self.db.fail_job(job, str(e))
                 self.db.agent_finish_job(job)
+                self.db.fail_job(job, str(e))
         else:
             raise RuntimeError("Unsupported queue")
 
