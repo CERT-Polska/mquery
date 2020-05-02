@@ -11,7 +11,7 @@ def test_literal():
     hex_str = "3F2504E0"
     result = ursify_hex(hex_str)
 
-    assert result.query == "({3F2504E0})"
+    assert result.query == "({3f2504e0})"
 
 
 def test_literal_to_hex():
