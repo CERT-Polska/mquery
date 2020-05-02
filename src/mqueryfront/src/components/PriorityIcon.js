@@ -9,16 +9,28 @@ import PropTypes from "prop-types";
 
 const PriorityIcon = (props) => {
     let icon;
-    if (props.priority === "low") icon = faAngleDown;
-    else if (props.priority === "medium") icon = faAngleUp;
-    else if (props.priority === "high") icon = faAngleDoubleUp;
-    else return null;
+    let color;
+
+    if (props.priority === "low") {
+        icon = faAngleDown;
+        color = "green";
+    } else if (props.priority === "medium") {
+        icon = faAngleUp;
+        color = "orange";
+    } else if (props.priority === "high") {
+        icon = faAngleDoubleUp;
+        color = "red";
+    } else return null;
 
     return (
         <span data-toggle="tooltip" title={props.priority}>
-            <FontAwesomeIcon icon={icon} size="1x" color="red" />
+            <FontAwesomeIcon icon={icon} size={props.size} color={color} />
         </span>
     );
+};
+
+PriorityIcon.defaultProps = {
+    size: "1x",
 };
 
 PriorityIcon.propTypes = {
