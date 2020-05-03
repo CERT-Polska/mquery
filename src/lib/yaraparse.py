@@ -47,11 +47,7 @@ class UrsaExpression:
         self.query = query
 
     @classmethod
-    def literal(cls, some_string):
-        return cls(f"{{{some_string}}}")
-
-    @classmethod
-    def literal_to_hex(cls, some_string):
+    def literal(cls, some_string: bytes) -> "UrsaExpression":
         return cls(f"{{{some_string.hex()}}}")
 
     @classmethod
@@ -124,7 +120,7 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
     hex_parts = re.split(r"\(.*?\)", hex_str)
     hex_parts = [x for y in hex_parts for x in re.split(r"\[[\d-]+\]", y)]
 
-    output: List[str] = []
+    output: List[bytes] = []
 
     for part in hex_parts:
         last_end = None
@@ -134,23 +130,39 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
 
             if part[i] == "?" or part[i + 1] == "?":
                 if last_end is not None:
-                    output.append(part[last_end:i])
+                    output.append(bytes.fromhex(part[last_end:i]))
                 last_end = None
             elif last_end is None:
                 last_end = i
 
         if last_end is not None:
-            output.append(part[last_end:])
+            output.append(bytes.fromhex(part[last_end:]))
 
     return UrsaExpression.and_(*[UrsaExpression.literal(f) for f in output])
+
+
+def ursify_nocase_bytes(raw: bytes) -> UrsaExpression:
+    out = []
+    for c in raw:
+        lower = chr(c).lower()
+        upper = chr(c).upper()
+        if lower == upper:
+            out.append(bytes([c]).hex())
+        else:
+            out.append(f"({lower.encode().hex()}|{upper.encode().hex()})")
+    return UrsaExpression(f"{{{ ' '.join(out) }}}")
 
 
 def ursify_plain_string(string: PlainString) -> UrsaExpression:
     text_ascii = string.pure_text
     text_wide = bytes(x for y in text_ascii for x in [y, 0])
 
-    ursa_ascii = UrsaExpression.literal_to_hex(text_ascii)
-    ursa_wide = UrsaExpression.literal_to_hex(text_wide)
+    if string.is_nocase:
+        ursa_ascii = ursify_nocase_bytes(text_ascii)
+        ursa_wide = ursify_nocase_bytes(text_wide)
+    else:
+        ursa_ascii = UrsaExpression.literal(text_ascii)
+        ursa_wide = UrsaExpression.literal(text_wide)
 
     if string.is_wide and not string.is_ascii:
         return ursa_wide
@@ -170,18 +182,14 @@ def ursify_xor_string(string: PlainString) -> UrsaExpression:
         xored_wide = bytes(x ^ xor_key for y in text_ascii for x in [y, 0])
 
         if string.is_ascii:
-            xored_strings.append(UrsaExpression.literal_to_hex(xored_ascii))
+            xored_strings.append(UrsaExpression.literal(xored_ascii))
         if string.is_wide:
-            xored_strings.append(UrsaExpression.literal_to_hex(xored_wide))
+            xored_strings.append(UrsaExpression.literal(xored_wide))
 
     return UrsaExpression.or_(*xored_strings)
 
 
 def ursify_string(string: String) -> Optional[UrsaExpression]:
-    # nocase strings are not currently supported
-    if string.is_nocase:
-        return None
-
     if string.is_xor:
         return ursify_xor_string(string)
     elif string.is_plain:
