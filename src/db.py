@@ -193,7 +193,7 @@ class Database:
 
     def reload_configuration(self, config_version: str):
         # Send request to any of agents that configuration must be reloaded
-        self.redis.rpush(f"config-reload:{config_version}", "reload")
+        self.redis.lpush(f"config-reload:{config_version}", "reload")
         # After 300 seconds of inactivity: reload request is deleted
         self.redis.expire(f"config-reload:{config_version}", 300)
 
@@ -202,7 +202,7 @@ class Database:
         # config-reload is notification queue that is set by web to notify
         # agents that configuration has been changed
         task_queues = [
-            f"config-reload:{config_version}"
+            f"config-reload:{config_version}",
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
         ]
@@ -301,7 +301,10 @@ class Database:
         self, plugin_name: str, key: str, value: str
     ) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
-        prev_version = self.redis.set("plugin-version", self.redis.time()[0]) or "initial"
+        prev_version = (
+            self.redis.getset("plugin-version", self.redis.time()[0])
+            or "initial"
+        )
         self.reload_configuration(prev_version)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
