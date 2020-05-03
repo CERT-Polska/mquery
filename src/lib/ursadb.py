@@ -40,16 +40,24 @@ class UrsaDb:
         socket.connect(self.backend)
         return socket
 
-    def query(self, query: str, taint: Optional[str]) -> Json:
+    def query(
+        self,
+        query: str,
+        taint: Optional[str] = None,
+        dataset: Optional[str] = None,
+    ) -> Json:
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
+        command = "select "
         if taint:
             taint = taint.replace('"', '\\"')
-            query = f'select with taints ["{taint}"] into iterator {query};'
-        else:
-            query = f"select into iterator {query};"
-        socket.send_string(query)
+            command += f'with taints ["{taint}"] '
+        if dataset:
+            command += f'with datasets ["{dataset}"] '
+
+        command += f"into iterator {query};"
+        socket.send_string(command)
 
         response = socket.recv_string()
         socket.close()
