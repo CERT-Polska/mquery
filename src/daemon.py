@@ -154,9 +154,6 @@ class Agent:
         self.db.add_match(job, match)
 
     def __execute_yara(self, job: JobId, files: List[str]) -> None:
-        if self.db.get_plugin_config_version() != self.plugin_config_version:
-            logging.info("Configuration changed - reloading plugins.")
-            self.__initialize_agent()
         rule = compile_yara(self.db, job)
         num_matches = 0
         self.db.job_start_work(job, len(files))
@@ -231,6 +228,17 @@ class Agent:
         :type task: AgentTask
         :raises RuntimeError: Task with unsupported type given.
         """
+        if task.type == TaskType.RELOAD:
+            if self.plugin_config_version == self.db.get_plugin_config_version():
+                # This should never happen and suggests that version is not updated properly.
+                raise RuntimeError("Critical error: Requested to reload configuration, but "
+                                   "configuration present in database is still the same.")
+            logging.info("Configuration changed - reloading plugins.")
+            # Request next agent to reload the configuration
+            self.db.reload_configuration(self.plugin_config_version)
+            # Reload configuration. Version will be updated during reinitialization,
+            # so we don't receive our own request.
+            self.__initialize_agent()
         if task.type == TaskType.SEARCH:
             job = JobId(task.data)
             logging.info(f"search: {job.hash}")
@@ -264,7 +272,7 @@ class Agent:
         self.__initialize_agent()
 
         while True:
-            task = self.db.agent_get_task(self.group_id)
+            task = self.db.agent_get_task(self.group_id, self.plugin_config_version)
             self.__process_task(task)
 
 
