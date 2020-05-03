@@ -6,7 +6,7 @@ import json
 import sys
 from lib.ursadb import UrsaDb
 from util import setup_logging
-from typing import Any, List, Optional
+from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
@@ -56,7 +56,6 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
-        self.plugin_config_version: Optional[str] = None
         self.active_plugins: List[MetadataPlugin] = []
 
     def __search_task(self, job_id: JobId) -> None:
