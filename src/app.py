@@ -91,14 +91,26 @@ def query(
             for rule in rules
         ]
 
-    active_agents = list(db.get_active_agents().keys())
+    active_agents = db.get_active_agents()
+
+    for agent, agent_spec in active_agents.items():
+        missing = set(data.required_plugins).difference(
+            agent_spec.active_plugins
+        )
+        if missing:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Agent {agent} doesn't support "
+                f"required plugins: {', '.join(missing)}",
+            )
+
     job = db.create_search_task(
         rules[-1].name,
         rules[-1].author,
         data.raw_yara,
         data.priority,
         data.taint,
-        active_agents,
+        list(active_agents.keys()),
     )
     return QueryResponseSchema(query_hash=job.hash)
 
