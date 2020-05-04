@@ -89,6 +89,7 @@ class Database:
             files_matched=int(data.get("files_matched", 0)),
             files_in_progress=int(data.get("files_in_progress", 0)),
             total_files=int(data.get("total_files", 0)),
+            files_errored=int(data.get("files_errored", 0)),
             iterator=data.get("iterator", None),
             taint=data.get("taint", None),
         )
@@ -110,15 +111,21 @@ class Database:
         self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
 
     def job_update_work(
-        self, job: JobId, files_processed: int, files_matched: int,
+        self, job: JobId, files_processed: int, files_matched: int
     ) -> None:
         """ Update progress for the job. This will increment number of files processed
         and matched, and if as a result all files are processed, will change the job
         status to `done`
         """
         self.redis.hincrby(job.key, "files_processed", files_processed)
-        self.redis.hincrby(job.key, "files_matched", files_matched)
         self.redis.hincrby(job.key, "files_in_progress", -files_processed)
+        self.redis.hincrby(job.key, "files_matched", files_matched)
+
+    def job_update_error(self, job: JobId, files_errored: int) -> None:
+        """ Update error for the job if it appears during agents' work. 
+        This will increment number of files errored and write them to the variable.
+        """
+        self.redis.hincrby(job.key, "files_errored", files_errored)
 
     def create_search_task(
         self,
@@ -148,6 +155,7 @@ class Database:
             "files_processed": 0,
             "files_matched": 0,
             "total_files": 0,
+            "files_errored": 0,
             "agents_left": len(agents),
         }
         if taint is not None:

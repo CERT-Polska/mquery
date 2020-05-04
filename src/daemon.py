@@ -92,6 +92,7 @@ class Agent:
     def __execute_yara(self, job: JobId, files: List[str]) -> None:
         rule = compile_yara(self.db, job)
         num_matches = 0
+        num_errors = 0
         self.db.job_start_work(job, len(files))
         for sample in files:
             try:
@@ -103,11 +104,15 @@ class Agent:
                     )
             except yara.Error:
                 logging.exception(f"Yara failed to check file {sample}")
+                num_errors += 1
             except FileNotFoundError:
                 logging.exception(
                     f"Failed to open file for yara check: {sample}"
                 )
+                num_errors += 1
+        logging.exception(f"Error files: {num_errors}")
 
+        self.db.job_update_error(job, num_errors)
         self.db.job_update_work(job, len(files), num_matches)
 
     def __yara_task(self, job: JobId, iterator: str) -> None:

@@ -220,7 +220,7 @@ class QueryResultsStatus extends Component {
                 </div>
             );
         }
-
+        console.log(this.props.job.files_error);
         return (
             <div>
                 <div className="progress" style={{ marginTop: "55px" }}>
@@ -257,6 +257,12 @@ class QueryResultsStatus extends Component {
                         >
                             {this.props.job.status}
                         </span>
+                        {this.props.job.total_files - lenMatches > 0 && (
+                            <span style={{ color: "grey", fontSize: "12px" }}>
+                                {" "}
+                                {this.props.job.files_errored} files was missed
+                            </span>
+                        )}
                     </div>
                     <div className="col-md-3">
                         Processed: <span>{processed}</span>
