@@ -232,11 +232,14 @@ class Agent:
                 self.plugin_config_version
                 == self.db.get_plugin_config_version()
             ):
-                # This should never happen and suggests that version is not updated properly.
-                raise RuntimeError(
+                # This should never happen and suggests that there is bug somewhere
+                # and version was not updated properly.
+                logging.error(
                     "Critical error: Requested to reload configuration, but "
-                    "configuration present in database is still the same."
+                    "configuration present in database is still the same (%s).",
+                    self.plugin_config_version,
                 )
+                return
             logging.info("Configuration changed - reloading plugins.")
             # Request next agent to reload the configuration
             self.db.reload_configuration(self.plugin_config_version)
