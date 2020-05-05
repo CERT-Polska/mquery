@@ -6,7 +6,7 @@ import json
 import sys
 from lib.ursadb import UrsaDb
 from util import setup_logging
-from typing import Any, List, Optional
+from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
@@ -56,7 +56,6 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
-        self.plugin_config_version: Optional[str] = None
         self.active_plugins: List[MetadataPlugin] = []
 
     def __search_task(self, job_id: JobId) -> None:
@@ -154,9 +153,6 @@ class Agent:
         self.db.add_match(job, match)
 
     def __execute_yara(self, job: JobId, files: List[str]) -> None:
-        if self.db.get_plugin_config_version() != self.plugin_config_version:
-            logging.info("Configuration changed - reloading plugins.")
-            self.__initialize_agent()
         rule = compile_yara(self.db, job)
         num_matches = 0
         self.db.job_start_work(job, len(files))
@@ -231,7 +227,26 @@ class Agent:
         :type task: AgentTask
         :raises RuntimeError: Task with unsupported type given.
         """
-        if task.type == TaskType.SEARCH:
+        if task.type == TaskType.RELOAD:
+            if (
+                self.plugin_config_version
+                == self.db.get_plugin_config_version()
+            ):
+                # This should never happen and suggests that there is bug somewhere
+                # and version was not updated properly.
+                logging.error(
+                    "Critical error: Requested to reload configuration, but "
+                    "configuration present in database is still the same (%s).",
+                    self.plugin_config_version,
+                )
+                return
+            logging.info("Configuration changed - reloading plugins.")
+            # Request next agent to reload the configuration
+            self.db.reload_configuration(self.plugin_config_version)
+            # Reload configuration. Version will be updated during reinitialization,
+            # so we don't receive our own request.
+            self.__initialize_agent()
+        elif task.type == TaskType.SEARCH:
             job = JobId(task.data)
             logging.info(f"search: {job.hash}")
 
@@ -264,7 +279,9 @@ class Agent:
         self.__initialize_agent()
 
         while True:
-            task = self.db.agent_get_task(self.group_id)
+            task = self.db.agent_get_task(
+                self.group_id, self.plugin_config_version
+            )
             self.__process_task(task)
 
 

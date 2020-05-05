@@ -12,6 +12,7 @@ from enum import Enum
 class TaskType(Enum):
     SEARCH = "search"
     YARA = "yara"
+    RELOAD = "reload"
 
 
 class AgentTask:
@@ -190,14 +191,26 @@ class Database:
             job=self.get_job(job), matches=[json.loads(m) for m in meta]
         )
 
-    def agent_get_task(self, agent_id: str) -> AgentTask:
+    def reload_configuration(self, config_version: str):
+        # Send request to any of agents that configuration must be reloaded
+        self.redis.lpush(f"config-reload:{config_version}", "reload")
+        # After 300 seconds of inactivity: reload request is deleted
+        self.redis.expire(f"config-reload:{config_version}", 300)
+
+    def agent_get_task(self, agent_id: str, config_version: str) -> AgentTask:
         agent_prefix = f"agent:{agent_id}"
+        # config-reload is a notification queue that is set by web to notify
+        # agents that configuration has been changed
         task_queues = [
+            f"config-reload:{config_version}",
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
         ]
         queue_task: Any = self.redis.blpop(task_queues)
         queue, task = queue_task
+
+        if queue == f"config-reload:{config_version}":
+            return AgentTask(TaskType.RELOAD, task)
 
         if queue.endswith(":queue-search"):
             return AgentTask(TaskType.SEARCH, task)
@@ -279,7 +292,7 @@ class Database:
         ]
 
     def get_plugin_config_version(self) -> str:
-        return self.redis.get("plugin-version")
+        return self.redis.get("plugin-version") or "initial"
 
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
@@ -288,7 +301,11 @@ class Database:
         self, plugin_name: str, key: str, value: str
     ) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
-        self.redis.set("plugin-version", self.redis.time()[0])
+        prev_version = (
+            self.redis.getset("plugin-version", self.redis.time()[0])
+            or "initial"
+        )
+        self.reload_configuration(prev_version)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")
