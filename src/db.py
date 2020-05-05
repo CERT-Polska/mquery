@@ -199,7 +199,7 @@ class Database:
 
     def agent_get_task(self, agent_id: str, config_version: str) -> AgentTask:
         agent_prefix = f"agent:{agent_id}"
-        # config-reload is notification queue that is set by web to notify
+        # config-reload is a notification queue that is set by web to notify
         # agents that configuration has been changed
         task_queues = [
             f"config-reload:{config_version}",
