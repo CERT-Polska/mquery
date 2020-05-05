@@ -122,7 +122,7 @@ class Database:
         self.redis.hincrby(job.key, "files_matched", files_matched)
 
     def job_update_error(self, job: JobId, files_errored: int) -> None:
-        """ Update error for the job if it appears during agents' work. 
+        """ Update error for the job if it appears during agents' work.
         This will increment number of files errored and write them to the variable.
         """
         self.redis.hincrby(job.key, "files_errored", files_errored)

@@ -150,6 +150,9 @@ class QueryResultsStatus extends Component {
         );
         let processed =
             this.props.job.files_processed + " / " + this.props.job.total_files;
+        let errored = Math.round(
+            (this.props.job.files_errored / this.props.job.total_files) * 100
+        );
         let cancel = (
             <button
                 className="btn btn-danger btn-sm"
@@ -220,7 +223,6 @@ class QueryResultsStatus extends Component {
                 </div>
             );
         }
-        console.log(this.props.job.files_error);
         return (
             <div>
                 <div className="progress" style={{ marginTop: "55px" }}>
@@ -240,6 +242,15 @@ class QueryResultsStatus extends Component {
                             {processing}%
                         </div>
                     )}
+                    {this.props.job.files_errored > 0 && (
+                        <div
+                            className={"progress-bar bg-danger"}
+                            role="progressbar"
+                            style={{ width: errored + "%" }}
+                        >
+                            {errored}%
+                        </div>
+                    )}
                 </div>
                 <div className="row m-0 pt-3">
                     <div className="col-md-3">
@@ -257,7 +268,7 @@ class QueryResultsStatus extends Component {
                         >
                             {this.props.job.status}
                         </span>
-                        {this.props.job.total_files - lenMatches > 0 && (
+                        {this.props.job.files_errored > 0 && (
                             <span style={{ color: "grey", fontSize: "12px" }}>
                                 {" "}
                                 {this.props.job.files_errored} files was missed
