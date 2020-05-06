@@ -199,13 +199,13 @@ class Database:
             job=self.get_job(job), matches=[json.loads(m) for m in meta]
         )
 
-    def reload_configuration(self, config_version: str):
+    def reload_configuration(self, config_version: int):
         # Send request to any of agents that configuration must be reloaded
         self.redis.lpush(f"config-reload:{config_version}", "reload")
         # After 300 seconds of inactivity: reload request is deleted
         self.redis.expire(f"config-reload:{config_version}", 300)
 
-    def agent_get_task(self, agent_id: str, config_version: str) -> AgentTask:
+    def agent_get_task(self, agent_id: str, config_version: int) -> AgentTask:
         agent_prefix = f"agent:{agent_id}"
         # config-reload is a notification queue that is set by web to notify
         # agents that configuration has been changed
@@ -299,8 +299,8 @@ class Database:
             for key in sorted(plugin_configs[plugin].keys())
         ]
 
-    def get_plugin_config_version(self) -> str:
-        return self.redis.get("plugin-version") or "initial"
+    def get_plugin_config_version(self) -> int:
+        return int(self.redis.get("plugin-version") or 0)
 
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
@@ -309,10 +309,7 @@ class Database:
         self, plugin_name: str, key: str, value: str
     ) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
-        prev_version = (
-            self.redis.getset("plugin-version", self.redis.time()[0])
-            or "initial"
-        )
+        prev_version = self.redis.incrby("plugin-version", 1) - 1
         self.reload_configuration(prev_version)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
