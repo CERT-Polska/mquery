@@ -13,6 +13,12 @@ def main() -> None:
         help="URL of the ursadb instance.",
         default="tcp://localhost:9281",
     )
+    parser.add_argument(
+        "--mode",
+        help="URL of the ursadb instance.",
+        default="smart",
+        choices=["smart", "all"],
+    )
 
     args = parser.parse_args()
     ursa = UrsaDb(args.ursadb)
@@ -32,7 +38,7 @@ def main() -> None:
             return
 
         start = time.time()
-        ursa.execute_command("compact all;")
+        ursa.execute_command(f"compact {args.mode};")
         end = time.time()
         logging.info("Compacting took %s seconds...", (end - start))
         stage += 1
