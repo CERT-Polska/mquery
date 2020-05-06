@@ -138,7 +138,7 @@ class Agent:
     ) -> None:
         """ After finding a match, push it into a database and
         update the related metadata """
-        metadata: Metadata = {}
+        metadata: Metadata = {"job": job.hash}
         for plugin in self.active_plugins:
             try:
                 extracted_meta = plugin.run(file_path, metadata)
