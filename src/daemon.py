@@ -214,7 +214,11 @@ class Agent:
             self.__execute_yara(job, pop_result.files)
 
         j = self.db.get_job(job)
-        if j.status == "processing" and j.files_processed == j.total_files:
+        if (
+            j.status == "processing"
+            and j.files_processed == j.total_files
+            and self.db.job_datasets_left(self.group_id, job) == 0
+        ):
             # The job is over, work of this agent as done.
             self.db.agent_finish_job(job)
 

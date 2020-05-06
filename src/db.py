@@ -186,6 +186,9 @@ class Database:
     ) -> Optional[str]:
         return self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
 
+    def job_datasets_left(self, agent_id: str, job: JobId) -> int:
+        return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")
+
     def agent_continue_search(self, agent_id: str, job: JobId) -> None:
         self.redis.rpush(f"agent:{agent_id}:queue-search", job.hash)
 
