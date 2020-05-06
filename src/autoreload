@@ -22,7 +22,7 @@ def get_max_mtime():
 
 def run():
     return subprocess.Popen(
-        sys.argv[1], shell=True, stdout=sys.stdout, stderr=sys.stderr
+        sys.argv[1:], stdout=sys.stdout, stderr=sys.stderr
     )
 
 
@@ -33,7 +33,7 @@ def main():
     while True:
         max_mtime, filename = get_max_mtime()
         if max_mtime > last_mtime:
-            print(f"{filename} changed: restarting process.")
+            print(f"{filename} changed: restarting process.", flush=True)
             last_mtime = max_mtime
             process.terminate()
             process.wait()
