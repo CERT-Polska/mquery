@@ -105,7 +105,7 @@ class Agent:
         self.db.agent_continue_search(self.group_id, job_id)
 
     def __load_plugins(self) -> None:
-        self.plugin_config_version = self.db.get_plugin_config_version()
+        self.plugin_config_version: int = self.db.get_plugin_config_version()
         active_plugins = []
         for plugin_class in METADATA_PLUGINS:
             plugin_name = plugin_class.get_name()
