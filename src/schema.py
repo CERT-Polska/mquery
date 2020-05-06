@@ -15,6 +15,7 @@ class JobSchema(BaseModel):
     files_matched: int
     files_in_progress: int
     total_files: int
+    files_errored: int
     iterator: Optional[str]
     taint: Optional[str]
 

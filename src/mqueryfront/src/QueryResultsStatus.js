@@ -150,6 +150,10 @@ class QueryResultsStatus extends Component {
         );
         let processed =
             this.props.job.files_processed + " / " + this.props.job.total_files;
+        let errored = Math.round(
+            (this.props.job.files_errored / this.props.job.total_files) * 100
+        );
+        let errorTooltip = `${this.props.job.files_errored} errors during processing`;
         let cancel = (
             <button
                 className="btn btn-danger btn-sm"
@@ -220,7 +224,6 @@ class QueryResultsStatus extends Component {
                 </div>
             );
         }
-
         return (
             <div>
                 <div className="progress" style={{ marginTop: "55px" }}>
@@ -239,6 +242,15 @@ class QueryResultsStatus extends Component {
                         >
                             {processing}%
                         </div>
+                    )}
+                    {this.props.job.files_errored > 0 && (
+                        <div
+                            className={"progress-bar bg-danger"}
+                            role="progressbar"
+                            style={{ width: Math.max(3, errored) + "%" }}
+                            data-toggle="tooltip"
+                            title={errorTooltip}
+                        />
                     )}
                 </div>
                 <div className="row m-0 pt-3">
