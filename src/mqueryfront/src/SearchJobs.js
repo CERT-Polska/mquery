@@ -1,154 +1,129 @@
-import React, { Component } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import ErrorBoundary from "./ErrorBoundary";
-import axios from "axios";
-import { API_URL } from "./config";
 import PriorityIcon from "./components/PriorityIcon";
 import ActionClose from "./components/ActionClose";
 import ActionCancel from "./components/ActionCancel";
 import StatusProgress from "./components/StatusProgress";
+import FilteringTableHeader from "./components/FilteringTableHeader";
+import FilteringTitle from "./components/FilteringTitle";
+import PropTypes from "prop-types";
 
-class SearchJobRow extends Component {
-    constructor(props) {
-        super(props);
+const SearchJobRow = (props) => {
+    const {
+        id,
+        status,
+        submitted,
+        rule_name,
+        priority,
+        files_matched,
+        total_files,
+        files_processed,
+    } = props.job;
+    const rule_author = props.job.rule_author
+        ? props.job.rule_author
+        : "(no author)";
+    const { onClose, onCancel } = props;
 
-        this.state = {
-            cancelled: false,
-        };
+    const submittedDate = new Date(submitted * 1000).toISOString();
 
-        this.handleCancelJob = this.handleCancelJob.bind(this);
-    }
+    const actionBtn =
+        status === "cancelled" || status === "expired" || status === "done" ? (
+            <ActionClose onClick={onClose} />
+        ) : (
+            <ActionCancel onClick={onCancel} />
+        );
 
-    handleCancelJob() {
-        axios.delete(API_URL + "/job/" + this.props.id).then((response) => {
-            this.setState({ cancelled: true });
-        });
-    }
-
-    render() {
-        const submittedDate = new Date(
-            this.props.submitted * 1000
-        ).toISOString();
-
-        let status;
-        if (this.state.cancelled) {
-            status = "cancelled";
-        } else {
-            status = this.props.status;
-        }
-
-        let actionBtn;
-        if (
-            status === "cancelled" ||
-            status === "expired" ||
-            status === "done"
-        ) {
-            actionBtn = <ActionClose onClick={this.props.onClose} />;
-        } else {
-            actionBtn = <ActionCancel onClick={this.handleCancelJob} />;
-        }
-
-        let rule_author = this.props.rule_author
-            ? this.props.rule_author
-            : "(no author)";
-
-        return (
-            <tr>
-                <td>
-                    <div className="d-flex">
-                        <div
-                            className="text-truncate"
-                            style={{ minWidth: 50, maxWidth: "20vw" }}
+    return (
+        <tr>
+            <td>
+                <div className="d-flex">
+                    <div
+                        className="text-truncate"
+                        style={{ minWidth: 50, maxWidth: "20vw" }}
+                    >
+                        <Link
+                            to={"/query/" + id}
+                            style={{ fontFamily: "monospace" }}
                         >
-                            <Link
-                                to={"/query/" + this.props.id}
-                                style={{ fontFamily: "monospace" }}
-                            >
-                                {this.props.rule_name}
-                            </Link>
-                        </div>
-                        <span className="ml-2">
-                            <PriorityIcon priority={this.props.priority} />
-                        </span>
+                            {rule_name}
+                        </Link>
                     </div>
-                    <p style={{ fontSize: 11 }}>
-                        [{rule_author}] {submittedDate}
-                    </p>
-                </td>
-                <td className="align-middle text-center">
-                    {this.props.files_matched}
-                </td>
-                <td className="text-center align-middle w-50">
-                    <StatusProgress
-                        status={status}
-                        total_files={this.props.total_files}
-                        files_processed={this.props.files_processed}
-                    />
-                </td>
-                <td className="text-center align-middle">{actionBtn}</td>
-            </tr>
-        );
-    }
-}
+                    <span className="ml-2">
+                        <PriorityIcon priority={priority} />
+                    </span>
+                </div>
+                <p style={{ fontSize: 11 }}>{submittedDate}</p>
+            </td>
+            <td className="align-middle text-center">{rule_author}</td>
+            <td className="align-middle text-center">{files_matched}</td>
+            <td className="text-center align-middle w-50">
+                <StatusProgress
+                    status={status}
+                    total_files={total_files}
+                    files_processed={files_processed}
+                />
+            </td>
+            <td className="text-center align-middle">{actionBtn}</td>
+        </tr>
+    );
+};
 
-class SearchJobs extends Component {
-    constructor(props) {
-        super(props);
+const SearchJobs = (props) => {
+    const { head, filter, onCancel, onClose, onFilter } = props;
+    let { jobs } = props;
 
-        this.state = {
-            jobs: [],
-            error: null,
-        };
+    let filterValue;
 
-        this.handleClose = this.handleClose.bind(this);
-    }
+    if (filter) {
+        const { name, value } = filter;
+        jobs = jobs.filter((el) => el[name] === value);
 
-    handleClose(id) {
-        const jobs = Object.assign([], this.state.jobs).filter(
-            (job) => job.id !== id
-        );
-
-        this.setState({ jobs: jobs });
+        filterValue = value;
     }
 
-    componentDidMount() {
-        axios
-            .get(API_URL + "/job")
-            .then((response) => {
-                this.setState({ jobs: response.data.jobs });
-            })
-            .catch((error) => {
-                this.setState({ error: error });
-            });
-    }
+    const backendJobRows = jobs.map((job) => (
+        <SearchJobRow
+            key={job.id}
+            job={job}
+            onClose={() => onClose(job.id)}
+            onCancel={() => onCancel(job.id)}
+        />
+    ));
 
-    render() {
-        const backendJobRows = this.state.jobs.map((job) => (
-            <SearchJobRow
-                {...job}
-                key={job.id}
-                onClose={() => this.handleClose(job.id)}
-            />
-        ));
-
-        return (
-            <ErrorBoundary error={this.state.error}>
+    return (
+        <div className="row">
+            <div className="col-md-8 offset-md-2">
+                <FilteringTitle title="Recent jobs" filterValue={filterValue} />
                 <div className="table-responsive">
                     <table className="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Job name</th>
-                                <th className="text-center">Matches</th>
-                                <th className="text-center">Status/Progress</th>
-                                <th className="text-center">Actions</th>
-                            </tr>
-                        </thead>
+                        <FilteringTableHeader
+                            head={head}
+                            currentFilter={filter}
+                            onClick={onFilter}
+                        />
                         <tbody>{backendJobRows}</tbody>
                     </table>
                 </div>
-            </ErrorBoundary>
-        );
-    }
-}
+            </div>
+        </div>
+    );
+};
+
+SearchJobs.propTypes = {
+    jobs: PropTypes.array.isRequired,
+    head: PropTypes.arrayOf(
+        PropTypes.shape({
+            title: PropTypes.string.isRequired,
+            attrubuteName: PropTypes.string,
+            valueList: PropTypes.arrayOf(
+                PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+            ),
+        })
+    ).isRequired,
+    filterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    onFilter: PropTypes.func.isRequired,
+    onClose: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
+};
 
 export default SearchJobs;

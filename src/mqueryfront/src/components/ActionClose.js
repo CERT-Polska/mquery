@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 const ActionClose = (props) => {
     return (
         <button className="btn shadow-none" onClick={props.onClick}>
-            <span data-toggle="tooltip" title="close">
+            <span data-toggle="tooltip" title={props.tooltipMessage}>
                 <FontAwesomeIcon icon={faTimes} size={props.size} />
             </span>
         </button>
@@ -15,6 +15,7 @@ const ActionClose = (props) => {
 
 ActionClose.defaultProps = {
     size: "1x",
+    tooltipMessage: "close",
 };
 
 ActionClose.propTypes = {
