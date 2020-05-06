@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY requirements.txt src/plugins/requirements-*.txt /tmp/
 RUN ls /tmp/requirements-*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 # ./src is expected to be mounted with a docker volume
-CMD ["./autoreload", "python3 daemon.py"]
+CMD ["./autoreload", "python3", "daemon.py"]
