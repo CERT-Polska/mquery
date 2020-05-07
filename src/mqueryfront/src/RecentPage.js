@@ -90,7 +90,7 @@ class RecentPage extends Component {
     }
 
     _getDistinctList(arrayOfObjects, attributeName, allElement) {
-        let returnList;
+        let returnList = null;    
 
         if (arrayOfObjects)
             returnList = arrayOfObjects
