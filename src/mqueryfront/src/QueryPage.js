@@ -196,8 +196,7 @@ class QueryPage extends Component {
                     >
                         <QueryField
                             rawYara={this.state.rawYara}
-                            isLoading={this.state.qhash && !this.state.rawYara}
-                            isLocked={!!this.state.qhash}
+                            readOnly={!!this.state.qhash}
                             updateQhash={this.updateQhash}
                             availableTaints={this.availableTaints()}
                             updateQueryPlan={this.updateQueryPlan}

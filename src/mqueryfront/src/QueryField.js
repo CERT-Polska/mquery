@@ -1,10 +1,12 @@
 import React, { Component } from "react";
 import axios from "axios";
 import { API_URL } from "./config";
+import QueryMonaco from "./QueryMonaco";
 
 class QueryField extends Component {
     constructor(props) {
         super(props);
+        this.editor = React.createRef();
 
         this.state = {
             rawYara: props.rawYara,
@@ -31,18 +33,34 @@ class QueryField extends Component {
         return this.state.selectedTaint;
     }
 
-    componentWillReceiveProps(newProps) {
-        this.setState({
-            rawYara: newProps.rawYara,
-            isLocked: newProps.isLocked,
-        });
+    static getDerivedStateFromProps(nextProps, prevState) {
+        if (
+            nextProps.rawYara !== prevState.rawYara ||
+            nextProps.readOnly !== prevState.readOnly
+        ) {
+            return { rawYara: nextProps.rawYara, readOnly: nextProps.readOnly };
+        }
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (
+            prevProps.rawYara !== this.state.rawYara ||
+            prevProps.readOnly !== this.state.readOnly
+        ) {
+            this.setState({
+                rawYara: this.state.rawYara,
+                readOnly: this.state.readOnly,
+            });
+            this.editor.current.setValue(this.state.rawYara);
+            this.editor.current.setReadOnly(this.state.readOnly);
+        }
     }
 
     handleQuery(event, method, priority) {
         axios
             .create()
             .post(API_URL + "/query", {
-                raw_yara: this.state.rawYara,
+                raw_yara: this.editor.current.getValue(),
                 method: method,
                 priority: priority,
                 taint: this.state.selectedTaint,
@@ -66,6 +84,11 @@ class QueryField extends Component {
 
                 if (error.response) {
                     err = error.response.data.detail;
+                    // Dirty hack to parse error lines from the error message
+                    // Error format: "Error at 4.2-7:" or  "Error at 5.1:"
+                    this.editor.current.setError(
+                        ...err.match(/Error at (\d+).(\d+)-?(\d+)?: (.*)/)
+                    );
                 }
 
                 this.props.updateQueryError(err, this.state.rawYara);
@@ -90,17 +113,6 @@ class QueryField extends Component {
     }
 
     render() {
-        if (this.props.isLoading) {
-            return (
-                <div>
-                    <h2>
-                        <i className="fa fa-spinner fa-spin spin-big" />{" "}
-                        Loading...
-                    </h2>
-                </div>
-            );
-        }
-
         return (
             <div>
                 <div className="btn-group mb-1" role="group">
@@ -151,7 +163,7 @@ class QueryField extends Component {
                             </a>
                         </div>
                     </div>
-                    {this.state.isLocked ? (
+                    {this.state.readOnly ? (
                         <button
                             className="btn btn-secondary btn-sm"
                             name="clone"
@@ -206,14 +218,8 @@ class QueryField extends Component {
                         </div>
                     </div>
                 </div>
-                <div className="form-group">
-                    <textarea
-                        name="rawYara"
-                        className="form-control mquery-yara-input"
-                        onChange={this.handleInputChange}
-                        readOnly={this.state.isLocked}
-                        value={this.state.rawYara}
-                    />
+                <div className="mt-1 monaco-container">
+                    <QueryMonaco ref={this.editor} />
                 </div>
             </div>
         );
