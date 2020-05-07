@@ -12,6 +12,7 @@ from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
 from metadata import MetadataPlugin, Metadata
 from plugins import METADATA_PLUGINS
+from setsha import set_sha
 
 
 @cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
@@ -149,6 +150,10 @@ class Agent:
                     plugin.get_name(),
                     file_path,
                 )
+        try:
+            metadata.update(set_sha(file_path))
+        except Exception:
+            logging.exception("Failed to set hash for %s", file_path)
         match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)
 

@@ -9,10 +9,22 @@ function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
         <a href={v.url}>
             {" "}
-            <span className="badge badge-pill badge-warning">
-                {v.display_text}
-            </span>
+            {!v.hidden && (
+                <span className="badge badge-pill badge-warning">
+                    {v.display_text}
+                </span>
+            )}
         </a>
+    ));
+
+    const hashes = Object.values(props.meta).map((v) => (
+        <span>
+            {v.hidden && (
+                <div className="text-truncate" style={{ minWidth: 50 }}>
+                    {v.display_text}
+                </div>
+            )}
+        </span>
     ));
 
     let matches = <span></span>;
@@ -40,7 +52,7 @@ function MatchItem(props) {
     return (
         <tr>
             <td>
-                <div className="d-flex">
+                <div className="row col text-truncate">
                     <div className="text-truncate" style={{ minWidth: 50 }}>
                         <a
                             href={download_url}
@@ -54,6 +66,7 @@ function MatchItem(props) {
                     {metadata}
                 </div>
             </td>
+            <td>{hashes}</td>
         </tr>
     );
 }
@@ -206,6 +219,7 @@ class QueryResultsStatus extends Component {
                         <thead>
                             <tr>
                                 <th>Matches</th>
+                                <th style={{ width: "32%" }}>SHA256</th>
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>
