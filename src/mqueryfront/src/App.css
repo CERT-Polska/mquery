@@ -43,3 +43,20 @@
 .table-topology tbody tr:nth-child(2n) {
     background: rgba(0, 0, 0, 0.02);
 }
+
+.glyphMargin {
+    background: rgb(255, 134, 134);
+    width: 5px !important;
+}
+
+.contentError {
+    background: #ffc7c7;
+}
+
+.monaco-container {
+    padding: 5px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 2px solid rgb(238, 238, 238);
+}

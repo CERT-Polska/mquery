@@ -1,17 +1,19 @@
 import React, { Component } from "react";
 import axios from "axios";
 import { API_URL } from "./config";
+import QueryMonaco from "./QueryMonaco";
 
 class QueryField extends Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            rawYara: props.rawYara,
             selectedTaint: null,
+            error: null,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleYaraChanged = this.handleYaraChanged.bind(this);
         this.handleQuery = this.handleQuery.bind(this);
         this.handleEdit = this.handleEdit.bind(this);
     }
@@ -31,33 +33,25 @@ class QueryField extends Component {
         return this.state.selectedTaint;
     }
 
-    componentWillReceiveProps(newProps) {
-        this.setState({
-            rawYara: newProps.rawYara,
-            isLocked: newProps.isLocked,
-        });
+    handleYaraChanged(value) {
+        this.props.updateYara(value);
     }
 
     handleQuery(event, method, priority) {
+        const yara = this.props.rawYara;
         axios
             .create()
             .post(API_URL + "/query", {
-                raw_yara: this.state.rawYara,
+                raw_yara: yara,
                 method: method,
                 priority: priority,
                 taint: this.state.selectedTaint,
             })
             .then((response) => {
                 if (method === "query") {
-                    this.props.updateQhash(
-                        response.data.query_hash,
-                        this.state.rawYara
-                    );
+                    this.props.updateQhash(response.data.query_hash, yara);
                 } else if (method === "parse") {
-                    this.props.updateQueryPlan(
-                        response.data,
-                        this.state.rawYara
-                    );
+                    this.props.updateQueryPlan(response.data, yara);
                 }
             })
             .catch((error) => {
@@ -65,9 +59,17 @@ class QueryField extends Component {
 
                 if (error.response) {
                     err = error.response.data.detail;
+                    // Dirty hack to parse error lines from the error message
+                    // Error format: "Error at 4.2-7:" or  "Error at 5.1:"
+                    let parsedError = err.match(
+                        /Error at (\d+).(\d+)-?(\d+)?: (.*)/
+                    );
+                    if (parsedError) {
+                        this.setState({ error: parsedError });
+                    }
                 }
 
-                this.props.updateQueryError(err, this.state.rawYara);
+                this.props.updateQueryError(err, this.props.rawYara);
             });
 
         event.preventDefault();
@@ -89,17 +91,6 @@ class QueryField extends Component {
     }
 
     render() {
-        if (this.props.isLoading) {
-            return (
-                <div>
-                    <h2>
-                        <i className="fa fa-spinner fa-spin spin-big" />{" "}
-                        Loading...
-                    </h2>
-                </div>
-            );
-        }
-
         return (
             <div>
                 <div className="btn-group mb-1" role="group">
@@ -147,7 +138,7 @@ class QueryField extends Component {
                             </button>
                         </div>
                     </div>
-                    {this.state.isLocked ? (
+                    {this.props.readOnly ? (
                         <button
                             className="btn btn-secondary btn-sm"
                             name="clone"
@@ -200,13 +191,13 @@ class QueryField extends Component {
                         </div>
                     </div>
                 </div>
-                <div className="form-group">
-                    <textarea
-                        name="rawYara"
-                        className="form-control mquery-yara-input"
-                        onChange={this.handleInputChange}
-                        readOnly={this.state.isLocked}
-                        value={this.state.rawYara}
+                <div className="mt-1 monaco-container">
+                    <QueryMonaco
+                        ref={this.editor}
+                        readOnly={this.props.readOnly}
+                        onValueChanged={this.handleYaraChanged}
+                        rawYara={this.props.rawYara}
+                        error={this.state.error}
                     />
                 </div>
             </div>
