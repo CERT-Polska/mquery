@@ -1,174 +1,152 @@
-import React from "react";
+import React, { Component } from "react";
 import { Link } from "react-router-dom";
-import PriorityIcon from "./components/PriorityIcon";
-import ActionClose from "./components/ActionClose";
-import ActionCancel from "./components/ActionCancel";
-import StatusProgress from "./components/StatusProgress";
-import FilteringTableHeader from "./components/FilteringTableHeader";
-import FilteringTitle from "./components/FilteringTitle";
-import Pagination from "react-js-pagination";
-import PropTypes from "prop-types";
-import { finishedStatuses } from "./QueryUtils";
+import ErrorBoundary from "./ErrorBoundary";
+import axios from "axios";
+import { API_URL } from "./config";
 
-const SearchJobRowEmpty = () => {
-    return (
-        <tr>
-            <td>
-                <div className="d-flex">
-                    <span className="invisible">sth</span>
-                </div>
-                <p className="mb-0 invisible" style={{ fontSize: 11 }}>
-                    sth
-                </p>
-            </td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>
-    );
-};
+class SearchJobRow extends Component {
+    constructor(props) {
+        super(props);
 
-const SearchJobRow = (props) => {
-    const {
-        id,
-        status,
-        submitted,
-        rule_name,
-        priority,
-        files_matched,
-        total_files,
-        files_processed,
-        files_in_progress,
-    } = props.job;
-    const rule_author = props.job.rule_author
-        ? props.job.rule_author
-        : "(no author)";
-    const { onClose, onCancel } = props;
+        this.state = {
+            cancelled: false,
+        };
 
-    const submittedDate = new Date(submitted * 1000).toISOString();
-
-    const actionBtn = finishedStatuses.includes(status) ? (
-        <ActionClose onClick={onClose} />
-    ) : (
-        <ActionCancel onClick={onCancel} />
-    );
-
-    return (
-        <tr>
-            <td>
-                <div className="d-flex">
-                    <div
-                        className="text-truncate"
-                        style={{ minWidth: 50, maxWidth: "20vw" }}
-                    >
-                        <Link
-                            to={"/query/" + id}
-                            style={{ fontFamily: "monospace" }}
-                        >
-                            {rule_name}
-                        </Link>
-                    </div>
-                    <span className="ml-2">
-                        <PriorityIcon priority={priority} />
-                    </span>
-                </div>
-                <p className="mb-0" style={{ fontSize: 11 }}>
-                    {submittedDate}
-                </p>
-            </td>
-            <td className="align-middle text-center">{rule_author}</td>
-            <td className="align-middle text-center">{files_matched}</td>
-            <td className="text-center align-middle w-50">
-                <StatusProgress
-                    status={status}
-                    total_files={total_files}
-                    files_processed={files_processed}
-                    files_in_progress={files_in_progress}
-                />
-            </td>
-            <td className="text-center align-middle">{actionBtn}</td>
-        </tr>
-    );
-};
-
-const SearchJobs = (props) => {
-    const {
-        jobs,
-        head,
-        filter,
-        onCancel,
-        onClose,
-        onFilter,
-        activePage,
-        itemsPerPage,
-        jobCount,
-        onPageChange,
-    } = props;
-
-    const filterValue = filter ? filter.value : null;
-
-    const backendJobRows = jobs.map((job) => (
-        <SearchJobRow
-            key={job.id}
-            job={job}
-            onClose={() => onClose(job.id)}
-            onCancel={() => onCancel(job.id)}
-        />
-    ));
-
-    // make table itemsPerPage size
-    let i = backendJobRows.length;
-    while (i < itemsPerPage) {
-        backendJobRows.push(<SearchJobRowEmpty key={i} />);
-        i++;
+        this.handleCancelJob = this.handleCancelJob.bind(this);
     }
 
-    return (
-        <div className="row">
-            <div className="col-md-8 offset-md-2">
-                <FilteringTitle title="Recent jobs" filterValue={filterValue} />
+    handleCancelJob() {
+        axios.delete(API_URL + "/job/" + this.props.id).then((response) => {
+            this.setState({ cancelled: true });
+        });
+    }
+
+    render() {
+        const shortId = this.props.id.substr(0, 6);
+        const submittedDate = new Date(
+            this.props.submitted * 1000
+        ).toISOString();
+        let rowClass;
+
+        switch (this.props.status) {
+            case "done":
+                rowClass = "table-success";
+                break;
+            case "processing":
+                rowClass = "table-info";
+                break;
+            case "querying":
+                rowClass = "table-info";
+                break;
+            case "cancelled":
+                rowClass = "table-danger";
+                break;
+            case "expired":
+                rowClass = "table-warning";
+                break;
+            default:
+                rowClass = "";
+                break;
+        }
+
+        let status = this.props.status;
+        let cancelBtn = (
+            <button
+                className="btn btn-sm btn-danger"
+                onClick={this.handleCancelJob}
+            >
+                cancel
+            </button>
+        );
+
+        if (this.props.status === "cancelled" || this.state.cancelled) {
+            status = "cancelled";
+            cancelBtn = <span />;
+        }
+
+        if (this.props.status === "expired") {
+            cancelBtn = "";
+        }
+
+        if (this.props.status === "done") {
+            cancelBtn = "";
+        }
+
+        let rule_author = this.props.rule_author
+            ? this.props.rule_author
+            : "(no author)";
+
+        return (
+            <tr className={rowClass}>
+                <td>
+                    <Link
+                        to={"/query/" + this.props.id}
+                        style={{ fontFamily: "monospace" }}
+                    >
+                        {this.props.rule_name} ({shortId})
+                    </Link>
+                    <p style={{ fontSize: "11px" }}>
+                        [{rule_author}] {submittedDate}
+                    </p>
+                </td>
+                <td>{this.props.priority}</td>
+                <td>{this.props.taint}</td>
+                <td>{status}</td>
+                <td>
+                    {this.props.files_processed} / {this.props.total_files}
+                </td>
+                <td>{cancelBtn}</td>
+            </tr>
+        );
+    }
+}
+
+class SearchJobs extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            jobs: [],
+            error: null,
+        };
+    }
+
+    componentDidMount() {
+        axios
+            .get(API_URL + "/job")
+            .then((response) => {
+                this.setState({ jobs: response.data.jobs });
+            })
+            .catch((error) => {
+                this.setState({ error: error });
+            });
+    }
+
+    render() {
+        const backendJobRows = this.state.jobs.map((job) => (
+            <SearchJobRow {...job} key={job.id} />
+        ));
+
+        return (
+            <ErrorBoundary error={this.state.error}>
                 <div className="table-responsive">
                     <table className="table table-striped table-bordered">
-                        <FilteringTableHeader
-                            head={head}
-                            currentFilter={filter}
-                            onClick={onFilter}
-                        />
+                        <thead>
+                            <tr>
+                                <th>Job name</th>
+                                <th>Priority</th>
+                                <th>Taints</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
                         <tbody>{backendJobRows}</tbody>
                     </table>
                 </div>
-                <div className="d-flex justify-content-center">
-                    <Pagination
-                        activePage={activePage}
-                        itemsCountPerPage={itemsPerPage}
-                        totalItemsCount={jobCount}
-                        pageRangeDisplayed={5}
-                        onChange={onPageChange}
-                        itemClass="page-item"
-                        linkClass="page-link"
-                    />
-                </div>
-            </div>
-        </div>
-    );
-};
-
-SearchJobs.propTypes = {
-    jobs: PropTypes.array.isRequired,
-    head: PropTypes.arrayOf(
-        PropTypes.shape({
-            title: PropTypes.string.isRequired,
-            attrubuteName: PropTypes.string,
-            valueList: PropTypes.arrayOf(
-                PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-            ),
-        })
-    ).isRequired,
-    filterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    onFilter: PropTypes.func.isRequired,
-    onClose: PropTypes.func.isRequired,
-    onCancel: PropTypes.func.isRequired,
-};
+            </ErrorBoundary>
+        );
+    }
+}
 
 export default SearchJobs;
