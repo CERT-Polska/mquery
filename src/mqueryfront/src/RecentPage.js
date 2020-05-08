@@ -10,16 +10,24 @@ class RecentPage extends Component {
 
         this.state = {
             jobs: [],
-            head: [],
             filter: null,
+            head: [],
+            activePage: 1,
+            itemsPerPage: 11,
             error: null,
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
         this.handleClose = this.handleClose.bind(this);
         this.handleFilter = this.handleFilter.bind(this);
-        this._getHead = this._getHead.bind(this);
-        this._getDistinctList = this._getDistinctList.bind(this);
+        this.getHead = this.getHead.bind(this);
+        this.getDistinctList = this.getDistinctList.bind(this);
+        this.handlePageChange = this.handlePageChange.bind(this);
+        this.getJobsPage = this.getJobsPage.bind(this);
+    }
+
+    handlePageChange(pageNumber) {
+        this.setState({ activePage: pageNumber });
     }
 
     handleCancelJob(id) {
@@ -31,7 +39,7 @@ class RecentPage extends Component {
             newJobs[index].status = "cancelled";
 
             axios.delete(API_URL + "/job/" + id).then((response) => {
-                this.setState({ jobs: newJobs, head: this._getHead(newJobs) });
+                this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
             });
         }
     }
@@ -43,7 +51,7 @@ class RecentPage extends Component {
         if (index >= 0) {
             const newJobs = [...jobs.slice(0, index), ...jobs.slice(index + 1)];
 
-            this.setState({ jobs: newJobs, head: this._getHead(newJobs) });
+            this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
         }
     }
 
@@ -51,33 +59,37 @@ class RecentPage extends Component {
         const { filter } = this.state;
 
         if (index > 0) {
-            this.setState({ filter: { name: name, value: value } });
+            this.setState({
+                filter: { name: name, value: value },
+                activePage: 1,
+            });
         } else {
-            if (filter && filter.name === name) this.setState({ filter: null });
+            if (filter && filter.name === name)
+                this.setState({ filter: null, activePage: 1 });
         }
     }
 
-    _getHead(jobs) {
+    getHead(jobs) {
         const head = [
             {
                 title: "Job name",
                 attrubuteName: "rule_name",
-                valueList: this._getDistinctList(jobs, "rule_name", "All"),
+                valueList: this.getDistinctList(jobs, "rule_name"),
             },
             {
                 title: "Author",
                 attrubuteName: "rule_author",
-                valueList: this._getDistinctList(jobs, "rule_author", "All"),
+                valueList: this.getDistinctList(jobs, "rule_author"),
             },
             {
                 title: "Matches",
                 attrubuteName: "files_matched",
-                valueList: this._getDistinctList(jobs, "files_matched", "All"),
+                valueList: this.getDistinctList(jobs, "files_matched", true),
             },
             {
                 title: "Status/Progress",
                 attrubuteName: "status",
-                valueList: this._getDistinctList(jobs, "status", "All"),
+                valueList: this.getDistinctList(jobs, "status"),
             },
             {
                 title: "Actions",
@@ -89,18 +101,33 @@ class RecentPage extends Component {
         return head;
     }
 
-    _getDistinctList(arrayOfObjects, attributeName, allElement) {
-        let returnList;
+    getDistinctList(
+        arrayOfObjects,
+        attributeName,
+        sortNumerically = false,
+        allElement = "All"
+    ) {
+        let returnList = null;
 
-        if (arrayOfObjects)
+        if (arrayOfObjects) {
             returnList = arrayOfObjects
                 .map((item) => item[attributeName])
                 .filter((value, index, self) => self.indexOf(value) === index)
                 .sort();
 
-        if (returnList) returnList.unshift(allElement);
+            if (sortNumerically) returnList.sort((a, b) => a - b);
+            else returnList.sort();
+
+            returnList.unshift(allElement);
+        }
 
         return returnList;
+    }
+
+    getJobsPage(jobs, activePage, itemsPerPage) {
+        const indexOfLastJob = activePage * itemsPerPage;
+        const indexOfFistJob = indexOfLastJob - itemsPerPage;
+        return jobs.slice(indexOfFistJob, indexOfLastJob);
     }
 
     componentDidMount() {
@@ -109,7 +136,7 @@ class RecentPage extends Component {
             .then((response) => {
                 const { jobs } = response.data;
 
-                this.setState({ jobs: jobs, head: this._getHead(jobs) });
+                this.setState({ jobs: jobs, head: this.getHead(jobs) });
             })
             .catch((error) => {
                 this.setState({ error: error });
@@ -117,17 +144,37 @@ class RecentPage extends Component {
     }
 
     render() {
-        const { jobs, head, filter } = this.state;
+        const { jobs, head, filter, itemsPerPage } = this.state;
+        let { activePage } = this.state;
+
+        let jobsFiltered = jobs;
+        if (filter) {
+            const { name, value } = filter;
+            jobsFiltered = jobs.filter((el) => el[name] === value);
+        }
+        const jobCount = jobsFiltered.length;
+
+        let jobsPage = this.getJobsPage(jobsFiltered, activePage, itemsPerPage);
+
+        // prevent from displaying empty table
+        if (jobsPage.length === 0 && activePage > 1) {
+            activePage--;
+            jobsPage = this.getJobsPage(jobsFiltered, activePage, itemsPerPage);
+        }
 
         return (
             <ErrorBoundary error={this.state.error}>
                 <SearchJobs
-                    jobs={jobs}
-                    head={head}
+                    jobs={jobsPage}
                     filter={filter}
+                    head={head}
                     onFilter={this.handleFilter}
                     onClose={this.handleClose}
                     onCancel={this.handleCancelJob}
+                    activePage={activePage}
+                    itemsPerPage={itemsPerPage}
+                    jobCount={jobCount}
+                    onPageChange={this.handlePageChange}
                 />
             </ErrorBoundary>
         );

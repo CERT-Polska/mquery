@@ -6,7 +6,28 @@ import ActionCancel from "./components/ActionCancel";
 import StatusProgress from "./components/StatusProgress";
 import FilteringTableHeader from "./components/FilteringTableHeader";
 import FilteringTitle from "./components/FilteringTitle";
+import Pagination from "react-js-pagination";
 import PropTypes from "prop-types";
+import { finishedStatuses } from "./QueryUtils";
+
+const SearchJobRowEmpty = () => {
+    return (
+        <tr>
+            <td>
+                <div className="d-flex">
+                    <span className="invisible">sth</span>
+                </div>
+                <p className="mb-0 invisible" style={{ fontSize: 11 }}>
+                    sth
+                </p>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    );
+};
 
 const SearchJobRow = (props) => {
     const {
@@ -18,6 +39,7 @@ const SearchJobRow = (props) => {
         files_matched,
         total_files,
         files_processed,
+        files_in_progress,
     } = props.job;
     const rule_author = props.job.rule_author
         ? props.job.rule_author
@@ -26,12 +48,11 @@ const SearchJobRow = (props) => {
 
     const submittedDate = new Date(submitted * 1000).toISOString();
 
-    const actionBtn =
-        status === "cancelled" || status === "expired" || status === "done" ? (
-            <ActionClose onClick={onClose} />
-        ) : (
-            <ActionCancel onClick={onCancel} />
-        );
+    const actionBtn = finishedStatuses.includes(status) ? (
+        <ActionClose onClick={onClose} />
+    ) : (
+        <ActionCancel onClick={onCancel} />
+    );
 
     return (
         <tr>
@@ -52,7 +73,9 @@ const SearchJobRow = (props) => {
                         <PriorityIcon priority={priority} />
                     </span>
                 </div>
-                <p style={{ fontSize: 11 }}>{submittedDate}</p>
+                <p className="mb-0" style={{ fontSize: 11 }}>
+                    {submittedDate}
+                </p>
             </td>
             <td className="align-middle text-center">{rule_author}</td>
             <td className="align-middle text-center">{files_matched}</td>
@@ -61,6 +84,7 @@ const SearchJobRow = (props) => {
                     status={status}
                     total_files={total_files}
                     files_processed={files_processed}
+                    files_in_progress={files_in_progress}
                 />
             </td>
             <td className="text-center align-middle">{actionBtn}</td>
@@ -69,17 +93,20 @@ const SearchJobRow = (props) => {
 };
 
 const SearchJobs = (props) => {
-    const { head, filter, onCancel, onClose, onFilter } = props;
-    let { jobs } = props;
+    const {
+        jobs,
+        head,
+        filter,
+        onCancel,
+        onClose,
+        onFilter,
+        activePage,
+        itemsPerPage,
+        jobCount,
+        onPageChange,
+    } = props;
 
-    let filterValue;
-
-    if (filter) {
-        const { name, value } = filter;
-        jobs = jobs.filter((el) => el[name] === value);
-
-        filterValue = value;
-    }
+    const filterValue = filter ? filter.value : null;
 
     const backendJobRows = jobs.map((job) => (
         <SearchJobRow
@@ -89,6 +116,13 @@ const SearchJobs = (props) => {
             onCancel={() => onCancel(job.id)}
         />
     ));
+
+    // make table itemsPerPage size
+    let i = backendJobRows.length;
+    while (i < itemsPerPage) {
+        backendJobRows.push(<SearchJobRowEmpty key={i} />);
+        i++;
+    }
 
     return (
         <div className="row">
@@ -103,6 +137,17 @@ const SearchJobs = (props) => {
                         />
                         <tbody>{backendJobRows}</tbody>
                     </table>
+                </div>
+                <div className="d-flex justify-content-center">
+                    <Pagination
+                        activePage={activePage}
+                        itemsCountPerPage={itemsPerPage}
+                        totalItemsCount={jobCount}
+                        pageRangeDisplayed={5}
+                        onChange={onPageChange}
+                        itemClass="page-item"
+                        linkClass="page-link"
+                    />
                 </div>
             </div>
         </div>
