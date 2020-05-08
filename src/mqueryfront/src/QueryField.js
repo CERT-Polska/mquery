@@ -10,6 +10,7 @@ class QueryField extends Component {
 
         this.state = {
             selectedTaint: null,
+            error: null,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
@@ -55,7 +56,6 @@ class QueryField extends Component {
                 }
             })
             .catch((error) => {
-                console.log(error);
                 let err = error.toString();
 
                 if (error.response) {
@@ -66,7 +66,7 @@ class QueryField extends Component {
                         /Error at (\d+).(\d+)-?(\d+)?: (.*)/
                     );
                     if (parsedError) {
-                        this.editor.current.setError(...parsedError);
+                        this.setState({ error: parsedError });
                     }
                 }
 
@@ -203,6 +203,7 @@ class QueryField extends Component {
                         readOnly={this.props.readOnly}
                         onValueChanged={this.handleYaraChanged}
                         rawYara={this.props.rawYara}
+                        error={this.state.error}
                     />
                 </div>
             </div>

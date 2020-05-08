@@ -116,6 +116,12 @@ class QueryMonaco extends Component {
             );
     }
 
+    componentDidUpdate(prevProps) {
+        if (this.props.error !== prevProps.error) {
+            this.setError(...this.props.error);
+        }
+    }
+
     render() {
         return (
             <Editor
