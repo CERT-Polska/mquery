@@ -13,7 +13,7 @@ class RecentPage extends Component {
             filter: null,
             head: [],
             activePage: 1,
-            itemsPerPage: 11,
+            itemsPerPage: 10,
             error: null,
         };
 
@@ -112,8 +112,7 @@ class RecentPage extends Component {
         if (arrayOfObjects) {
             returnList = arrayOfObjects
                 .map((item) => item[attributeName])
-                .filter((value, index, self) => self.indexOf(value) === index)
-                .sort();
+                .filter((value, index, self) => self.indexOf(value) === index);
 
             if (sortNumerically) returnList.sort((a, b) => a - b);
             else returnList.sort();

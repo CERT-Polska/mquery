@@ -15,10 +15,10 @@ const SearchJobRowEmpty = () => {
         <tr>
             <td>
                 <div className="d-flex">
-                    <span className="invisible">sth</span>
+                    <span className="invisible">&nbsp;</span>
                 </div>
                 <p className="mb-0 invisible" style={{ fontSize: 11 }}>
-                    sth
+                    &nbsp;
                 </p>
             </td>
             <td></td>
