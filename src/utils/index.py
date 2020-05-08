@@ -49,11 +49,16 @@ def find_new_files(
 
 
 def index_files(
-    proc_params: Tuple[str, List[str], Path, Optional[Tuple[str, str]]]
+    proc_params: Tuple[str, List[str], List[str], Path, Optional[Tuple[str, str]], int]
 ) -> str:
-    ursa_url, types, batch, path_rel = proc_params
+    ursa_url, types, tags, batch, path_rel, compact_threshold = proc_params
     ursa = UrsaDb(ursa_url)
-    with_ = ", ".join(types)
+
+    current_datasets = len(ursa.topology()["result"]["datasets"])
+    if current_datasets > compact_threshold:
+        ursa.execute_command("compact smart;")
+
+    type_list = ", ".join(types)
     mounted_names = []
     wipbatch = batch.with_suffix(".wip")
     batch.rename(wipbatch)
@@ -68,8 +73,12 @@ def index_files(
             fname = fname.replace('"', '\\"')
             mounted_names.append(fname)
     mounted_list = " ".join(f'"{fpath}"' for fpath in mounted_names)
+    tag_mod = ""
+    if tags:
+        tag_list = ','.join(f'"{tag}"' for tag in tags)
+        tag_mod = f" with taints [{tag_list}]"
     result = ursa.execute_command(
-        f"index {mounted_list} with [{with_}] nocheck;"
+        f"index {mounted_list} with [{type_list}]{tag_mod} nocheck;"
     )
     if "error" in result:
         wipbatch.rename(batch.with_suffix(".errored"))
@@ -133,13 +142,25 @@ def index(
     ursadb: str,
     workdir: Path,
     types: List[str],
+    tags: List[str],
     path_rel: Optional[Tuple[str, str]],
     workers: int,
+    working_datasets: Optional[int],
 ) -> None:
+    logging.info("Index.1: Determine compacting threshold.")
+    if working_datasets is None:
+        working_datasets = workers * 20 + 40
+
+    ursa = UrsaDb(ursadb)
+    current_datasets = len(ursa.topology()["result"]["datasets"])
+    compact_threshold = current_datasets + working_datasets
+
+    logging.info("Index.2: Compact threshold = %s.", compact_threshold)
+
     logging.info("Index.1: Find prepared batches.")
     indexing_jobs = []
     for batch in workdir.glob("*.txt"):
-        indexing_jobs.append((ursadb, types, batch, path_rel))
+        indexing_jobs.append((ursadb, types, tags, batch, path_rel, compact_threshold))
 
     logging.info("Index.2: Got %s batches to run.", len(indexing_jobs))
 
@@ -207,10 +228,23 @@ def main() -> None:
         choices=["gram3", "text4", "hash4", "wide8"],
     )
     parser.add_argument(
+        "--tag",
+        dest="tags",
+        help="Additional tags for indexed datasets.",
+        action="append",
+        default=[],
+    )
+    parser.add_argument(
         "--workers",
         help="Number of parallel indexing jobs.",
         type=int,
         default=2,
+    )
+    parser.add_argument(
+        "--working-datasets",
+        help="Numer of working datasets (uses sane value by default).",
+        type=int,
+        default=None,
     )
 
     args = parser.parse_args()
@@ -276,7 +310,7 @@ def main() -> None:
             )
             return
 
-        index(args.ursadb, workdir, types, path_rel, args.workers)
+        index(args.ursadb, workdir, types, args.tags, path_rel, args.workers, args.working_datasets)
 
 
 if __name__ == "__main__":

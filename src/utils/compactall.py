@@ -15,7 +15,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--mode",
-        help="URL of the ursadb instance.",
+        help="Compacting mode. Force (all) or optimise for time (smart).",
         default="smart",
         choices=["smart", "all"],
     )
