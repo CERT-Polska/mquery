@@ -18,13 +18,12 @@ function MatchItem(props) {
     ));
 
     const hashes = Object.values(props.meta).map((v) => (
-        <span>
-            {v.hidden && (
-                <div className="text-truncate" style={{ minWidth: 50 }}>
-                    {v.display_text}
-                </div>
-            )}
-        </span>
+        <div
+            className="text-truncate"
+            style={{ minWidth: 50, fontFamily: "monospace" }}
+        >
+            {(v.key = "sha256" && v.display_text)}
+        </div>
     ));
 
     let matches = <span></span>;
@@ -52,7 +51,7 @@ function MatchItem(props) {
     return (
         <tr>
             <td>
-                <div className="row col text-truncate">
+                <div className="row m-0 text-truncate">
                     <div className="text-truncate" style={{ minWidth: 50 }}>
                         <a
                             href={download_url}
@@ -218,8 +217,15 @@ class QueryResultsStatus extends Component {
                     >
                         <thead>
                             <tr>
-                                <th>Matches</th>
-                                <th style={{ width: "32%" }}>SHA256</th>
+                                <th className="col-md-8">Matches</th>
+                                {this.props.collapsed && (
+                                    <th
+                                        className="col-md-4 d-none d-sm-table-cell"
+                                        style={{ width: "40%" }}
+                                    >
+                                        SHA256
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>

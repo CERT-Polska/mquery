@@ -195,6 +195,7 @@ class QueryPage extends Component {
                     job={this.state.job}
                     matches={this.state.matches}
                     parentCallback={this.callbackResultsActivePage}
+                    collapsed={this.state.collapsed}
                 />
             </div>
         );
