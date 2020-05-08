@@ -5,20 +5,18 @@ import YARA from "./yara-lang";
 class QueryMonaco extends Component {
     constructor(props) {
         super(props);
-        this.state = {
-            editor: null,
-        };
+        this.editor = null;
         this.handleEditorDidMount = this.handleEditorDidMount.bind(this);
         this.decorations = null;
     }
 
     setError(error, startLine, startColumn, endColumn, errorMessage) {
-        if (!this.state.editor || !error) {
+        if (!this.editor || !error) {
             return;
         }
 
         monaco.init().then((monaco) => {
-            this.decorations = this.state.editor.getModel().deltaDecorations(
+            this.decorations = this.editor.getModel().deltaDecorations(
                 [],
                 [
                     {
@@ -40,7 +38,7 @@ class QueryMonaco extends Component {
     }
 
     handleEditorDidMount(_, editor) {
-        this.setState({ editor });
+        this.editor = editor;
 
         monaco
             .init()
@@ -94,7 +92,7 @@ class QueryMonaco extends Component {
                 });
 
                 editor.onDidChangeModelContent((ev) => {
-                    this.props.onValueChanged(this.state.editor.getValue());
+                    this.props.onValueChanged(editor.getValue());
 
                     // A dirty hack to clear all decorations when the user
                     // started typing after the error has showed

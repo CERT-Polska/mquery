@@ -6,7 +6,6 @@ import QueryMonaco from "./QueryMonaco";
 class QueryField extends Component {
     constructor(props) {
         super(props);
-        this.editor = React.createRef();
 
         this.state = {
             selectedTaint: null,
