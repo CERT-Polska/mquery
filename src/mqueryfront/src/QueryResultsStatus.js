@@ -7,16 +7,16 @@ import { finishedStatuses } from "./QueryUtils";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 
 function MatchItem(props) {
-    const metadata = Object.values(props.meta).map((v) => (
-        <a href={v.url}>
-            {" "}
-            {!v.hidden && (
+    const metadata = Object.values(props.meta)
+        .filter((v) => !v.hidden)
+        .map((v) => (
+            <a href={v.url}>
+                {" "}
                 <span className="badge badge-pill badge-warning">
                     {v.display_text}
                 </span>
-            )}
-        </a>
-    ));
+            </a>
+        ));
 
     const hashes = Object.values(props.meta).map((v) => (
         <CopyToClipboard text={(v.key = "sha256" && v.display_text)}>
