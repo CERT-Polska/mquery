@@ -88,7 +88,7 @@ const YARA = {
             ">>>=",
         ],
 
-        symbols: /[=><!~?:&|+\-*\/^%]+/,
+        symbols: /[=><!~?:&|+\-*/^%]+/,
         escapes: /\\(?:[abfnrtv\\""]|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/,
 
         // The main tokenizer for our languages
@@ -111,7 +111,7 @@ const YARA = {
                 { include: "@whitespace" },
 
                 // delimiters and operators
-                [/[{}()\[\]]/, "@brackets"],
+                [/[{}()[\]]/, "@brackets"],
                 [/[<>](?!@symbols)/, "@brackets"],
 
                 [
@@ -124,11 +124,11 @@ const YARA = {
                     },
                 ],
 
-                [/#!?\[[^]*\]/, "annotation"],
+                [/#!?[[^]*\]/, "annotation"],
                 [/#!?.*$/, "annotation.invalid"],
 
                 // numbers
-                [/\d*\.\d+([eE][\-+]?\d+)?[fFdD]?/, "number.float"],
+                [/\d*\.\d+([eE][-+]?\d+)?[fFdD]?/, "number.float"],
                 [/0[xX][0-9a-fA-F_]*[0-9a-fA-F][Ll]?/, "number.hex"],
                 [/0[0-7_]*[0-7][Ll]?/, "number.octal"],
                 [/0[bB][0-1_]*[0-1][Ll]?/, "number.binary"],
@@ -154,11 +154,11 @@ const YARA = {
             ],
 
             comment: [
-                [/[^\/*]+/, "comment"],
+                [/[^/*]+/, "comment"],
                 [/\/\*/, "comment", "@push"],
                 [/\/\*/, "comment.invalid"],
                 ["\\*/", "comment", "@pop"],
-                [/[\/*]/, "comment"],
+                [/[/*]/, "comment"],
             ],
 
             string: [

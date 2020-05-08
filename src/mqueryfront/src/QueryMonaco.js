@@ -6,31 +6,10 @@ class QueryMonaco extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            rawYara: props.rawYara,
             editor: null,
-            readOnly: false,
-            decorations: [],
         };
         this.handleEditorDidMount = this.handleEditorDidMount.bind(this);
         this.decorations = null;
-    }
-
-    getValue() {
-        if (this.state.editor) {
-            return this.state.editor.getValue();
-        }
-    }
-
-    setValue(newValue) {
-        if (this.state.editor) {
-            this.state.editor.setValue(newValue);
-        }
-    }
-
-    setReadOnly(readOnly) {
-        if (this.state.editor) {
-            this.setState({ readOnly });
-        }
     }
 
     setError(error, startLine, startColumn, endColumn, errorMessage) {
@@ -39,26 +18,24 @@ class QueryMonaco extends Component {
         }
 
         monaco.init().then((monaco) => {
-            this.decorations = this.state.editor
-                .getModel()
-                .deltaDecorations(
-                    [],
-                    [
-                        {
-                            range: new monaco.Range(
-                                startLine,
-                                startColumn,
-                                startLine,
-                                Number(endColumn) + 1 // Increase by one because it excludes end column
-                            ),
-                            options: {
-                                isWholeLine: endColumn == undefined,
-                                className: "contentError",
-                                glyphMarginClassName: "glyphMargin",
-                            },
+            this.decorations = this.state.editor.getModel().deltaDecorations(
+                [],
+                [
+                    {
+                        range: new monaco.Range(
+                            startLine,
+                            startColumn,
+                            startLine,
+                            Number(endColumn) + 1 // Increase by one because it excludes end column
+                        ),
+                        options: {
+                            isWholeLine: endColumn === undefined,
+                            className: "contentError",
+                            glyphMarginClassName: "glyphMargin",
                         },
-                    ]
-                );
+                    },
+                ]
+            );
         });
     }
 
@@ -116,11 +93,13 @@ class QueryMonaco extends Component {
                     },
                 });
 
-                // A dirty hack to clear all decorations when the user
-                // started typing after the error has showed
                 editor.onDidChangeModelContent((ev) => {
-                    if (this.state.decorations) {
-                        editor.deltaDecorations(this.state.decorations, [
+                    this.props.onValueChanged(this.state.editor.getValue());
+
+                    // A dirty hack to clear all decorations when the user
+                    // started typing after the error has showed
+                    if (this.decorations) {
+                        editor.deltaDecorations(this.decorations, [
                             {
                                 range: new monaco.Range(1, 1, 1, 1),
                                 options: {},
@@ -143,14 +122,14 @@ class QueryMonaco extends Component {
                 name="rawYara"
                 height="70vh"
                 language="yara"
-                theme={this.state.readOnly ? "readOnlyTheme" : "light"}
-                value={this.state.rawYara}
+                theme={this.props.readOnly ? "readOnlyTheme" : "light"}
+                value={this.props.rawYara}
                 editorDidMount={this.handleEditorDidMount}
                 options={{
                     selectOnLineNumber: true,
                     lineNumbersMinChars: 0,
                     glyphMargin: true,
-                    readOnly: this.state.readOnly,
+                    readOnly: this.props.readOnly,
                     automaticLayout: true,
                     hover: {
                         enabled: true,

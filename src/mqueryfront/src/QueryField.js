@@ -9,11 +9,11 @@ class QueryField extends Component {
         this.editor = React.createRef();
 
         this.state = {
-            rawYara: props.rawYara,
             selectedTaint: null,
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
+        this.handleYaraChanged = this.handleYaraChanged.bind(this);
         this.handleQuery = this.handleQuery.bind(this);
         this.handleEdit = this.handleEdit.bind(this);
     }
@@ -33,49 +33,25 @@ class QueryField extends Component {
         return this.state.selectedTaint;
     }
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (
-            nextProps.rawYara !== prevState.rawYara ||
-            nextProps.readOnly !== prevState.readOnly
-        ) {
-            return { rawYara: nextProps.rawYara, readOnly: nextProps.readOnly };
-        }
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        if (
-            prevProps.rawYara !== this.state.rawYara ||
-            prevProps.readOnly !== this.state.readOnly
-        ) {
-            this.setState({
-                rawYara: this.state.rawYara,
-                readOnly: this.state.readOnly,
-            });
-            this.editor.current.setValue(this.state.rawYara);
-            this.editor.current.setReadOnly(this.state.readOnly);
-        }
+    handleYaraChanged(value) {
+        this.props.updateYara(value);
     }
 
     handleQuery(event, method, priority) {
+        const yara = this.props.rawYara;
         axios
             .create()
             .post(API_URL + "/query", {
-                raw_yara: this.editor.current.getValue(),
+                raw_yara: yara,
                 method: method,
                 priority: priority,
                 taint: this.state.selectedTaint,
             })
             .then((response) => {
                 if (method === "query") {
-                    this.props.updateQhash(
-                        response.data.query_hash,
-                        this.state.rawYara
-                    );
+                    this.props.updateQhash(response.data.query_hash, yara);
                 } else if (method === "parse") {
-                    this.props.updateQueryPlan(
-                        response.data,
-                        this.state.rawYara
-                    );
+                    this.props.updateQueryPlan(response.data, yara);
                 }
             })
             .catch((error) => {
@@ -86,12 +62,15 @@ class QueryField extends Component {
                     err = error.response.data.detail;
                     // Dirty hack to parse error lines from the error message
                     // Error format: "Error at 4.2-7:" or  "Error at 5.1:"
-                    this.editor.current.setError(
-                        ...err.match(/Error at (\d+).(\d+)-?(\d+)?: (.*)/)
+                    let parsedError = err.match(
+                        /Error at (\d+).(\d+)-?(\d+)?: (.*)/
                     );
+                    if (parsedError) {
+                        this.editor.current.setError(...parsedError);
+                    }
                 }
 
-                this.props.updateQueryError(err, this.state.rawYara);
+                this.props.updateQueryError(err, this.props.rawYara);
             });
 
         event.preventDefault();
@@ -163,7 +142,7 @@ class QueryField extends Component {
                             </a>
                         </div>
                     </div>
-                    {this.state.readOnly ? (
+                    {this.props.readOnly ? (
                         <button
                             className="btn btn-secondary btn-sm"
                             name="clone"
@@ -219,7 +198,12 @@ class QueryField extends Component {
                     </div>
                 </div>
                 <div className="mt-1 monaco-container">
-                    <QueryMonaco ref={this.editor} />
+                    <QueryMonaco
+                        ref={this.editor}
+                        readOnly={this.props.readOnly}
+                        onValueChanged={this.handleYaraChanged}
+                        rawYara={this.props.rawYara}
+                    />
                 </div>
             </div>
         );

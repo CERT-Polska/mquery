@@ -29,6 +29,7 @@ class QueryPage extends Component {
         this.updateQueryError = this.updateQueryError.bind(this);
         this.updateQueryPlan = this.updateQueryPlan.bind(this);
         this.collapsePane = this.collapsePane.bind(this);
+        this.updateYara = this.updateYara.bind(this);
     }
 
     componentDidMount() {
@@ -80,6 +81,10 @@ class QueryPage extends Component {
             job: [],
         });
         this.loadMatches();
+    }
+
+    updateYara(value) {
+        this.setState({ rawYara: value });
     }
 
     loadMatches() {
@@ -201,6 +206,7 @@ class QueryPage extends Component {
                             availableTaints={this.availableTaints()}
                             updateQueryPlan={this.updateQueryPlan}
                             updateQueryError={this.updateQueryError}
+                            updateYara={this.updateYara}
                         />
                     </div>
                     <div
