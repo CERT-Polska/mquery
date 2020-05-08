@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 const ActionCancel = (props) => {
     return (
         <button className="btn shadow-none" onClick={props.onClick}>
-            <span data-toggle="tooltip" title="cancel">
+            <span data-toggle="tooltip" title={props.tooltipMessage}>
                 <FontAwesomeIcon
                     icon={faMinusCircle}
                     size={props.size}
@@ -19,6 +19,7 @@ const ActionCancel = (props) => {
 
 ActionCancel.defaultProps = {
     size: "1x",
+    tooltipMessage: "cancel",
 };
 
 ActionCancel.propTypes = {
