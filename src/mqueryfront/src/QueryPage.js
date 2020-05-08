@@ -206,21 +206,21 @@ class QueryPage extends Component {
         return (
             <div className="container-fluid">
                 <div className="row wrapper">
-                    <div
-                        className={
-                            this.state.collapsed ? "is-collapsed" : "col-md-5"
-                        }
-                    >
-                        <QueryField
-                            rawYara={this.state.rawYara}
-                            readOnly={!!this.state.qhash}
-                            updateQhash={this.updateQhash}
-                            availableTaints={this.availableTaints()}
-                            updateQueryPlan={this.updateQueryPlan}
-                            updateQueryError={this.updateQueryError}
-                            updateYara={this.updateYara}
-                        />
-                    </div>
+                    {!this.state.collapsed ? (
+                        <div className="col-md-5">
+                            <QueryField
+                                rawYara={this.state.rawYara}
+                                readOnly={!!this.state.qhash}
+                                updateQhash={this.updateQhash}
+                                availableTaints={this.availableTaints()}
+                                updateQueryPlan={this.updateQueryPlan}
+                                updateQueryError={this.updateQueryError}
+                                updateYara={this.updateYara}
+                            />
+                        </div>
+                    ) : (
+                        []
+                    )}
                     <div
                         className={
                             this.state.collapsed ? "col-md-12" : "col-md-7"
