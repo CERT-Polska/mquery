@@ -4,6 +4,7 @@ import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
 import { finishedStatuses } from "./QueryUtils";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta).map((v) => (
@@ -18,12 +19,16 @@ function MatchItem(props) {
     ));
 
     const hashes = Object.values(props.meta).map((v) => (
-        <div
-            className="text-truncate"
-            style={{ minWidth: 50, fontFamily: "monospace" }}
-        >
-            {(v.key = "sha256" && v.display_text)}
-        </div>
+        <CopyToClipboard text={(v.key = "sha256" && v.display_text)}>
+            <div
+                className="text-truncate"
+                style={{ minWidth: 50, fontFamily: "monospace" }}
+                data-toggle="tooltip"
+                title="Copy to clipboard"
+            >
+                {(v.key = "sha256" && v.display_text)}
+            </div>
+        </CopyToClipboard>
     ));
 
     let matches = <span></span>;

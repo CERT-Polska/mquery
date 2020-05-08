@@ -4,15 +4,15 @@ import yara  # type: ignore
 import config
 import json
 import sys
+import hashlib
 from lib.ursadb import UrsaDb
-from util import setup_logging
+from util import setup_logging, update_sha
 from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
 from metadata import MetadataPlugin, Metadata
 from plugins import METADATA_PLUGINS
-from setsha import set_sha
 
 
 @cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
@@ -150,10 +150,7 @@ class Agent:
                     plugin.get_name(),
                     file_path,
                 )
-        try:
-            metadata.update(set_sha(file_path))
-        except Exception:
-            logging.exception("Failed to set hash for %s", file_path)
+        metadata.update(update_sha(file_path))
         match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)
 
