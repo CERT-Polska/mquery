@@ -43,54 +43,6 @@ class QueryMonaco extends Component {
         monaco
             .init()
             .then((monaco) => {
-                // Register a new yara language
-                monaco.languages.register({ id: "yara" });
-
-                // Register a tokens provider for yara
-                monaco.languages.setMonarchTokensProvider(
-                    "yara",
-                    YARA.TOKEN_PROVIDER
-                );
-
-                // Register a completion item provider for yara
-                monaco.languages.registerCompletionItemProvider("yara", {
-                    provideCompletionItems: () => {
-                        var suggestions = [
-                            {
-                                label: "rule",
-                                kind:
-                                    monaco.languages.CompletionItemKind.Snippet,
-                                insertText: YARA.COMPLETION_RULE,
-                                insertTextRules:
-                                    monaco.languages
-                                        .CompletionItemInsertTextRule
-                                        .InsertAsSnippet,
-                                documentation: "Generate a rule skeleton",
-                            },
-                        ];
-                        return { suggestions: suggestions };
-                    },
-                });
-
-                // We want to have a way to indicate the user that the
-                // Editor object is currently in read-only mode
-                monaco.editor.defineTheme("readOnlyTheme", {
-                    base: "vs",
-                    inherit: true,
-
-                    rules: [
-                        {
-                            token: "",
-                            foreground: "565656",
-                            background: "ededed",
-                        },
-                    ],
-                    colors: {
-                        "editor.background": "#ededed",
-                        "editor.foreground": "#121212",
-                    },
-                });
-
                 editor.onDidChangeModelContent((ev) => {
                     this.props.onValueChanged(editor.getValue());
 
@@ -147,5 +99,53 @@ class QueryMonaco extends Component {
         );
     }
 }
+
+/**
+ * Monaco editor initialization
+ */
+
+monaco.init().then((monaco) => {
+    // Register a new yara language
+    monaco.languages.register({ id: "yara" });
+
+    // Register a tokens provider for yara
+    monaco.languages.setMonarchTokensProvider("yara", YARA.TOKEN_PROVIDER);
+
+    // Register a completion item provider for yara
+    monaco.languages.registerCompletionItemProvider("yara", {
+        provideCompletionItems: () => {
+            var suggestions = [
+                {
+                    label: "rule",
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertText: YARA.COMPLETION_RULE,
+                    insertTextRules:
+                        monaco.languages.CompletionItemInsertTextRule
+                            .InsertAsSnippet,
+                    documentation: "Generate a rule skeleton",
+                },
+            ];
+            return { suggestions: suggestions };
+        },
+    });
+
+    // We want to have a way to indicate the user that the
+    // Editor object is currently in read-only mode
+    monaco.editor.defineTheme("readOnlyTheme", {
+        base: "vs",
+        inherit: true,
+        rules: [
+            {
+                token: "",
+                foreground: "565656",
+                background: "ededed",
+            },
+        ],
+        colors: {
+            "editor.background": "#ededed",
+            "editor.foreground": "#121212",
+        },
+    });
+});
 
 export default QueryMonaco;
