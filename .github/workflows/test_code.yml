@@ -7,6 +7,14 @@ on:
     branches:
     - master
 jobs:
+  expression_blacklist:
+    name: expression blacklist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: git fetch origin master
+      - name: No "console.log" please
+        run: git diff master -- "*.js" | grep "^[+][^+]" | grep -v "noqa" | grep "console.log" || exit 0 && exit 1
   test_python_types:
     name: python mypy
     runs-on: ubuntu-latest
@@ -83,16 +91,26 @@ jobs:
         run: npm install
       - name: build
         run: npm build
-  test_whole:
-    name: e2e tests
+  test_unit:
+    name: unit tests
     runs-on: ubuntu-latest
-    needs: [test_python_types, test_js_build]
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
       - name: build test image
         run: docker build -t mquery_tests:latest -f src/tests/Dockerfile .
+      - name: run unit tests
+        run: docker run mquery_tests
+  test_e2e:
+    name: e2e tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: build test image
+        run: docker build -t mquery_tests:latest -f src/e2etests/Dockerfile .
       - name: run docker compose
         run: docker-compose up --scale daemon=1 --build -d
       - name: run e2e tests

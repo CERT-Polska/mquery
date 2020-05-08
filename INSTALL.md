@@ -15,7 +15,10 @@ Quick build & run with [docker compose](https://docs.docker.com/compose/).
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
 mkdir samples
-# Copy your malware samples to ./samples directory in the cloned repository
+# now set SAMPLES_DIR to a directory with your files, and INDEX_DIR to
+# empty directory for database files to live in. By default database will
+# expect files in ./samples directory, and keep index in ./index.
+vim .env
 docker-compose up --scale daemon=3  # this will take a while
 ```
 
@@ -30,7 +33,10 @@ Docker compose dedicated for developers.
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
 cp src/config.docker.py src/config.py
-# Optionally copy test files to ./samples directory
+# now set SAMPLES_DIR to a directory with your files, and INDEX_DIR to
+# empty directory for database files to live in. By default database will
+# expect files in ./samples directory, and keep index in ./index.
+vim .env
 docker-compose -f docker-compose.dev.yml up  # this will take a while
 ```
 

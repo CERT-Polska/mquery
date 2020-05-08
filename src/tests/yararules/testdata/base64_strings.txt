@@ -1,0 +1,1 @@
+Error at 4.36-41: Syntax error: Unexpected identifier, expected one of private, condition, ascii, nocase, wide, fullword, xor, string identifier

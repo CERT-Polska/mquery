@@ -4,6 +4,7 @@ import QueryResultsStatus from "./QueryResultsStatus";
 import QueryParseStatus from "./QueryParseStatus";
 import axios from "axios";
 import { API_URL } from "./config";
+import { finishedStatuses } from "./QueryUtils";
 
 class QueryPage extends Component {
     constructor(props) {
@@ -23,6 +24,7 @@ class QueryPage extends Component {
             queryPlan: null,
             queryError: null,
             datasets: {},
+            activePage: 1,
         };
 
         this.updateQhash = this.updateQhash.bind(this);
@@ -79,16 +81,18 @@ class QueryPage extends Component {
             qhash: newQhash,
             matches: [],
             job: [],
+            activePage: 1,
         });
-        this.loadMatches();
+        this.loadJob();
     }
 
     updateYara(value) {
         this.setState({ rawYara: value });
     }
 
-    loadMatches() {
-        const LIMIT = 50;
+    loadJob() {
+        const LIMIT = 20;
+        let OFFSET = (this.state.activePage - 1) * 20;
 
         if (!this.state.qhash) {
             return;
@@ -100,40 +104,46 @@ class QueryPage extends Component {
                     "/matches/" +
                     this.state.qhash +
                     "?offset=" +
-                    this.state.matches.length +
+                    OFFSET +
                     "&limit=" +
                     LIMIT
             )
             .then((response) => {
-                let newShouldRequest = true;
-
-                if (
-                    ["done", "cancelled", "failed", "expired"].indexOf(
-                        response.data.job.status
-                    ) !== -1
-                ) {
-                    if (!response.data.matches.length) {
-                        newShouldRequest = false;
-                    }
-                }
-
+                let job = response.data.job;
                 this.setState({
-                    matches: [...this.state.matches, ...response.data.matches],
-                    job: response.data.job,
+                    job: job,
+                    matches: response.data.matches,
                 });
-
-                if (newShouldRequest) {
-                    let nextTimeout =
-                        response.data.matches.length >= LIMIT ? 50 : 1000;
-                    this.timeout = setTimeout(
-                        () => this.loadMatches(),
-                        nextTimeout
-                    );
+                let isDone = finishedStatuses.indexOf(job.status) !== -1;
+                if (isDone) {
+                    return;
                 }
-            })
-            .catch(() => {
+                this.timeout = setTimeout(() => this.loadJob(), 1000);
+            });
+    }
+
+    callbackResultsActivePage = (pageNumber) => {
+        this.setState({ activePage: pageNumber }, () => {
+            this.loadMatches();
+        });
+    };
+
+    loadMatches() {
+        const LIMIT = 20;
+        let OFFSET = (this.state.activePage - 1) * 20;
+        axios
+            .get(
+                API_URL +
+                    "/matches/" +
+                    this.state.qhash +
+                    "?offset=" +
+                    OFFSET +
+                    "&limit=" +
+                    LIMIT
+            )
+            .then((response) => {
                 this.setState({
-                    shouldRequest: false,
+                    matches: response.data.matches,
                 });
             });
     }
@@ -174,6 +184,7 @@ class QueryPage extends Component {
                 queryError={this.state.queryError}
             />
         );
+
         var queryResults = (
             <div>
                 <button
@@ -188,6 +199,7 @@ class QueryPage extends Component {
                     qhash={this.state.qhash}
                     job={this.state.job}
                     matches={this.state.matches}
+                    parentCallback={this.callbackResultsActivePage}
                 />
             </div>
         );

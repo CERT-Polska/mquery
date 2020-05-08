@@ -6,7 +6,7 @@ YARA is pretty fast, but searching through a large dataset for a given
 signature can take a lot of time. We pre-filter the results, so it is only
 necessary to run YARA against a small fraction of binaries:
 
-![mquery flowchart](docs/mquery-flowchart.png?raw=1)
+![mquery flowchart](mquery-flowchart.png?raw=1)
 
 Internally this is implemented with an n-gram database called
 ursadb. Visit [ursadb's repository](https://github.com/CERT-Polska/ursadb) for more details.

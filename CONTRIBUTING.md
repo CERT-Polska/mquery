@@ -21,12 +21,12 @@ https://gist.github.com/Chaser324/ce0505fbed06b947d962).
 
 3. Work on your changes!
 
-4. If possible, add a test or two to the `src/tests/` directory. 
-   We test every change on our Gitlab instance, but you can run them locally too:
+4. If possible, add a test or two to the `src/tests/` directory. You can run
+  them with:
 
 ```bash
 $ docker build -t mquery_tests -f ./src/tests/Dockerfile .
-$ docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
+$ docker run mquery_tests
 ```
 
 5. We run many code formatters and linters on the code to ensure expected
@@ -44,7 +44,7 @@ $ black src/
 
 ```bash
 $ npm install -g prettier@2.0.4
-$ prettier --tab-width=4 --write "src/mqueryfront/src/**/*.js"
+$ prettier --write src/mqueryfront/
 ```
 
 - Verify that there are no type errors with [mypy](http://mypy-lang.org/):

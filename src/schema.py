@@ -1,8 +1,6 @@
 from enum import Enum
 from typing import List, Dict, Optional
-from datetime import datetime
-
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class JobSchema(BaseModel):
@@ -14,21 +12,23 @@ class JobSchema(BaseModel):
     submitted: int
     priority: str
     files_processed: int
+    files_matched: int
+    files_in_progress: int
     total_files: int
+    files_errored: int
+    iterator: Optional[str]
+    taint: Optional[str]
 
 
 class JobsSchema(BaseModel):
     jobs: List[JobSchema]
 
 
-class StorageSchema(BaseModel):
-    id: str
-    name: str
-    path: str
-    indexing_job_id: Optional[str]
-    last_update: datetime
-    taints: List[str]
-    enabled: bool
+class ConfigSchema(BaseModel):
+    plugin: str
+    key: str
+    value: str
+    description: str
 
 
 class TaskSchema(BaseModel):
@@ -45,11 +45,18 @@ class RequestQueryMethod(str, Enum):
     parse = "parse"
 
 
+class RequestConfigEdit(BaseModel):
+    plugin: str
+    key: str
+    value: str
+
+
 class QueryRequestSchema(BaseModel):
     raw_yara: str
     taint: Optional[str]
     priority: Optional[str]
     method: str
+    required_plugins: List[str] = Field([])
 
 
 class QueryResponseSchema(BaseModel):
@@ -88,12 +95,23 @@ class UserAuthSchema(BaseModel):
     password: str
 
 
+class AgentSpecSchema(BaseModel):
+    ursadb_url: str
+    plugins_spec: Dict[str, Dict[str, str]]
+    active_plugins: List[str]
+
+
+class AgentSchema(BaseModel):
+    name: str
+    alive: bool
+    tasks: List
+    spec: AgentSpecSchema
+
+
 class BackendStatusSchema(BaseModel):
-    db_alive: bool
-    tasks: List[TaskSchema]
-    components: Dict
+    agents: List[AgentSchema]
+    components: Dict[str, str]
 
 
 class BackendStatusDatasetsSchema(BaseModel):
-    db_alive: bool
     datasets: Dict

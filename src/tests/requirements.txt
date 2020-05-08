@@ -1,4 +1,4 @@
-pytest
-pytest-timeout
-requests
-zmq
+pytest==5.4.1
+pytest-timeout==1.3.4
+pyzmq==19.0.0
+yaramod

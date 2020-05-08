@@ -21,7 +21,7 @@ services:
     links:
     - redis
     volumes:
-    - ./samples:/mnt/samples
+    - "${SAMPLES_DIR}:/mnt/samples"
     - ./src:/usr/src/app/src
     depends_on:
       - "redis"
@@ -34,7 +34,7 @@ services:
     - redis
     - ursadb
     volumes:
-    - ./samples:/mnt/samples
+    - "${SAMPLES_DIR}:/mnt/samples"
     - ./src:/usr/src/app/src
     depends_on:
       - "redis"
@@ -46,7 +46,7 @@ services:
     ports:
     - "9281:9281"
     volumes:
-    - ./samples:/mnt/samples
-    - ./index:/var/lib/ursadb
+    - "${SAMPLES_DIR}:/mnt/samples"
+    - "${INDEX_DIR}:/var/lib/ursadb"
   redis:
     image: redis
