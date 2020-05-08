@@ -4,7 +4,6 @@ import yara  # type: ignore
 import config
 import json
 import sys
-import hashlib
 from lib.ursadb import UrsaDb
 from util import setup_logging, update_sha
 from typing import Any, List
