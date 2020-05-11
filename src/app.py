@@ -175,7 +175,11 @@ def user_jobs(name: str) -> List[JobSchema]:
 
 @app.get("/api/job", response_model=JobsSchema)
 def job_statuses() -> JobsSchema:
-    jobs = [db.get_job(job) for job in db.get_job_ids()]
+    jobs = [
+        db.get_job(job)
+        for job in db.get_job_ids()
+        if db.get_job(job).status != "removed"
+    ]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
     return JobsSchema(jobs=jobs)
 
