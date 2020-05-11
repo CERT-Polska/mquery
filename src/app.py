@@ -175,7 +175,11 @@ def user_jobs(name: str) -> List[JobSchema]:
 
 @app.get("/api/job", response_model=JobsSchema)
 def job_statuses() -> JobsSchema:
-    jobs = [db.get_job(job) for job in db.get_job_ids()]
+    jobs = [
+        db.get_job(job)
+        for job in db.get_job_ids()
+        if db.get_job(job).status != "removed"
+    ]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
     return JobsSchema(jobs=jobs)
 
@@ -223,6 +227,12 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
 @app.get("/query/{path}", include_in_schema=False)
 def serve_index(path: str) -> FileResponse:
     return FileResponse("mqueryfront/build/index.html")
+
+
+@app.delete("/api/query/{job_id}", response_model=StatusSchema)
+def query_remove(job_id: str) -> StatusSchema:
+    db.remove_query(JobId(job_id))
+    return StatusSchema(status="ok")
 
 
 @app.get("/recent", include_in_schema=False)

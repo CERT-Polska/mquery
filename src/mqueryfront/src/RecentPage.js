@@ -51,7 +51,9 @@ class RecentPage extends Component {
         if (index >= 0) {
             const newJobs = [...jobs.slice(0, index), ...jobs.slice(index + 1)];
 
-            this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
+            axios.delete(API_URL + "/query/" + id).then((response) => {
+                this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
+            });
         }
     }
 

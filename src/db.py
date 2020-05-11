@@ -102,6 +102,10 @@ class Database:
             taint=data.get("taint", None),
         )
 
+    def remove_query(self, job: JobId) -> None:
+        """ Sets the job status to removed """
+        self.redis.hmset(job.key, {"status": "removed"})
+
     def add_match(self, job: JobId, match: MatchInfo) -> None:
         self.redis.rpush(job.meta_key, match.to_json())
 
