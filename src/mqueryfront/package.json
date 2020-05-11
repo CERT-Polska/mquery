@@ -23,7 +23,8 @@
         "@fortawesome/free-solid-svg-icons": "^5.13.0",
         "@fortawesome/react-fontawesome": "^0.1.9",
         "prop-types": "^15.7.2",
-        "react-js-pagination": "^3.0.3"
+        "react-js-pagination": "^3.0.3",
+        "react-copy-to-clipboard": "^5.0.2"
     },
     "scripts": {
         "start": "react-scripts start",

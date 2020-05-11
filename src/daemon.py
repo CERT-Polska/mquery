@@ -5,7 +5,7 @@ import config
 import json
 import sys
 from lib.ursadb import UrsaDb
-from util import setup_logging
+from util import setup_logging, update_sha
 from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
@@ -149,6 +149,7 @@ class Agent:
                     plugin.get_name(),
                     file_path,
                 )
+        metadata.update(update_sha(file_path))
         match = MatchInfo(file_path, metadata, matches)
         self.db.add_match(job, match)
 

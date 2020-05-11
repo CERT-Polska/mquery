@@ -4,16 +4,33 @@ import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
 import { finishedStatuses } from "./QueryUtils";
+import { CopyToClipboard } from "react-copy-to-clipboard";
 
 function MatchItem(props) {
-    const metadata = Object.values(props.meta).map((v) => (
-        <a href={v.url}>
-            {" "}
-            <span className="badge badge-pill badge-warning">
-                {v.display_text}
-            </span>
-        </a>
-    ));
+    const metadata = Object.values(props.meta)
+        .filter((v) => !v.hidden)
+        .map((v) => (
+            <a href={v.url} key={v}>
+                {" "}
+                <span className="badge badge-pill badge-warning">
+                    {v.display_text}
+                </span>
+            </a>
+        ));
+
+    let hashes = Object.values(props.meta)
+        .filter((v) => v.hidden)
+        .map((v) => (
+            <CopyToClipboard text={v.display_text} key={v}>
+                <div
+                    style={{ fontFamily: "monospace" }}
+                    data-toggle="tooltip"
+                    title="Click to copy"
+                >
+                    {v.display_text}
+                </div>
+            </CopyToClipboard>
+        ));
 
     let matches = <span></span>;
     if (props.matches) {
@@ -40,7 +57,7 @@ function MatchItem(props) {
     return (
         <tr>
             <td>
-                <div className="d-flex">
+                <div className="row m-0 text-truncate">
                     <div className="text-truncate" style={{ minWidth: 50 }}>
                         <a
                             href={download_url}
@@ -54,6 +71,7 @@ function MatchItem(props) {
                     {metadata}
                 </div>
             </td>
+            {props.collapsed ? <td>{hashes}</td> : null}
         </tr>
     );
 }
@@ -174,6 +192,7 @@ class QueryResultsStatus extends Component {
                 qhash={this.props.qhash}
                 key={match.file}
                 ordinal={index}
+                collapsed={this.props.collapsed}
             />
         ));
 
@@ -205,7 +224,12 @@ class QueryResultsStatus extends Component {
                     >
                         <thead>
                             <tr>
-                                <th>Matches</th>
+                                <th className="col-md-8">Matches</th>
+                                {this.props.collapsed && (
+                                    <th className="col-md-4 d-none d-sm-table-cell">
+                                        SHA256
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>
@@ -273,7 +297,7 @@ class QueryResultsStatus extends Component {
                     <div className="col-md-3">
                         Processed: <span>{processed}</span>
                     </div>
-                    <div className="col-md-3" style={{ "text-align": "right" }}>
+                    <div className="col-md-3" style={{ textAlign: "right" }}>
                         <QueryTimer
                             job={this.props.job}
                             finishStatus={finishedStatuses}
