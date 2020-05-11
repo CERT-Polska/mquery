@@ -11,6 +11,7 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 class MalwarecageUploadsMetadata(MetadataPlugin):
     cacheable = False
+    is_extractor = True
     config_fields = {
         "mwdb_url": "URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/)",
         "mwdb_api_url": "API URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/api/)",
@@ -23,7 +24,6 @@ class MalwarecageUploadsMetadata(MetadataPlugin):
             api_url=config["mwdb_api_url"], api_key=config["mwdb_api_token"]
         )
         self.mwdb_url = config["mwdb_url"]
-        self.is_extractor = True
 
     def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(

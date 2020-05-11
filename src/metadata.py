@@ -1,5 +1,5 @@
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
 from db import Database
 from typing import Any, Dict, Optional
 
@@ -16,6 +16,10 @@ class MetadataPlugin(ABC):
     cache_expire_time: int = DEFAULT_CACHE_EXPIRE_TIME
     #: Configuration keys required by plugin with description as a value
     config_fields: Dict[str, str] = {}
+    # can this plugin be used for prefiltering mwdb results?
+    is_filter = False
+    # can this plugin be used for extracting metadata?
+    is_extractor = False
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         self.db = db
@@ -24,12 +28,6 @@ class MetadataPlugin(ABC):
                 raise KeyError(
                     f"Required configuration key '{key}' is not set"
                 )
-
-        # can this plugin be used for prefiltering mwdb results?
-        self.is_filter = False
-
-        # can this plugin be used for extracting metadata?
-        self.is_extractor = False
 
     @classmethod
     def get_name(cls) -> str:

@@ -9,12 +9,12 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 class CuckooAnalysisMetadata(MetadataPlugin):
     cacheable = True
+    is_extractor = True
     config_fields = {"path": "Root of cuckoo analysis directory."}
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         super().__init__(db, config)
         self.path = config["path"]
-        self.is_extractor = True
 
     def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(r"analyses/([0-9]+)/", matched_fname)
