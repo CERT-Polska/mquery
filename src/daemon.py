@@ -184,7 +184,7 @@ class Agent:
         that other agents will be able to work on it in parallel). Later,
         process the obtained files.
         """
-        final_statuses = ["cancelled", "failed", "done"]
+        final_statuses = ["cancelled", "failed", "done", "removed"]
         j = self.db.get_job(job)
         if j.status in final_statuses:
             return
