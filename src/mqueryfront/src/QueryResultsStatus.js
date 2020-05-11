@@ -18,18 +18,23 @@ function MatchItem(props) {
             </a>
         ));
 
-    const hashes = Object.values(props.meta).map((v) => (
-        <CopyToClipboard text={(v.key = "sha256" && v.display_text)} key={v}>
-            <div
-                className="text-truncate"
-                style={{ minWidth: 50, fontFamily: "monospace" }}
-                data-toggle="tooltip"
-                title="Copy to clipboard"
+    const hashes = Object.values(props.meta)
+        .filter((v) => v.hidden)
+        .map((v) => (
+            <CopyToClipboard
+                text={v.display_text}
+                key={v}
             >
-                {(v.key = "sha256" && v.display_text)}
-            </div>
-        </CopyToClipboard>
-    ));
+                <div
+                    className="text-truncate"
+                    style={{ minWidth: 50, fontFamily: "monospace" }}
+                    data-toggle="tooltip"
+                    title="Copy to clipboard"
+                >
+                    {v.display_text}
+                </div>
+            </CopyToClipboard>
+        ));
 
     let matches = <span></span>;
     if (props.matches) {
