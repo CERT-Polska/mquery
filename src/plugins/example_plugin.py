@@ -14,6 +14,7 @@ class ExampleTagPlugin(MetadataPlugin):
         super().__init__(db, config)
         self.tag = config["tag"]
         self.tag_url = config["tag_url"]
+        self.is_extractor = True
 
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata

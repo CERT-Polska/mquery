@@ -140,6 +140,8 @@ class Agent:
         update the related metadata """
         metadata: Metadata = {"job": job.hash}
         for plugin in self.active_plugins:
+            if not plugin.is_extractor:
+                continue
             try:
                 extracted_meta = plugin.run(file_path, metadata)
                 metadata.update(extracted_meta)
@@ -157,7 +159,14 @@ class Agent:
         rule = compile_yara(self.db, job)
         num_matches = 0
         num_errors = 0
-        self.db.job_start_work(job, len(files))
+        num_files = len(files)
+        self.db.job_start_work(job, num_files)
+
+        for plugin in self.active_plugins:
+            if not plugin.is_filter:
+                continue
+            files = [f for f in files if plugin.filter(f)]
+
         for sample in files:
             try:
                 matches = rule.match(sample)
@@ -176,7 +185,7 @@ class Agent:
         if num_errors > 0:
             self.db.job_update_error(job, num_errors)
 
-        self.db.job_update_work(job, len(files), num_matches)
+        self.db.job_update_work(job, num_files, num_matches)
 
     def __yara_task(self, job: JobId, iterator: str) -> None:
         """Get a next batch of worm from the db. If there are still files

@@ -23,6 +23,7 @@ class MalwarecageUploadsMetadata(MetadataPlugin):
             api_url=config["mwdb_api_url"], api_key=config["mwdb_api_token"]
         )
         self.mwdb_url = config["mwdb_url"]
+        self.is_extractor = True
 
     def identify(self, matched_fname: str) -> Optional[str]:
         m = re.search(

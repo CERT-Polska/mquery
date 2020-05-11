@@ -25,6 +25,12 @@ class MetadataPlugin(ABC):
                     f"Required configuration key '{key}' is not set"
                 )
 
+        # can this plugin be used for prefiltering mwdb results?
+        self.is_filter = False
+
+        # can this plugin be used for extracting metadata?
+        self.is_extractor = False
+
     @classmethod
     def get_name(cls) -> str:
         return cls.__name__
@@ -53,10 +59,18 @@ class MetadataPlugin(ABC):
         Returns file unique identifier based on matched path.
 
         Intended to be overridden by plugin.
-       """
+        """
         return matched_fname
 
     def run(self, matched_fname: str, current_meta: Metadata) -> Metadata:
+        """
+        Extracts metadata and updates cache. This method can only be run if
+        the plugin sets `is_extractor` to True.
+
+        :param matched_fname: Filename of the processed file
+        :param current_meta: Metadata that will be updated
+        :return: New metadata
+        """
         identifier = self.identify(matched_fname)
         if identifier is None:
             return {}
@@ -72,14 +86,22 @@ class MetadataPlugin(ABC):
             self._cache_store(identifier, result)
         return result
 
-    @abstractmethod
+    def filter(self, matched_fname: str) -> bool:
+        """
+        Checks if the file is a good candidate for further processing.
+        False otherwise.
+        :param matched_fname: Matched file path
+        :return: True if the file should be kept. False otherwise.
+        """
+        raise NotImplementedError
+
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
         """
         Extracts metadata for matched path
 
-        Intended to be overridden by plugin.
+        Intended to be overridden by plugin, if is_extractor is True.
 
         :param identifier: File identifier returned by overridable
                            :py:meth:`MetadataPlugin.identify` method
@@ -87,5 +109,5 @@ class MetadataPlugin(ABC):
         :param current_meta: Metadata extracted so far by dependencies
         :return: Metadata object. If you can't extract metadata for current file,
                  return empty dict.
-       """
+        """
         raise NotImplementedError
