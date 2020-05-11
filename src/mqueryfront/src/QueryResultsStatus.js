@@ -18,15 +18,14 @@ function MatchItem(props) {
             </a>
         ));
 
-    const hashes = Object.values(props.meta)
+    let hashes = Object.values(props.meta)
         .filter((v) => v.hidden)
         .map((v) => (
             <CopyToClipboard text={v.display_text} key={v}>
                 <div
-                    className="text-truncate"
-                    style={{ minWidth: 50, fontFamily: "monospace" }}
+                    style={{ fontFamily: "monospace" }}
                     data-toggle="tooltip"
-                    title="Copy to clipboard"
+                    title="Click to copy"
                 >
                     {v.display_text}
                 </div>
@@ -72,7 +71,7 @@ function MatchItem(props) {
                     {metadata}
                 </div>
             </td>
-            <td>{hashes}</td>
+            {props.collapsed ? <td>{hashes}</td> : null}
         </tr>
     );
 }
@@ -193,6 +192,7 @@ class QueryResultsStatus extends Component {
                 qhash={this.props.qhash}
                 key={match.file}
                 ordinal={index}
+                collapsed={this.props.collapsed}
             />
         ));
 
@@ -226,10 +226,7 @@ class QueryResultsStatus extends Component {
                             <tr>
                                 <th className="col-md-8">Matches</th>
                                 {this.props.collapsed && (
-                                    <th
-                                        className="col-md-4 d-none d-sm-table-cell"
-                                        style={{ width: "40%" }}
-                                    >
+                                    <th className="col-md-4 d-none d-sm-table-cell">
                                         SHA256
                                     </th>
                                 )}
