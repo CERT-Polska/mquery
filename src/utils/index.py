@@ -39,19 +39,21 @@ def walk_directory(dir: Path, ignores: List[str]) -> Iterator[Path]:
 
 
 def find_new_files(
-    existing: Set[str], files_root: Path, mounted_as: str
+    existing: Set[str], files_root: Path, mounted_as: str, max_file_size: int
 ) -> Iterator[str]:
     for abspath in walk_directory(files_root.resolve(), [".ursadb"]):
+        if Path(abspath).stat().st_size > max_file_size:
+            continue
         relpath = os.path.relpath(abspath, files_root)
         mounted_path = os.path.join(mounted_as, relpath)
         if mounted_path not in existing:
-            yield str(abspath)
+            yield str(mounted_path)
 
 
 def index_files(
-    proc_params: Tuple[str, List[str], List[str], Path, Optional[Tuple[str, str]], int]
+    proc_params: Tuple[str, List[str], List[str], Path, int]
 ) -> str:
-    ursa_url, types, tags, batch, path_rel, compact_threshold = proc_params
+    ursa_url, types, tags, batch, compact_threshold = proc_params
     ursa = UrsaDb(ursa_url)
 
     current_datasets = len(ursa.topology()["result"]["datasets"])
@@ -65,17 +67,12 @@ def index_files(
     with wipbatch.open() as batchfile:
         for fname in batchfile:
             fname = fname[:-1]  # remove the trailing newline
-            if path_rel is not None:
-                files_root, mounted_as = path_rel
-                relpath = os.path.relpath(fname, files_root)
-                fname = os.path.join(mounted_as, relpath)
-
             fname = fname.replace('"', '\\"')
             mounted_names.append(fname)
     mounted_list = " ".join(f'"{fpath}"' for fpath in mounted_names)
     tag_mod = ""
     if tags:
-        tag_list = ','.join(f'"{tag}"' for tag in tags)
+        tag_list = ",".join(f'"{tag}"' for tag in tags)
         tag_mod = f" with taints [{tag_list}]"
     result = ursa.execute_command(
         f"index {mounted_list} with [{type_list}]{tag_mod} nocheck;"
@@ -114,9 +111,7 @@ def prepare(
     current_batch = 10 ** 20  # As good as infinity.
     new_files = 0
     batch_id = 0
-    for f in find_new_files(fileset, path, mounted_as):
-        if Path(f).stat().st_size > max_file_size:
-            continue
+    for f in find_new_files(fileset, path, mounted_as, max_file_size):
         if current_batch > batch:
             if tmpfile is not None:
                 tmpfile.close()
@@ -143,7 +138,6 @@ def index(
     workdir: Path,
     types: List[str],
     tags: List[str],
-    path_rel: Optional[Tuple[str, str]],
     workers: int,
     working_datasets: Optional[int],
 ) -> None:
@@ -155,12 +149,12 @@ def index(
     current_datasets = len(ursa.topology()["result"]["datasets"])
     compact_threshold = current_datasets + working_datasets
 
-    logging.info("Index.2: Compact threshold = %s.", compact_threshold)
+    logging.info("Index.1: Compact threshold = %s.", compact_threshold)
 
-    logging.info("Index.1: Find prepared batches.")
+    logging.info("Index.2: Find prepared batches.")
     indexing_jobs = []
     for batch in workdir.glob("*.txt"):
-        indexing_jobs.append((ursadb, types, tags, batch, path_rel, compact_threshold))
+        indexing_jobs.append((ursadb, types, tags, batch, compact_threshold))
 
     logging.info("Index.2: Got %s batches to run.", len(indexing_jobs))
 
@@ -193,9 +187,6 @@ def main() -> None:
     )
     # switches relevant for both "prepare" and "index" modes
     parser.add_argument(
-        "--path", help="Path of samples to be indexed.", default=None
-    )
-    parser.add_argument(
         "--ursadb",
         help="URL of the ursadb instance.",
         default="tcp://localhost:9281",
@@ -203,15 +194,18 @@ def main() -> None:
     parser.add_argument(
         "--workdir", help="Path to a working directory.", default=None
     )
+    # switches relevant only for "prepare" mode
     parser.add_argument(
         "--batch", help="Size of indexing batch.", type=int, default=1000
+    )
+    parser.add_argument(
+        "--path", help="Path of samples to be indexed.", default=None
     )
     parser.add_argument(
         "--path-mount",
         help="Path to the samples to be indexed, as seen by ursadb (if different).",
         default=None,
     )
-    # switches relevant only for "prepare" mode
     parser.add_argument(
         "--max-file-size-mb",
         type=int,
@@ -222,7 +216,7 @@ def main() -> None:
     parser.add_argument(
         "--type",
         dest="types",
-        help="Index types. By default [gram3]",
+        help="Index types. By default [gram3, text4, wide8, hash4]",
         action="append",
         default=[],
         choices=["gram3", "text4", "hash4", "wide8"],
@@ -260,22 +254,16 @@ def main() -> None:
     except Exception:
         logging.error("Can't connect to ursadb instance at %s", args.ursadb)
 
-    path_rel: Optional[Tuple[str, str]]
-    if args.path_mount is not None:
-        if args.path is None:
-            logging.error("--path-mount specified but --path is None")
-            return
-        path_rel = (args.path, args.path_mount)
-        path_mount = args.path_mount
-    else:
-        path_rel = None
-        path_mount = args.path
-
     if args.mode == "prepare" or args.mode == "prepare-and-index":
         # Path must exist
         if args.path is None:
             logging.error("Path (--path) is a required parameter.")
             return
+
+        if args.path_mount is not None:
+            path_mount = args.path_mount
+        else:
+            path_mount = args.path
 
         path = Path(args.path)
         if not path.exists:
@@ -297,9 +285,9 @@ def main() -> None:
         )
 
     if args.mode == "index" or args.mode == "prepare-and-index":
-        # By default use only gram3.
+        # By default use only all index types.
         if not args.types:
-            types = ["gram3"]
+            types = ["gram3", "text4", "wide8", "hash4"]
 
         # We're continuing an existing operation. Workdir must exist.
         workdir = Path(args.workdir)
@@ -310,7 +298,16 @@ def main() -> None:
             )
             return
 
-        index(args.ursadb, workdir, types, args.tags, path_rel, args.workers, args.working_datasets)
+        index(
+            args.ursadb,
+            workdir,
+            types,
+            args.tags,
+            args.workers,
+            args.working_datasets,
+        )
+
+        logging.info("Indexing finished. Consider compacting the database now")
 
 
 if __name__ == "__main__":
