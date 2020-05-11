@@ -10,7 +10,7 @@ function MatchItem(props) {
     const metadata = Object.values(props.meta)
         .filter((v) => !v.hidden)
         .map((v) => (
-            <a href={v.url}>
+            <a href={v.url} key={v}>
                 {" "}
                 <span className="badge badge-pill badge-warning">
                     {v.display_text}
@@ -19,7 +19,7 @@ function MatchItem(props) {
         ));
 
     const hashes = Object.values(props.meta).map((v) => (
-        <CopyToClipboard text={(v.key = "sha256" && v.display_text)}>
+        <CopyToClipboard text={(v.key = "sha256" && v.display_text)} key={v}>
             <div
                 className="text-truncate"
                 style={{ minWidth: 50, fontFamily: "monospace" }}
@@ -298,7 +298,7 @@ class QueryResultsStatus extends Component {
                     <div className="col-md-3">
                         Processed: <span>{processed}</span>
                     </div>
-                    <div className="col-md-3" style={{ "text-align": "right" }}>
+                    <div className="col-md-3" style={{ textAlign: "right" }}>
                         <QueryTimer
                             job={this.props.job}
                             finishStatus={finishedStatuses}
