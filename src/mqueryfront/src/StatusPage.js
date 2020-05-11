@@ -17,6 +17,8 @@ class StatusPage extends Component {
             },
             error: null,
         };
+
+        this.isIndexingOrCompacting = this.isIndexingOrCompacting.bind(this);
     }
 
     componentDidMount() {
@@ -28,6 +30,15 @@ class StatusPage extends Component {
             .catch((error) => {
                 this.setState({ error: error });
             });
+    }
+
+    isIndexingOrCompacting() {
+        let isWorking = (task) =>
+            task.request.startsWith("index ") ||
+            task.request.startsWith("compact ");
+        return this.state.backend.agents.some((agent) =>
+            agent.tasks.some(isWorking)
+        );
     }
 
     render() {
@@ -43,7 +54,9 @@ class StatusPage extends Component {
                             <BackendStatus agents={this.state.backend.agents} />
                         </div>
                         <div className="col-md-6">
-                            <DatabaseTopology />
+                            <DatabaseTopology
+                                working={this.isIndexingOrCompacting()}
+                            />
                         </div>
                     </div>
                 </div>

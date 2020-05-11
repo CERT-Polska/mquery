@@ -13,6 +13,7 @@ class TaskType(Enum):
     SEARCH = "search"
     YARA = "yara"
     RELOAD = "reload"
+    COMMAND = "command"
 
 
 class AgentTask:
@@ -109,7 +110,7 @@ class Database:
     def add_match(self, job: JobId, match: MatchInfo) -> None:
         self.redis.rpush(job.meta_key, match.to_json())
 
-    def job_contains(self, job: JobId, ordinal: str, file_path: str) -> bool:
+    def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
         file_list = self.redis.lrange(job.meta_key, ordinal, ordinal)
         return file_list and file_path == json.loads(file_list[0])["file"]
 
@@ -178,6 +179,10 @@ class Database:
             self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
         return job
 
+    def broadcast_command(self, command: str) -> None:
+        for agent in self.get_active_agents().keys():
+            self.redis.rpush(f"agent:{agent}:queue-command", command)
+
     def init_job_datasets(
         self, agent_id: str, job: JobId, datasets: List[str]
     ) -> None:
@@ -220,6 +225,7 @@ class Database:
         # agents that configuration has been changed
         task_queues = [
             f"config-reload:{config_version}",
+            f"{agent_prefix}:queue-command",
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
         ]
@@ -228,6 +234,9 @@ class Database:
 
         if queue == f"config-reload:{config_version}":
             return AgentTask(TaskType.RELOAD, task)
+
+        if queue.endswith(":queue-command"):
+            return AgentTask(TaskType.COMMAND, task)
 
         if queue.endswith(":queue-search"):
             return AgentTask(TaskType.SEARCH, task)
