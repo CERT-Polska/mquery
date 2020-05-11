@@ -105,7 +105,7 @@ class Agent:
         self.db.agent_continue_search(self.group_id, job_id)
 
     def __load_plugins(self) -> None:
-        self.plugin_config_version = self.db.get_plugin_config_version()
+        self.plugin_config_version: int = self.db.get_plugin_config_version()
         active_plugins = []
         for plugin_class in METADATA_PLUGINS:
             plugin_name = plugin_class.get_name()
@@ -138,7 +138,7 @@ class Agent:
     ) -> None:
         """ After finding a match, push it into a database and
         update the related metadata """
-        metadata: Metadata = {}
+        metadata: Metadata = {"job": job.hash}
         for plugin in self.active_plugins:
             try:
                 extracted_meta = plugin.run(file_path, metadata)
@@ -215,7 +215,11 @@ class Agent:
             self.__execute_yara(job, pop_result.files)
 
         j = self.db.get_job(job)
-        if j.status == "processing" and j.files_processed == j.total_files:
+        if (
+            j.status == "processing"
+            and j.files_processed == j.total_files
+            and self.db.job_datasets_left(self.group_id, job) == 0
+        ):
             # The job is over, work of this agent as done.
             self.db.agent_finish_job(job)
 

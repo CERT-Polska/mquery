@@ -31,6 +31,7 @@ class QueryPage extends Component {
         this.updateQueryError = this.updateQueryError.bind(this);
         this.updateQueryPlan = this.updateQueryPlan.bind(this);
         this.collapsePane = this.collapsePane.bind(this);
+        this.updateYara = this.updateYara.bind(this);
     }
 
     componentDidMount() {
@@ -83,6 +84,10 @@ class QueryPage extends Component {
             activePage: 1,
         });
         this.loadJob();
+    }
+
+    updateYara(value) {
+        this.setState({ rawYara: value });
     }
 
     loadJob() {
@@ -202,21 +207,21 @@ class QueryPage extends Component {
         return (
             <div className="container-fluid">
                 <div className="row wrapper">
-                    <div
-                        className={
-                            this.state.collapsed ? "is-collapsed" : "col-md-5"
-                        }
-                    >
-                        <QueryField
-                            rawYara={this.state.rawYara}
-                            isLoading={this.state.qhash && !this.state.rawYara}
-                            isLocked={!!this.state.qhash}
-                            updateQhash={this.updateQhash}
-                            availableTaints={this.availableTaints()}
-                            updateQueryPlan={this.updateQueryPlan}
-                            updateQueryError={this.updateQueryError}
-                        />
-                    </div>
+                    {!this.state.collapsed ? (
+                        <div className="col-md-5">
+                            <QueryField
+                                rawYara={this.state.rawYara}
+                                readOnly={!!this.state.qhash}
+                                updateQhash={this.updateQhash}
+                                availableTaints={this.availableTaints()}
+                                updateQueryPlan={this.updateQueryPlan}
+                                updateQueryError={this.updateQueryError}
+                                updateYara={this.updateYara}
+                            />
+                        </div>
+                    ) : (
+                        []
+                    )}
                     <div
                         className={
                             this.state.collapsed ? "col-md-12" : "col-md-7"
