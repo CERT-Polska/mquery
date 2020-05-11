@@ -21,10 +21,7 @@ function MatchItem(props) {
     const hashes = Object.values(props.meta)
         .filter((v) => v.hidden)
         .map((v) => (
-            <CopyToClipboard
-                text={v.display_text}
-                key={v}
-            >
+            <CopyToClipboard text={v.display_text} key={v}>
                 <div
                     className="text-truncate"
                     style={{ minWidth: 50, fontFamily: "monospace" }}
