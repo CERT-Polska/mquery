@@ -225,6 +225,12 @@ def serve_index(path: str) -> FileResponse:
     return FileResponse("mqueryfront/build/index.html")
 
 
+@app.delete("/api/query/{job_id}", response_model=StatusSchema)
+def query_remove(job_id: str) -> StatusSchema:
+    db.remove_query(JobId(job_id))
+    return StatusSchema(status="ok")
+
+
 @app.get("/recent", include_in_schema=False)
 @app.get("/status", include_in_schema=False)
 @app.get("/query", include_in_schema=False)

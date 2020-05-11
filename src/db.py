@@ -102,6 +102,10 @@ class Database:
             taint=data.get("taint", None),
         )
 
+    def remove_query(self, job: JobId) -> None:
+        """ Remove query key from redis storage """
+        self.redis.delete(job.key)
+
     def add_match(self, job: JobId, match: MatchInfo) -> None:
         self.redis.rpush(job.meta_key, match.to_json())
 
