@@ -18,7 +18,7 @@ class RecentPage extends Component {
         };
 
         this.handleCancelJob = this.handleCancelJob.bind(this);
-        this.handleClose = this.handleClose.bind(this);
+        this.handleRemove = this.handleRemove.bind(this);
         this.handleFilter = this.handleFilter.bind(this);
         this.getHead = this.getHead.bind(this);
         this.getDistinctList = this.getDistinctList.bind(this);
@@ -44,7 +44,7 @@ class RecentPage extends Component {
         }
     }
 
-    handleClose(id) {
+    handleRemove(id) {
         const { jobs } = this.state;
         const index = jobs.findIndex((obj) => obj.id === id);
 
@@ -170,7 +170,7 @@ class RecentPage extends Component {
                     filter={filter}
                     head={head}
                     onFilter={this.handleFilter}
-                    onClose={this.handleClose}
+                    onRemove={this.handleRemove}
                     onCancel={this.handleCancelJob}
                     activePage={activePage}
                     itemsPerPage={itemsPerPage}

@@ -5,6 +5,7 @@ import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
 import { finishedStatuses } from "./QueryUtils";
 import { CopyToClipboard } from "react-copy-to-clipboard";
+import ActionCancel from "./components/ActionCancel";
 
 function MatchItem(props) {
     const metadata = Object.values(props.meta)
@@ -172,14 +173,7 @@ class QueryResultsStatus extends Component {
             (this.props.job.files_errored / this.props.job.total_files) * 100
         );
         let errorTooltip = `${this.props.job.files_errored} errors during processing`;
-        let cancel = (
-            <button
-                className="btn btn-danger btn-sm"
-                onClick={this.handleCancelJob}
-            >
-                cancel
-            </button>
-        );
+        let cancel = <ActionCancel onClick={this.handleCancelJob} size="lg" />;
 
         if (!this.props.job.total_files && this.props.job.status !== "done") {
             progress = 0;
