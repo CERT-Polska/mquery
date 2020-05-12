@@ -94,6 +94,13 @@ class MetadataPlugin(ABC):
         """
         raise NotImplementedError
 
+    def cleanup(self) -> None:
+        """
+        Optionally, clean up after the plugin, for example remove any
+        temporary files. Called after processing a single batch of files.
+        """
+        pass
+
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:

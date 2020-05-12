@@ -193,6 +193,9 @@ class Agent:
                 )
                 num_errors += 1
 
+        for plugin in self.active_plugins:
+            plugin.cleanup()
+
         if num_errors > 0:
             self.db.job_update_error(job, num_errors)
 
