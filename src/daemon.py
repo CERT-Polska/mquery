@@ -162,24 +162,35 @@ class Agent:
         num_files = len(files)
         self.db.job_start_work(job, num_files)
 
+        # filenames returned from ursadb are usually paths, but may be
+        # rewritten by plugins. Create a map {original_name: file_path}
+        filemap = {f: f for f in files}
+
         for plugin in self.active_plugins:
             if not plugin.is_filter:
                 continue
-            files = [f for f in files if plugin.filter(f)]
+            new_filemap = {}
+            for orig_name, current_path in filemap.items():
+                new_path = plugin.filter(current_path)
+                if new_path:
+                    new_filemap[orig_name] = new_path
+            filemap = new_filemap
 
-        for sample in files:
+        for orig_name, path in filemap.items():
             try:
-                matches = rule.match(sample)
+                matches = rule.match(path)
                 if matches:
                     self.__update_metadata(
-                        job, sample, [r.rule for r in matches]
+                        job, orig_name, [r.rule for r in matches]
                     )
                     num_matches += 1
             except yara.Error:
-                logging.error("Yara failed to check file %s", sample)
+                logging.error("Yara failed to check file %s", orig_name)
                 num_errors += 1
             except FileNotFoundError:
-                logging.error("Failed to open file for yara check: %s", sample)
+                logging.error(
+                    "Failed to open file for yara check: %s", orig_name
+                )
                 num_errors += 1
 
         if num_errors > 0:
