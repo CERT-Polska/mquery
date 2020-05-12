@@ -5,6 +5,11 @@ from typing import Optional
 
 
 class RegexBlacklistPlugin(MetadataPlugin):
+    """ Can be used to ignore files with filenames matching a certain
+    pattern. For example, to ignore all pcap files, set blacklist_pattern
+    to "[.]pcap$".
+    """
+
     is_filter = True
     config_fields = {
         "blacklist_pattern": "Regular expression for files that should be ignored",

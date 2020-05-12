@@ -7,6 +7,11 @@ import tempfile
 
 
 class GzipPlugin(MetadataPlugin):
+    """ Can be used to automatically extract gzip contents before running
+    Yara on them. This plugin will look for all files that end with .gz,
+    and add extract them to disk before further processing.
+    """
+
     is_filter = True
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
