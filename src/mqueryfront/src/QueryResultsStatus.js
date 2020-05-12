@@ -3,6 +3,7 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
+import ActionDownload from "./components/ActionDownload";
 import {
     isStatusFinished,
     getProgressBarClass,
@@ -222,7 +223,35 @@ class QueryResultsStatus extends Component {
                     >
                         <thead>
                             <tr>
-                                <th className="col-md-8">Matches</th>
+                                <th className="col-md-8">
+                                    Matches
+                                    <ActionDownload
+                                        downloadUrl={
+                                            API_URL +
+                                            "/download/files/" +
+                                            this.props.qhash
+                                        }
+                                        downloadName={
+                                            this.props.qhash + "_files.zip"
+                                        }
+                                    />
+                                </th>
+                                {this.props.collapsed && (
+                                    <th className="col-md-4 d-none d-sm-table-cell">
+                                        SHA256
+                                        <ActionDownload
+                                            downloadUrl={
+                                                API_URL +
+                                                "/download/hashes/" +
+                                                this.props.qhash
+                                            }
+                                            downloadName={
+                                                this.props.qhash +
+                                                "_sha256_hashes.txt"
+                                            }
+                                        />
+                                    </th>
+                                )}
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>

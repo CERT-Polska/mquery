@@ -5,7 +5,7 @@ import uvicorn
 import config
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
-from starlette.responses import Response, FileResponse
+from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.staticfiles import StaticFiles
 from werkzeug.exceptions import NotFound
 from zmq import Again
@@ -14,7 +14,9 @@ from lib.yaraparse import parse_yara
 
 from util import mquery_version
 from db import Database, JobId
-from typing import Any, Callable, List, Union, Dict
+from typing import Any, Callable, List, Union, Dict, Iterable
+import tempfile
+import zipfile
 
 from schema import (
     JobsSchema,
@@ -54,12 +56,43 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 
 @app.get("/api/download")
-def download(job_id: str, ordinal: str, file_path: str) -> Any:
+def download(job_id: str, ordinal: str, file_path: str) -> FileResponse:
     if not db.job_contains(JobId(job_id), ordinal, file_path):
         raise NotFound("No such file in result set.")
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     return FileResponse(file_path, filename=attach_name + ext + "_")
+
+
+@app.get("/api/download/hashes/{hash}")
+def download_hashes(hash: str) -> Response:
+    hashes = ",".join(
+        list(
+            [
+                d["meta"]["sha256"]["display_text"]
+                for d in db.get_job_matches(JobId(hash)).matches
+            ]
+        )
+    )
+    return Response(hashes)
+
+
+def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
+    with tempfile.NamedTemporaryFile() as writer:
+        with open(writer.name, "rb") as reader:
+            with zipfile.ZipFile(writer, mode="w") as zipwriter:
+                for match in matches:
+                    sha256 = match["meta"]["sha256"]["display_text"]
+                    zipwriter.write(match["file"], sha256)
+                    yield reader.read()
+            writer.flush()
+            yield reader.read()
+
+
+@app.get("/api/download/files/{hash}")
+async def download_files(hash: str) -> StreamingResponse:
+    matches = db.get_job_matches(JobId(hash)).matches
+    return StreamingResponse(zip_files(matches))
 
 
 @app.post(

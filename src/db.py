@@ -197,11 +197,13 @@ class Database:
         self.redis.rpush(f"agent:{agent_id}:queue-search", job.hash)
 
     def get_job_matches(
-        self, job: JobId, offset: int, limit: int
+        self, job: JobId, offset: int = 0, limit: Optional[int] = None
     ) -> MatchesSchema:
-        meta = self.redis.lrange(
-            "meta:" + job.hash, offset, offset + limit - 1
-        )
+        if limit is None:
+            end = -1
+        else:
+            end = offset + limit - 1
+        meta = self.redis.lrange("meta:" + job.hash, offset, end)
         return MatchesSchema(
             job=self.get_job(job), matches=[json.loads(m) for m in meta]
         )
