@@ -84,12 +84,13 @@ class MetadataPlugin(ABC):
             self._cache_store(identifier, result)
         return result
 
-    def filter(self, matched_fname: str) -> Optional[str]:
+    def filter(self, matched_fname: str, file_path: str) -> Optional[str]:
         """
         Checks if the file is a good candidate for further processing,
         and fix the file path if necessary.
-        :param matched_fname: Matched file path
-        :return: New path to file (may be the same path). None if the file
+        :param matched_fname: Original file path coming from ursadb
+        :param file_path: Current path to the file contents
+        :return: New path to a file (may be the same path). None if the file
         should be discarded.
         """
         raise NotImplementedError

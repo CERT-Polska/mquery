@@ -1,5 +1,6 @@
 import logging
 import hashlib
+from typing import Dict, Any
 
 
 LOG_FORMAT = "[%(asctime)s][%(levelname)s] %(message)s"
@@ -12,15 +13,13 @@ def setup_logging() -> None:
     )
 
 
-def mquery_version():
+def mquery_version() -> str:
     return "1.1.0"
 
 
-def update_sha(filename):
+def make_sha256_tag(filename: str) -> Dict[str, Any]:
     sha256_hash = hashlib.sha256()
     with open(filename, "rb") as f:
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
-    return {
-        "sha256": {"display_text": sha256_hash.hexdigest(), "hidden": True}
-    }
+    return {"display_text": sha256_hash.hexdigest(), "hidden": True}

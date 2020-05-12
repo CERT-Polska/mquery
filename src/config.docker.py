@@ -6,3 +6,4 @@ REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 JOB_EXPIRATION_MINUTES = int(
     os.environ.get("JOB_EXPIRATION_MINUTES", 0)
 )  # infinite by default
+PLUGINS = list(filter(None, os.environ.get("MQUERY_PLUGINS", "").split()))

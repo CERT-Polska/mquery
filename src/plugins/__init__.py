@@ -1,5 +1,12 @@
 from typing import List, Type
 from metadata import MetadataPlugin
+from importlib import import_module
 
-# Feel free to import plugins here and add them to list below
-METADATA_PLUGINS: List[Type[MetadataPlugin]] = []
+
+def load_plugins(specs: List[str]) -> List[Type[MetadataPlugin]]:
+    result = []
+    for spec in specs:
+        module, classname = spec.split(":")
+        moduleobj = import_module(module)
+        result.append(getattr(moduleobj, classname))
+    return result

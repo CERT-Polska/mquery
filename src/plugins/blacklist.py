@@ -14,7 +14,7 @@ class RegexBlacklistPlugin(MetadataPlugin):
         super().__init__(db, config)
         self.blacklist_pattern = config["blacklist_pattern"]
 
-    def filter(self, matched_fname: str) -> Optional[str]:
-        if re.search(self.blacklist_pattern, matched_fname):
+    def filter(self, orig_name: str, file_path: str) -> Optional[str]:
+        if re.search(self.blacklist_pattern, orig_name):
             return None
-        return matched_fname
+        return file_path
