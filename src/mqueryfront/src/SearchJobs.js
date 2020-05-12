@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import PriorityIcon from "./components/PriorityIcon";
-import ActionClose from "./components/ActionClose";
+import ActionRemove from "./components/ActionRemove";
 import ActionCancel from "./components/ActionCancel";
 import StatusProgress from "./components/StatusProgress";
 import FilteringTableHeader from "./components/FilteringTableHeader";
@@ -44,12 +44,12 @@ const SearchJobRow = (props) => {
     const rule_author = props.job.rule_author
         ? props.job.rule_author
         : "(no author)";
-    const { onClose, onCancel } = props;
+    const { onRemove, onCancel } = props;
 
     const submittedDate = new Date(submitted * 1000).toISOString();
 
     const actionBtn = finishedStatuses.includes(status) ? (
-        <ActionClose onClick={onClose} />
+        <ActionRemove onClick={onRemove} />
     ) : (
         <ActionCancel onClick={onCancel} />
     );
@@ -98,7 +98,7 @@ const SearchJobs = (props) => {
         head,
         filter,
         onCancel,
-        onClose,
+        onRemove,
         onFilter,
         activePage,
         itemsPerPage,
@@ -112,7 +112,7 @@ const SearchJobs = (props) => {
         <SearchJobRow
             key={job.id}
             job={job}
-            onClose={() => onClose(job.id)}
+            onRemove={() => onRemove(job.id)}
             onCancel={() => onCancel(job.id)}
         />
     ));
@@ -167,7 +167,7 @@ SearchJobs.propTypes = {
     ).isRequired,
     filterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     onFilter: PropTypes.func.isRequired,
-    onClose: PropTypes.func.isRequired,
+    onRemove: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
 };
 
