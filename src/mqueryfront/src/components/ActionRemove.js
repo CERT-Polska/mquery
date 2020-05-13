@@ -1,6 +1,7 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
+import { FONTAWESOMESIZES } from "./bootstrapUtils";
 import PropTypes from "prop-types";
 
 const ActionRemove = (props) => {
@@ -25,21 +26,7 @@ ActionRemove.defaultProps = {
 
 ActionRemove.propTypes = {
     onClick: PropTypes.func.isRequired,
-    size: PropTypes.oneOf([
-        "lg",
-        "xs",
-        "sm",
-        "1x",
-        "2x",
-        "3x",
-        "4x",
-        "5x",
-        "6x",
-        "7x",
-        "8x",
-        "9x",
-        "10x",
-    ]),
+    size: PropTypes.oneOf(FONTAWESOMESIZES),
     tooltipMessage: PropTypes.string,
     color: PropTypes.string,
 };

@@ -3,7 +3,11 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
-import { finishedStatuses } from "./QueryUtils";
+import {
+    isStatusFinished,
+    getProgressBarClass,
+    getBadgeClass,
+} from "./queryUtils";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import ActionCancel from "./components/ActionCancel";
 
@@ -117,22 +121,6 @@ class QueryResultsStatus extends Component {
         this.sendResultsActivePage(pageNumber);
     }
 
-    renderSwitchStatus(status) {
-        switch (status) {
-            case "done":
-                return "success";
-            case "cancelled":
-                return "danger";
-            case "expired":
-                return "warning";
-            case "processing":
-            case "querying":
-                return "info";
-            default:
-                return "info";
-        }
-    }
-
     componentDidUpdate(prevProps) {
         if (prevProps.qhash !== this.props.qhash) {
             this.setState({ activePage: 1 });
@@ -140,16 +128,26 @@ class QueryResultsStatus extends Component {
     }
 
     render() {
-        if (this.props.job && this.props.job.error) {
+        const { job } = this.props;
+        const {
+            status,
+            files_processed,
+            total_files,
+            files_in_progress,
+            files_errored,
+            files_matched,
+        } = job;
+
+        if (job && job.error) {
             return (
                 <div className="alert alert-danger">
                     <h2>Error occurred</h2>
-                    {this.props.job.error}
+                    {job.error}
                 </div>
             );
         }
 
-        if (!this.props.job) {
+        if (!job) {
             return (
                 <div>
                     <h2>
@@ -160,22 +158,15 @@ class QueryResultsStatus extends Component {
             );
         }
 
-        let progress = Math.floor(
-            (this.props.job.files_processed * 100) / this.props.job.total_files
-        );
-        let processing = Math.round(
-            (this.props.job.files_in_progress * 100) /
-                this.props.job.total_files
-        );
-        let processed =
-            this.props.job.files_processed + " / " + this.props.job.total_files;
-        let errored = Math.round(
-            (this.props.job.files_errored / this.props.job.total_files) * 100
-        );
-        let errorTooltip = `${this.props.job.files_errored} errors during processing`;
+        let progress = Math.floor((files_processed * 100) / total_files);
+        let processing = Math.round((files_in_progress * 100) / total_files);
+        let processed = files_processed + " / " + total_files;
+
+        let errored = Math.round((files_errored / total_files) * 100);
+        let errorTooltip = `${files_errored} errors during processing`;
         let cancel = <ActionCancel onClick={this.handleCancelJob} size="lg" />;
 
-        if (!this.props.job.total_files && this.props.job.status !== "done") {
+        if (!total_files && status !== "done") {
             progress = 0;
             processed = "-";
         }
@@ -190,20 +181,19 @@ class QueryResultsStatus extends Component {
             />
         ));
 
-        let progressBg = "bg-" + this.renderSwitchStatus(this.props.job.status);
-
-        if (finishedStatuses.includes(this.props.job.status)) {
+        const isFinished = isStatusFinished(status);
+        if (isFinished) {
             cancel = <span />;
         }
 
-        const lenMatches = this.props.job.files_matched;
+        const lenMatches = files_matched;
 
-        if (this.props.job.status === "expired") {
-            return ReturnExpiredJob(this.props.job.error);
+        if (status === "expired") {
+            return ReturnExpiredJob(job.error);
         }
         let results = <div />;
 
-        if (lenMatches === 0 && this.props.job.status === "done") {
+        if (lenMatches === 0 && status === "done") {
             progress = 100;
             results = <div className="alert alert-info">No matches found.</div>;
         } else if (lenMatches !== 0) {
@@ -246,13 +236,13 @@ class QueryResultsStatus extends Component {
             <div>
                 <div className="progress" style={{ marginTop: "55px" }}>
                     <div
-                        className={"progress-bar " + progressBg}
+                        className={getProgressBarClass(status)}
                         role="progressbar"
                         style={{ width: progress + "%" }}
                     >
                         {progress}%
                     </div>
-                    {this.props.job.total_files > 0 && processing > 0 && (
+                    {total_files > 0 && processing > 0 && (
                         <div
                             className={"progress-bar bg-warning"}
                             role="progressbar"
@@ -261,7 +251,7 @@ class QueryResultsStatus extends Component {
                             {processing}%
                         </div>
                     )}
-                    {this.props.job.files_errored > 0 && (
+                    {files_errored > 0 && (
                         <div
                             className={"progress-bar bg-danger"}
                             role="progressbar"
@@ -279,32 +269,23 @@ class QueryResultsStatus extends Component {
                     </div>
                     <div className="col-md-3">
                         Status:{" "}
-                        <span
-                            className={
-                                "badge badge-" +
-                                this.renderSwitchStatus(this.props.job.status)
-                            }
-                        >
-                            {this.props.job.status}
-                        </span>
+                        <span className={getBadgeClass(status)}>{status}</span>
                     </div>
                     <div className="col-md-3">
                         Processed: <span>{processed}</span>
                     </div>
                     <div className="col-md-3" style={{ textAlign: "right" }}>
                         <QueryTimer
-                            job={this.props.job}
-                            finishStatus={finishedStatuses}
+                            job={job}
+                            isFinished={isFinished}
                             duration={true}
                             countDown={true}
                         />{" "}
                         {cancel}
                     </div>
                 </div>
-                {this.props.job.error ? (
-                    <div className="alert alert-danger">
-                        {this.props.job.error}
-                    </div>
+                {job.error ? (
+                    <div className="alert alert-danger">{job.error}</div>
                 ) : (
                     <div />
                 )}
