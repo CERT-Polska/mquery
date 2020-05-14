@@ -174,9 +174,12 @@ def flatten_regex_or_tree(unit: Any) -> Optional[List[bytes]]:
         return left + right
     elif type(unit) is RegexpConcat:
         chars = [flatten_regex_or_tree(u) for u in unit.units]
-        if any(c is None for c in chars):
-            return None
-        return [b"".join(x[0] for x in chars)]
+        string = b""
+        for c in chars:
+            if c is None:
+                return None
+            string += c[0]
+        return [string]
     else:
         return None
 
@@ -195,7 +198,7 @@ def urisfy_regex(
             joined_string += unit.text.encode()
         elif type(unit) is RegexpGroup:
             or_strings = flatten_regex_or_tree(unit.unit)
-            if all(s is not None for s in or_strings):
+            if or_strings and all(s is not None for s in or_strings):
                 or_ursa_strings = [
                     ursify_plain_string(
                         s,
@@ -234,7 +237,7 @@ def ursify_regex_string(string: Regexp) -> Optional[UrsaExpression]:
         string.unit.units, is_wide=True, is_nocase=string.is_nocase
     )
 
-    if not regex_ascii and not regex_wide:
+    if not regex_ascii or not regex_wide:
         return None
 
     if string.is_wide and not string.is_ascii:
