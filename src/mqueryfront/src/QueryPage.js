@@ -4,7 +4,7 @@ import QueryResultsStatus from "./QueryResultsStatus";
 import QueryParseStatus from "./QueryParseStatus";
 import axios from "axios";
 import { API_URL } from "./config";
-import { finishedStatuses } from "./QueryUtils";
+import { isStatusFinished } from "./queryUtils";
 
 class QueryPage extends Component {
     constructor(props) {
@@ -109,12 +109,12 @@ class QueryPage extends Component {
                     LIMIT
             )
             .then((response) => {
-                let job = response.data.job;
+                const { job, matches } = response.data;
                 this.setState({
                     job: job,
-                    matches: response.data.matches,
+                    matches: matches,
                 });
-                let isDone = finishedStatuses.indexOf(job.status) !== -1;
+                const isDone = isStatusFinished(job.status);
                 if (isDone) {
                     return;
                 }

@@ -8,7 +8,7 @@ import FilteringTableHeader from "./components/FilteringTableHeader";
 import FilteringTitle from "./components/FilteringTitle";
 import Pagination from "react-js-pagination";
 import PropTypes from "prop-types";
-import { finishedStatuses } from "./QueryUtils";
+import { isStatusFinished } from "./queryUtils";
 
 const SearchJobRowEmpty = () => {
     return (
@@ -44,11 +44,12 @@ const SearchJobRow = (props) => {
     const rule_author = props.job.rule_author
         ? props.job.rule_author
         : "(no author)";
+    const isFinished = isStatusFinished(status);
     const { onRemove, onCancel } = props;
 
     const submittedDate = new Date(submitted * 1000).toISOString();
 
-    const actionBtn = finishedStatuses.includes(status) ? (
+    const actionBtn = isFinished ? (
         <ActionRemove onClick={onRemove} />
     ) : (
         <ActionCancel onClick={onCancel} />
@@ -82,6 +83,7 @@ const SearchJobRow = (props) => {
             <td className="text-center align-middle w-50">
                 <StatusProgress
                     status={status}
+                    isFinished={isFinished}
                     total_files={total_files}
                     files_processed={files_processed}
                     files_in_progress={files_in_progress}
