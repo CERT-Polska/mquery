@@ -79,10 +79,10 @@ def process_job(
             offset += 1
 
         FINISHED_STATES = ["cancelled", "failed", "done", "removed"]
-        if not matches and out["job"]["status"] in FINISHED_STATES:
-            break
+        if not matches:
+            if out["job"]["status"] in FINISHED_STATES:
+                break
 
-        if len(matches) < MAX_SAMPLES:
             time.sleep(1.0)
 
 
