@@ -16,6 +16,7 @@ export const getClassForStatus = (status) => {
             classSufix = "warning";
             break;
         case "cancelled":
+        case "failed":
             classSufix = "danger";
             break;
         case "removed":
