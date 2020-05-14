@@ -3,12 +3,16 @@ import PropTypes from "prop-types";
 import { getProgressBarClass } from "../queryUtils";
 
 const StatusProgress = (props) => {
-    const { status, total_files, files_processed } = props;
+    const { status, isFinished, total_files, files_processed } = props;
 
     const progressClass = getProgressBarClass(status);
 
     const percentage = Math.round(
-        total_files ? (files_processed * 100) / total_files : 0
+        total_files
+            ? (files_processed * 100) / total_files
+            : isFinished
+            ? 100
+            : 0
     );
 
     return (
@@ -38,6 +42,7 @@ const StatusProgress = (props) => {
 
 StatusProgress.propTypes = {
     status: PropTypes.string.isRequired,
+    isFinished: PropTypes.bool.isRequired,
     total_files: PropTypes.number.isRequired,
     files_processed: PropTypes.number.isRequired,
 };

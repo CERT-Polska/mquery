@@ -186,17 +186,15 @@ class QueryResultsStatus extends Component {
             cancel = <span />;
         }
 
-        const lenMatches = files_matched;
-
         if (status === "expired") {
             return ReturnExpiredJob(job.error);
         }
         let results = <div />;
 
-        if (lenMatches === 0 && status === "done") {
+        if (files_matched === 0 && status === "done") {
             progress = 100;
             results = <div className="alert alert-info">No matches found.</div>;
-        } else if (lenMatches !== 0) {
+        } else if (files_matched !== 0) {
             const styleFixed = {
                 tableLayout: "fixed",
             };
@@ -218,11 +216,11 @@ class QueryResultsStatus extends Component {
                         </thead>
                         <tbody>{matches}</tbody>
                     </table>
-                    {lenMatches > 0 && (
+                    {files_matched > 0 && (
                         <Pagination
                             activePage={this.state.activePage}
                             itemsCountPerPage={this.state.itemsPerPage}
-                            totalItemsCount={lenMatches}
+                            totalItemsCount={files_matched}
                             pageRangeDisplayed={5}
                             onChange={this.handlePageChange.bind(this)}
                             itemClass="page-item"
@@ -264,7 +262,7 @@ class QueryResultsStatus extends Component {
                 <div className="row m-0 pt-3">
                     <div className="col-md-3">
                         <p>
-                            Matches: <span>{lenMatches}</span>
+                            Matches: <span>{files_matched}</span>
                         </p>
                     </div>
                     <div className="col-md-3">

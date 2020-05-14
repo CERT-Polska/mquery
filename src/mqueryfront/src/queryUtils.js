@@ -1,5 +1,5 @@
 export const isStatusFinished = (status) =>
-    ["done", "cancelled", "failed", "expired"].includes(status);
+    ["done", "cancelled", "failed", "expired", "removed"].includes(status);
 
 export const getClassForStatus = (status) => {
     let classSufix = null;
@@ -18,7 +18,11 @@ export const getClassForStatus = (status) => {
         case "cancelled":
             classSufix = "danger";
             break;
+        case "removed":
+            classSufix = "dark";
+            break;
         default:
+            console.log(`getClassForStatus: unknown status="${status}"`);
             break;
     }
 
