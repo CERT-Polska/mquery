@@ -3,7 +3,7 @@ import itertools
 import re
 from typing import Any, Dict, List, Optional
 
-from yaramod import (  # type: ignore
+from yaramod import (# type: ignore
     AndExpression,
     EqExpression,
     GtExpression,
@@ -14,6 +14,9 @@ from yaramod import (  # type: ignore
     ParenthesesExpression,
     PlainString,
     Regexp,
+    RegexpConcat,
+    RegexpGroup,
+    RegexpOr,
     RegexpText,
     SetExpression,
     String,
@@ -160,6 +163,24 @@ def encode_wide_bytes(raw: bytes) -> bytes:
     return bytes(x for y in raw for x in [y, 0])
 
 
+def flatten_regex_or_tree(unit: Any) -> Optional[List[bytes]]:
+    if type(unit) is RegexpText:
+        return [unit.text.encode()]
+    elif type(unit) is RegexpOr:
+        left = flatten_regex_or_tree(unit.left)
+        right = flatten_regex_or_tree(unit.right)
+        if not left or not right:
+            return None
+        return left + right
+    elif type(unit) is RegexpConcat:
+        chars = [flatten_regex_or_tree(u) for u in unit.units]
+        if any(c is None for c in chars):
+            return None
+        return [b"".join(x[0] for x in chars)]
+    else:
+        return None
+
+
 def urisfy_regex(
     units: List[Any],
     is_ascii: bool = False,
@@ -172,6 +193,18 @@ def urisfy_regex(
     for i, unit in enumerate(units):
         if type(unit) is RegexpText:
             joined_string += unit.text.encode()
+        elif type(unit) is RegexpGroup:
+            or_strings = flatten_regex_or_tree(unit.unit)
+            if all(s is not None for s in or_strings):
+                or_ursa_strings = [
+                    ursify_plain_string(
+                        s,
+                        is_ascii=is_ascii,
+                        is_wide=is_wide,
+                        is_nocase=is_nocase,
+                    ) for s in or_strings
+                ]
+                strings.append(UrsaExpression.or_(*or_ursa_strings))
 
         if joined_string and (
             type(unit) is not RegexpText or i == len(units) - 1
@@ -257,7 +290,7 @@ def ursify_string(string: String) -> Optional[UrsaExpression]:
         return ursify_xor_string(string)
     elif string.is_plain:
         return ursify_plain_string(
-            string,
+            string.pure_text,
             is_ascii=string.is_ascii,
             is_wide=string.is_wide,
             is_nocase=string.is_nocase,
