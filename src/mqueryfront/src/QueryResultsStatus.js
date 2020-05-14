@@ -3,6 +3,7 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
+import ActionDownload from "./components/ActionDownload";
 import {
     isStatusFinished,
     getProgressBarClass,
@@ -10,6 +11,7 @@ import {
 } from "./queryUtils";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import ActionCancel from "./components/ActionCancel";
+import { faFileAlt, faArchive } from "@fortawesome/free-solid-svg-icons";
 
 function MatchItem(props) {
     const download_url =
@@ -222,7 +224,33 @@ class QueryResultsStatus extends Component {
                     >
                         <thead>
                             <tr>
-                                <th className="col-md-8">Matches</th>
+                                <th className="col-md-8">
+                                    <span class="d-inline-block mr-4">
+                                        Matches
+                                    </span>
+                                    <ActionDownload
+                                        title="Download sha256 hashes as .txt"
+                                        icon={faFileAlt}
+                                        downloadUrl={
+                                            API_URL +
+                                            "/download/hashes/" +
+                                            this.props.qhash
+                                        }
+                                        downloadName={
+                                            this.props.qhash + "_sha256.txt"
+                                        }
+                                    />
+                                    <ActionDownload
+                                        title="Download files as .zip"
+                                        icon={faArchive}
+                                        downloadUrl={
+                                            API_URL +
+                                            "/download/files/" +
+                                            this.props.qhash
+                                        }
+                                        downloadName={this.props.qhash + ".zip"}
+                                    />
+                                </th>
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>
