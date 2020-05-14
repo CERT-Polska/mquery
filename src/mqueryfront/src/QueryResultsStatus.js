@@ -8,6 +8,17 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 import ActionCancel from "./components/ActionCancel";
 
 function MatchItem(props) {
+    const download_url =
+        API_URL +
+        "/download?job_id=" +
+        encodeURIComponent(props.qhash) +
+        "&ordinal=" +
+        encodeURIComponent(props.ordinal) +
+        "&file_path=" +
+        encodeURIComponent(props.file);
+
+    const path = require("path");
+
     const metadata = Object.values(props.meta)
         .filter((v) => !v.hidden)
         .map((v) => (
@@ -17,20 +28,6 @@ function MatchItem(props) {
                     {v.display_text}
                 </span>
             </a>
-        ));
-
-    let hashes = Object.values(props.meta)
-        .filter((v) => v.hidden)
-        .map((v) => (
-            <CopyToClipboard text={v.display_text} key={v}>
-                <div
-                    style={{ fontFamily: "monospace" }}
-                    data-toggle="tooltip"
-                    title="Click to copy"
-                >
-                    {v.display_text}
-                </div>
-            </CopyToClipboard>
         ));
 
     let matches = <span></span>;
@@ -44,35 +41,54 @@ function MatchItem(props) {
         ));
     }
 
-    const download_url =
-        API_URL +
-        "/download?job_id=" +
-        encodeURIComponent(props.qhash) +
-        "&ordinal=" +
-        encodeURIComponent(props.ordinal) +
-        "&file_path=" +
-        encodeURIComponent(props.file);
-
-    const path = require("path");
-
     return (
         <tr>
             <td>
                 <div className="row m-0 text-truncate">
                     <div className="text-truncate" style={{ minWidth: 50 }}>
-                        <a
-                            href={download_url}
-                            data-toggle="tooltip"
-                            title={props.file}
-                        >
+                        <div>
+                            {props.meta.sha256.display_text}
+                            <small>
+                                <a
+                                    href={download_url}
+                                    data-toggle="tooltip"
+                                    title={props.file}
+                                    className="text-secondary"
+                                >
+                                    <i className="fa fa-download fa-xm ml-2" />
+                                </a>
+                                <CopyToClipboard
+                                    text={props.meta.sha256.display_text}
+                                    className="copyable-item"
+                                >
+                                    <span
+                                        data-toggle="tooltip"
+                                        title="Copy sha256 to clipboard"
+                                    >
+                                        <i className="fa fa-copy fa-xm ml-2" />
+                                    </span>
+                                </CopyToClipboard>
+                            </small>
+                        </div>
+                        <small class="text-secondary">
                             {path.basename(props.file)}
-                        </a>
+                            <CopyToClipboard
+                                text={path.basename(props.file)}
+                                className="copyable-item"
+                            >
+                                <span
+                                    data-toggle="tooltip"
+                                    title="Copy file name to clipboard"
+                                >
+                                    <i className="fa fa-copy fa-xm ml-2" />
+                                </span>
+                            </CopyToClipboard>
+                        </small>
+                        {matches}
+                        {metadata}
                     </div>
-                    {matches}
-                    {metadata}
                 </div>
             </td>
-            {props.collapsed ? <td>{hashes}</td> : null}
         </tr>
     );
 }
@@ -219,11 +235,6 @@ class QueryResultsStatus extends Component {
                         <thead>
                             <tr>
                                 <th className="col-md-8">Matches</th>
-                                {this.props.collapsed && (
-                                    <th className="col-md-4 d-none d-sm-table-cell">
-                                        SHA256
-                                    </th>
-                                )}
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>
