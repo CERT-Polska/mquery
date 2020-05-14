@@ -59,11 +59,11 @@ function MatchItem(props) {
                                 </a>
                                 <CopyToClipboard
                                     text={props.meta.sha256.display_text}
+                                    className="copyable-item"
                                 >
                                     <span
                                         data-toggle="tooltip"
                                         title="Copy sha256 to clipboard"
-                                        className="hash-item"
                                     >
                                         <i className="fa fa-copy fa-xm ml-2" />
                                     </span>
@@ -72,20 +72,21 @@ function MatchItem(props) {
                         </div>
                         <small class="text-secondary">
                             {path.basename(props.file)}
-                            <CopyToClipboard text={path.basename(props.file)}>
+                            <CopyToClipboard
+                                text={path.basename(props.file)}
+                                className="copyable-item"
+                            >
                                 <span
                                     data-toggle="tooltip"
                                     title="Copy file name to clipboard"
-                                    className="hash-item"
                                 >
                                     <i className="fa fa-copy fa-xm ml-2" />
                                 </span>
                             </CopyToClipboard>
                         </small>
                         {matches}
+                        {metadata}
                     </div>
-                    {metadata}
-                    <br />
                 </div>
             </td>
         </tr>

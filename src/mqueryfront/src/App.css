@@ -25,7 +25,7 @@
     color: var(--blue);
 }
 
-.hash-item {
+.copyable-item {
     cursor: pointer;
 }
 
