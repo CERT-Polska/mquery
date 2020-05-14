@@ -3,7 +3,7 @@ import itertools
 import re
 from typing import Any, Dict, List, Optional
 
-from yaramod import (# type: ignore
+from yaramod import (  # type: ignore
     AndExpression,
     EqExpression,
     GtExpression,
@@ -202,7 +202,8 @@ def urisfy_regex(
                         is_ascii=is_ascii,
                         is_wide=is_wide,
                         is_nocase=is_nocase,
-                    ) for s in or_strings
+                    )
+                    for s in or_strings
                 ]
                 strings.append(UrsaExpression.or_(*or_ursa_strings))
 
