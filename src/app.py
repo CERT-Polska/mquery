@@ -66,15 +66,11 @@ def download(job_id: str, ordinal: str, file_path: str) -> FileResponse:
 
 @app.get("/api/download/hashes/{hash}")
 def download_hashes(hash: str) -> Response:
-    hashes = ",".join(
-        list(
-            [
-                d["meta"]["sha256"]["display_text"]
-                for d in db.get_job_matches(JobId(hash)).matches
-            ]
-        )
+    hashes = "\n".join(
+        d["meta"]["sha256"]["display_text"]
+        for d in db.get_job_matches(JobId(hash)).matches
     )
-    return Response(hashes)
+    return Response(hashes + "\n")
 
 
 def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:

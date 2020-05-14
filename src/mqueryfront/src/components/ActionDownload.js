@@ -1,6 +1,5 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faDownload } from "@fortawesome/free-solid-svg-icons";
 
 const ActionDownload = (props) => {
     return (
@@ -8,9 +7,9 @@ const ActionDownload = (props) => {
             <button
                 className="btn shadow-none"
                 data-toggle="tooltip"
-                title="Download"
+                title={props.title}
             >
-                <FontAwesomeIcon icon={faDownload} size="sm" />
+                <FontAwesomeIcon icon={props.icon} size="sm" />
             </button>
         </a>
     );

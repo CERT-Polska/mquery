@@ -11,6 +11,7 @@ import {
 } from "./queryUtils";
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import ActionCancel from "./components/ActionCancel";
+import { faFileAlt, faArchive } from "@fortawesome/free-solid-svg-icons";
 
 function MatchItem(props) {
     const download_url =
@@ -224,34 +225,32 @@ class QueryResultsStatus extends Component {
                         <thead>
                             <tr>
                                 <th className="col-md-8">
-                                    Matches
+                                    <span class="d-inline-block mr-4">
+                                        Matches
+                                    </span>
                                     <ActionDownload
+                                        title="Download sha256 hashes as .txt"
+                                        icon={faFileAlt}
+                                        downloadUrl={
+                                            API_URL +
+                                            "/download/hashes/" +
+                                            this.props.qhash
+                                        }
+                                        downloadName={
+                                            this.props.qhash + "_sha256.txt"
+                                        }
+                                    />
+                                    <ActionDownload
+                                        title="Download files as .zip"
+                                        icon={faArchive}
                                         downloadUrl={
                                             API_URL +
                                             "/download/files/" +
                                             this.props.qhash
                                         }
-                                        downloadName={
-                                            this.props.qhash + "_files.zip"
-                                        }
+                                        downloadName={this.props.qhash + ".zip"}
                                     />
                                 </th>
-                                {this.props.collapsed && (
-                                    <th className="col-md-4 d-none d-sm-table-cell">
-                                        SHA256
-                                        <ActionDownload
-                                            downloadUrl={
-                                                API_URL +
-                                                "/download/hashes/" +
-                                                this.props.qhash
-                                            }
-                                            downloadName={
-                                                this.props.qhash +
-                                                "_sha256_hashes.txt"
-                                            }
-                                        />
-                                    </th>
-                                )}
                             </tr>
                         </thead>
                         <tbody>{matches}</tbody>
