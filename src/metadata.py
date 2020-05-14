@@ -1,5 +1,5 @@
 import json
-from abc import ABC, abstractmethod
+from abc import ABC
 from db import Database
 from typing import Any, Dict, Optional
 
@@ -16,6 +16,10 @@ class MetadataPlugin(ABC):
     cache_expire_time: int = DEFAULT_CACHE_EXPIRE_TIME
     #: Configuration keys required by plugin with description as a value
     config_fields: Dict[str, str] = {}
+    # can this plugin be used for prefiltering mwdb results?
+    is_filter = False
+    # can this plugin be used for extracting metadata?
+    is_extractor = False
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         self.db = db
@@ -53,10 +57,18 @@ class MetadataPlugin(ABC):
         Returns file unique identifier based on matched path.
 
         Intended to be overridden by plugin.
-       """
+        """
         return matched_fname
 
     def run(self, matched_fname: str, current_meta: Metadata) -> Metadata:
+        """
+        Extracts metadata and updates cache. This method can only be run if
+        the plugin sets `is_extractor` to True.
+
+        :param matched_fname: Filename of the processed file
+        :param current_meta: Metadata that will be updated
+        :return: New metadata
+        """
         identifier = self.identify(matched_fname)
         if identifier is None:
             return {}
@@ -72,14 +84,31 @@ class MetadataPlugin(ABC):
             self._cache_store(identifier, result)
         return result
 
-    @abstractmethod
+    def filter(self, matched_fname: str, file_path: str) -> Optional[str]:
+        """
+        Checks if the file is a good candidate for further processing,
+        and fix the file path if necessary.
+        :param matched_fname: Original file path coming from ursadb
+        :param file_path: Current path to the file contents
+        :return: New path to a file (may be the same path). None if the file
+        should be discarded.
+        """
+        raise NotImplementedError
+
+    def cleanup(self) -> None:
+        """
+        Optionally, clean up after the plugin, for example remove any
+        temporary files. Called after processing a single batch of files.
+        """
+        pass
+
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
         """
         Extracts metadata for matched path
 
-        Intended to be overridden by plugin.
+        Intended to be overridden by plugin, if is_extractor is True.
 
         :param identifier: File identifier returned by overridable
                            :py:meth:`MetadataPlugin.identify` method
@@ -87,5 +116,5 @@ class MetadataPlugin(ABC):
         :param current_meta: Metadata extracted so far by dependencies
         :return: Metadata object. If you can't extract metadata for current file,
                  return empty dict.
-       """
+        """
         raise NotImplementedError

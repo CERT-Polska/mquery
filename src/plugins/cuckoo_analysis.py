@@ -9,6 +9,7 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 class CuckooAnalysisMetadata(MetadataPlugin):
     cacheable = True
+    is_extractor = True
     config_fields = {"path": "Root of cuckoo analysis directory."}
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:

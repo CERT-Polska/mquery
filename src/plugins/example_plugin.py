@@ -5,6 +5,7 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 class ExampleTagPlugin(MetadataPlugin):
     cacheable = True
+    is_extractor = True
     config_fields = {
         "tag": "Everything will be tagged using that tag",
         "tag_url": "Tag URL e.g. http://google.com?q={tag}",

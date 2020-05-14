@@ -11,6 +11,7 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 class MalwarecageUploadsMetadata(MetadataPlugin):
     cacheable = False
+    is_extractor = True
     config_fields = {
         "mwdb_url": "URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/)",
         "mwdb_api_url": "API URL to the Malwarecage instance (e.g. https://mwdb.cert.pl/api/)",

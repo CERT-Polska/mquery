@@ -5,13 +5,15 @@ import config
 import json
 import sys
 from lib.ursadb import UrsaDb
-from util import setup_logging, update_sha
+from util import setup_logging, make_sha256_tag
 from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
 from metadata import MetadataPlugin, Metadata
-from plugins import METADATA_PLUGINS
+from plugins import load_plugins
+
+METADATA_PLUGINS = load_plugins(config.PLUGINS)
 
 
 @cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
@@ -134,49 +136,91 @@ class Agent:
         )
 
     def __update_metadata(
-        self, job: JobId, file_path: str, matches: List[str]
+        self, job: JobId, orig_name: str, path: str, matches: List[str]
     ) -> None:
-        """ After finding a match, push it into a database and
-        update the related metadata """
-        metadata: Metadata = {"job": job.hash}
+        """
+        Runs metadata plugins for the given file in a given job.
+        :param group_id: Identifier of the agent group this agent belongs to.
+        :type group_id: str
+        :param ursa_url: URL to connected ursadb instance. Ideally this should
+            be public, because this will allow mquery to collect measurements.
+        :type ursa_url: str
+        :param db: Reference to main database/task queue.
+        :type db: Database
+        """
+
+        # Initialise default values in the metadata.
+        metadata: Metadata = {
+            "job": job.hash,
+            "path": path,
+            "sha256": make_sha256_tag(path),
+        }
+        # Run all the plugins in configured order.
         for plugin in self.active_plugins:
+            if not plugin.is_extractor:
+                continue
             try:
-                extracted_meta = plugin.run(file_path, metadata)
+                extracted_meta = plugin.run(orig_name, metadata)
                 metadata.update(extracted_meta)
             except Exception:
                 logging.exception(
                     "Failed to launch plugin %s for %s",
                     plugin.get_name(),
-                    file_path,
+                    orig_name,
                 )
-        metadata.update(update_sha(file_path))
-        match = MatchInfo(file_path, metadata, matches)
+        # Remove unnecessary keys from the metadata.
+        del metadata["job"]
+        del metadata["path"]
+
+        # Update the database.
+        match = MatchInfo(orig_name, metadata, matches)
         self.db.add_match(job, match)
 
     def __execute_yara(self, job: JobId, files: List[str]) -> None:
         rule = compile_yara(self.db, job)
         num_matches = 0
         num_errors = 0
-        self.db.job_start_work(job, len(files))
-        for sample in files:
+        num_files = len(files)
+        self.db.job_start_work(job, num_files)
+
+        # filenames returned from ursadb are usually paths, but may be
+        # rewritten by plugins. Create a map {original_name: file_path}
+        filemap = {f: f for f in files}
+
+        for plugin in self.active_plugins:
+            if not plugin.is_filter:
+                continue
+            new_filemap = {}
+            for orig_name, current_path in filemap.items():
+                new_path = plugin.filter(orig_name, current_path)
+                if new_path:
+                    new_filemap[orig_name] = new_path
+            filemap = new_filemap
+
+        for orig_name, path in filemap.items():
             try:
-                matches = rule.match(sample)
+                matches = rule.match(path)
                 if matches:
                     self.__update_metadata(
-                        job, sample, [r.rule for r in matches]
+                        job, orig_name, path, [r.rule for r in matches]
                     )
                     num_matches += 1
             except yara.Error:
-                logging.error("Yara failed to check file %s", sample)
+                logging.error("Yara failed to check file %s", orig_name)
                 num_errors += 1
             except FileNotFoundError:
-                logging.error("Failed to open file for yara check: %s", sample)
+                logging.error(
+                    "Failed to open file for yara check: %s", orig_name
+                )
                 num_errors += 1
+
+        for plugin in self.active_plugins:
+            plugin.cleanup()
 
         if num_errors > 0:
             self.db.job_update_error(job, num_errors)
 
-        self.db.job_update_work(job, len(files), num_matches)
+        self.db.job_update_work(job, num_files, num_matches)
 
     def __yara_task(self, job: JobId, iterator: str) -> None:
         """Get a next batch of worm from the db. If there are still files

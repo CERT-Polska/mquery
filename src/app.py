@@ -14,7 +14,7 @@ from lib.yaraparse import parse_yara
 
 from util import mquery_version
 from db import Database, JobId
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Union, Dict
 
 from schema import (
     JobsSchema,
@@ -213,7 +213,7 @@ def backend_status() -> BackendStatusSchema:
 
 @app.get("/api/backend/datasets", response_model=BackendStatusDatasetsSchema)
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
-    datasets = {}
+    datasets: Dict[str, int] = {}
     for agent_spec in db.get_active_agents().values():
         try:
             ursa = UrsaDb(agent_spec.ursadb_url)
