@@ -13,7 +13,6 @@ from cachetools import cached, LRUCache
 from metadata import MetadataPlugin, Metadata
 from plugins import load_plugins
 
-
 METADATA_PLUGINS = load_plugins(config.PLUGINS)
 
 
