@@ -21,6 +21,6 @@ def test_literal_to_hex():
     yara_file = new_file.with_rule(rule).get()
 
     ascii_str = yara_file.rules[0].strings[0]
-    result = ursify_plain_string(ascii_str)
+    result = ursify_plain_string(ascii_str.pure_text, is_ascii=True)
 
     assert result.query == "{616263}"
