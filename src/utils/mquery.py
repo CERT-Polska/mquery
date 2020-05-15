@@ -102,18 +102,18 @@ def main():
         "--print-filenames",
         default=False,
         action="store_true",
-        help="Also print filenames",
+        help="Print matched filenames",
     )
     parser.add_argument(
         "--print-matches",
         default=False,
         action="store_true",
-        help="Also print matched rules",
+        help="Print matched rules",
     )
     parser.add_argument(
         "--save",
         default=None,
-        help="Download samples and save to the provided directory",
+        help="Download matched samples to the provided directory",
     )
 
     args = parser.parse_args()
