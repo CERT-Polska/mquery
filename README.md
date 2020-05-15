@@ -1,6 +1,6 @@
 # mquery: Blazingly fast Yara queries for malware analysts
 
-Ever had trouble searching for particular malware samples? Mquery is an
+Ever had trouble searching for malware samples? Mquery is an
 analyst-friendly web GUI to look through your digital warehouse.
 
 It can be used to search through terabytes of malware in a blink of an eye:

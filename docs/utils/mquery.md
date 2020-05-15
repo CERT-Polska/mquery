@@ -22,8 +22,8 @@ optional arguments:
 ## Example
 
 You can provide either a yara rule (`--yara` parameter) or existing job id
-(`--job` parameter). The script will then a new job or download existing one,
-and return all the results as a list of hashes, optionally with filenames
+(`--job` parameter). The script will then create a new job or download existing
+one, and return all the results as a list of hashes, optionally with filenames
 (`--print-filenames`) and matched rules (`--print-matches`). There is also an
 option to save samples to a local directory (with `--save DIRNAME`).
 

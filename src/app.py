@@ -159,7 +159,7 @@ def matches(
     hash: str, offset: int = Query(...), limit: int = Query(...)
 ) -> MatchesSchema:
     """
-    Gets a lost of matched files, along with metadata tags and other
+    Returns a list of matched files, along with metadata tags and other
     useful information. Results from this query can be used to download files
     using the `/download` endpoint.
     """
@@ -169,7 +169,8 @@ def matches(
 @app.get("/api/job/{job_id}", response_model=JobSchema, tags=["stable"])
 def job_info(job_id: str) -> JobSchema:
     """
-    Gets metadata about a single job. May be useful for monitoring job progress.
+    Returns a metadata for a single job. May be useful for monitoring 
+    a job progress.
     """
     return db.get_job(JobId(job_id))
 
@@ -186,8 +187,8 @@ def job_cancel(job_id: str) -> StatusSchema:
 @app.get("/api/job", response_model=JobsSchema, tags=["stable"])
 def job_statuses() -> JobsSchema:
     """
-    Gets statuses of all the jobs in the system. May take some time (> 1s) when
-    there is a lot of jobs.
+    Returns statuses of all the jobs in the system. May take some time (> 1s)
+    when there are a lot of them.
     """
     jobs = [db.get_job(job) for job in db.get_job_ids()]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
@@ -197,7 +198,7 @@ def job_statuses() -> JobsSchema:
 @app.get("/api/config", response_model=List[ConfigSchema], tags=["internal"])
 def config_list() -> List[ConfigSchema]:
     """
-    Gets the current database configuration.
+    Returns the current database configuration.
 
     This endpoint is not stable and may be subject to change in the future.
     """
@@ -254,7 +255,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 @app.get("/api/backend", response_model=BackendStatusSchema, tags=["internal"])
 def backend_status() -> BackendStatusSchema:
     """
-    Gets the current status of backend services, and returns it. Intended to
+    Returns the current status of backend services, and returns it. Intended to
     be used by the webpage.
 
     This endpoint is not stable and may be subject to change in the future.
