@@ -1,4 +1,4 @@
-# Installing mquery
+# How to install mquery
 
 Supported installation and deployment methods:
 
