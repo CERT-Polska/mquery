@@ -169,7 +169,7 @@ def matches(
 @app.get("/api/job/{job_id}", response_model=JobSchema, tags=["stable"])
 def job_info(job_id: str) -> JobSchema:
     """
-    Returns a metadata for a single job. May be useful for monitoring 
+    Returns a metadata for a single job. May be useful for monitoring
     a job progress.
     """
     return db.get_job(JobId(job_id))

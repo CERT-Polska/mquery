@@ -123,8 +123,10 @@ will be renamed from `batch_XYZ.txt` to `batch_XYZ.error`, and error messages wi
 be saved to `batch_XYZ.message`.
 
 You can increase the number of parallel workers with the `--workers` switch,
-but don't overdo it - indexing needs a lot of RAM and by default Ursadb has only
-4 workers, so increasing this higher won't help anything.
+but don't overdo it - indexing needs
+[a lot of RAM](https://cert-polska.github.io/ursadb/docs/limits.html), and by
+default Ursadb has only 4 workers, so increasing this too much won't speed
+things up.
 
 If the indexing crashes or has to be stopped for some reason, you can resume it
 using the same command, with the same working directory.
