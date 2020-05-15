@@ -2,6 +2,7 @@
 
 ## User guide
 
+- [Installation](../INSTALL.md): Installation instruction.
 - [Indexing](./indexing.md): Indexing files is one of the most important things in
     mquery. In simple cases it can be solved without leaving the web UI, but
     many things will require more advanced approach. Read this if you need to
@@ -10,6 +11,7 @@
     accelerates queries, what will, and what won't work.
 - [Utility scripts](./utils): Mquery ships with a few useful scripts.
     Here you can find documentation for them.
+- [For future contributors](../CONTRIBUTING.md): How to contribute.
 
 ## Relevant [ursadb's documentation](https://cert-polska.github.io/ursadb/docs)
 

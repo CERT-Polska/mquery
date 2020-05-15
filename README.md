@@ -13,11 +13,11 @@ accelerate yara queries with ngrams.
 
 ## Demo
 
-Take a look at [https://mquery.tailcall.net](https://mquery.tailcall.net) for an (unofficial) demo.
+Public instance will be created soon, stay tuned...
 
 ## Quickstart
 
-### 1. Start the system
+### 1. Install and start
 
 The easiest way to do this is with `docker-compose`:
 
@@ -90,6 +90,11 @@ if you plan a bigger deployment.
 
 You can also read the hosted version here:
 [cert-polska.github.io/mquery/docs](https://cert-polska.github.io/mquery/docs).
+
+## Installation
+
+See the
+[installation instruction](./INSTALL.md).
 
 ## Contributing
 
