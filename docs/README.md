@@ -8,6 +8,8 @@
     index a considerable number of files.
 - [Yara support and limitations](./yara.md): Explains how mquery
     accelerates queries, what will, and what won't work.
+- [Utility scripts](./utils): Mquery ships with a few useful scripts.
+    Here you can find documentation for them.
 
 ## Relevant [ursadb's documentation](https://cert-polska.github.io/ursadb/docs)
 

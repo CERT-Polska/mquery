@@ -223,7 +223,7 @@ def reindex_files() -> StatusSchema:
 
 
 @app.post("/api/compact", response_model=StatusSchema, tags=["internal"])
-def reindex_files() -> StatusSchema:
+def compact_files() -> StatusSchema:
     """
     Broadcasts compcat command to all ursadb instances. This uses `compact all;`
     subcommand (which is more intuitive because it ways compacts), except the
@@ -236,7 +236,7 @@ def reindex_files() -> StatusSchema:
 
     This endpoint is not stable and may be subject to change in the future.
     """
-    db.broadcast_command(f'compact all;')
+    db.broadcast_command(f"compact all;")
     return StatusSchema(status="ok")
 
 

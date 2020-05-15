@@ -9,7 +9,7 @@ so it is only necessary to run YARA against a small fraction of binaries:
 ![mquery flowchart](mquery-flowchart.png?raw=1)
 
 Internally this is implemented with an n-gram database called
-ursadb. Visit [ursadb's repository](https://github.com/CERT-Polska/ursadb) for more details.
+Ursadb. Visit [ursadb's repository](https://github.com/CERT-Polska/ursadb) for more details.
 
 In short, we look for short (3-4) byte fragments in indexed files, and we can
 tell (almost) immediately which files contain the given 3-byte pattern.

@@ -30,12 +30,14 @@ docker-compose up --scale daemon=3  # building the images will take a while
 
 The web interface should be available at `http://localhost`.
 
+![](./docs/recent-jobs.png)
+
 *(For more installation options see the [installation manual](./INSTALL.md) ).*
 
 ### 2. Add the files
 
 Put some files in the `SAMPLES_DIR` (by default `./samples` in the repository,
-configurable with variable in `.env` file).
+configurable with variable in the `.env` file).
 
 ### 3. Index your collection
 
@@ -45,30 +47,41 @@ page:
 ![](./docs/index-button.png)
 
 This will scan samples directory for all new files and index them. You can
-monitor the progress in the `tasks` window on the left. You have to
-repeat this every time you want to add new files!
+monitor the progress in the `tasks` window on the left:
+
+![](./docs/indexing.png)
+
+You have to repeat this process every time you want to add new files!
+
+After indexing is over, you will notice new datasets:
+
+![](./docs/indexed-datasets.png)
+
+Merging datasets takes time, but having too many datasets slows mquery down.
+Click `compact` button to merge some datasets with each other (or use the
+[compactall](./docs/utils/compactall.md) script).
+
+After this process, you end up with a nice, clean index:
+
+![](./docs/compacted-datasets.png)
 
 This is a good and easy way to start, but if you have a big collection you are
 strongly encouraged to read [indexing page](./docs/indexing.md) in the manual. 
 
 ### 4. Test it
 
-Now your files should be searchable - try the following Yara rule (or any other):
+Now your files should be searchable - insert any Yara rule into the search
+window and click `Query`. Just for demonstration, I've indexed the source code
+of this application and tested this Yara rule:
 
 ```
-rule yara_rule_test
-{
-    meta:
-        author = "cert.pl"
-    strings:
-        $emotet4_rsa_public = {
-            8d ?? ?? 5? 8d ?? ?? 5? 6a 00 68 00 80 00 00 ff 35 [4] ff
-            35 [4] 6a 13 68 01 00 01 00 ff 15 [4] 85
-        }
-    condition:
-        all of them
+rule mquery_exceptions {
+    strings: $a = "Exception"
+    condition: all of them
 }
 ```
+
+![](./docs/query-window.png)
 
 ## Learn more
 

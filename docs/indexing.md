@@ -1,4 +1,4 @@
-# indexing
+# Indexing
 
 Indexing is one of the two most important things you can do with mquery
 (the other one is searching). So it's pretty useful to understand how it works.
@@ -10,13 +10,13 @@ Just click the button and it works:
 
 ![](index-button.png)
 
-This will scan and index preconfigured folder with samples, and will work
+This will scan and index the preconfigured folder with samples, and will work
 out of the box with the docker configuration.
 
-This method is the simplest one, and should be enough for small to medium collections.
+This method is the simplest one and should be enough for small to medium collections.
 Unfortunately, it's not very flexible or doesn't scale well. The biggest problem
 is failure-resistance - in case of database/server crash, the indexing progress
-won't be saved and you'll have to restart it from beginning. This matters when you
+won't be saved and you'll have to restart it from the beginning. This matters when you
 index many millions of files.
 If you need something more powerful or robust, continue reading.
 
@@ -31,13 +31,13 @@ sudo docker-compose exec ursadb ursacli
 ursadb>
 ```
 
-This will start ursadb client command prompt. Type:
+This will start Ursadb client command prompt. Type:
 
 ```
 ursadb> index "/mnt/samples";
 ```
 
-To index `"/mnt/samples"` directory. By default this will only use `gram3` index.
+To index `"/mnt/samples"` directory. By default, this will only use `gram3` index.
 It's a good idea to use all of them for better results:
 
 
@@ -47,8 +47,8 @@ ursadb> index "/mnt/samples" with [gram3, text4, wide8, hash4];
 
 This is exactly what the `reindex` button does under the hood.
 
-There are more variations of this command. For example you can:
- - Index a list of files, or even read that list from file. 
+There are more variations of this command. For example, you can:
+ - Index a list of files, or even read that list from a file. 
  - Tag all indexed samples with arbitrary metadata.
  - Disable safety measures that protect you from indexing the same file twice.
 
@@ -63,7 +63,7 @@ of a single transaction, so database/server crash will delete all progress.
 
 More advanced indexing workflows are supported with a separate script. To use
 it, open a terminal in `mquery/src` directory. This method is slower
-than the previous ones, but can be parallelised easily.
+than the previous ones but can be parallelised easily.
 
 There are two stages: `prepare` and `index`.
 
@@ -82,7 +82,7 @@ For docker you also need `--path-mount` argument (`./samples` are visible as
 python3 -m utils.index --mode prepare --workdir ~/workdir --path ../samples --path-mount /mnt/samples
 ```
 
-After that command, `./samples` directory will be scanned for new samples,
+After that command, the `./samples` directory will be scanned for new samples,
 and `~/workdir` directory will contain a list of batches (by default with
 1000 files per batch). You can check them manually to ensure they have the files
 you expect:
@@ -118,15 +118,15 @@ INFO:root:Index.5: Unlinking the workdir.
 ```
 
 That will take some time. Files that are currently being processed are renamed to `.wip`
-and removed later. In case there are any errors, relevant file
+and removed later. In case there are any errors, the relevant file
 will be renamed from `batch_XYZ.txt` to `batch_XYZ.error`, and error messages will
 be saved to `batch_XYZ.message`.
 
 You can increase the number of parallel workers with the `--workers` switch,
-but don't overdo it - indexing needs a lot of RAM and by default ursadb has only
+but don't overdo it - indexing needs a lot of RAM and by default Ursadb has only
 4 workers, so increasing this higher won't help anything.
 
-If the indexing crashes, or has to be stopped for some reason, you can resume it
+If the indexing crashes or has to be stopped for some reason, you can resume it
 using the same command, with the same working directory.
 
 ### 3. Advanced options

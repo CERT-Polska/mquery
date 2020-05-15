@@ -6,10 +6,31 @@ There are two types of plugins:
  - [`filter plugins`](#filter-plugins) - run before yara matching, can discard files
  - [`metadata plugins`](#metadata-plugins) - run after yara matching, can add additional metadata
 
+## Configuration
+
+Visit the `/config` endpoint to change configuration variables required
+by plugins.
+
+![](plugin-config.png)
+
+To add a new plugin to the system, you need to change PLUGINS key in
+`config.py` for bare metal setup. For example:
+
+```python
+PLUGINS = ["plugins.mwdb_uploads:MalwarecageUploadsMetadata"]
+```
+
+To load a plugin `MalwarecageUploadsMetadata` from `plugins.mwdb_uploads`
+module.
+
+To load plugins with docker-compose deployment, you can change
+`MQUERY_PLUGINS` environment variable in the container to load existing
+plugin, but to load your own plugin you need to create your own image.
+
 ## Filter plugins
 
 Filter plugins can be used to discard files quickly (before even running
-yara rules), or to process raw paths returned from ursadb.
+yara rules), or to process raw paths returned from Ursadb.
 
 The very simple example of a filter plugin is
 [RegexBlacklistPlugin](https://github.com/CERT-Polska/mquery/tree/master/src/plugins/blacklist.py)
