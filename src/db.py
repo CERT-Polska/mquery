@@ -209,9 +209,15 @@ class Database:
         else:
             end = offset + limit - 1
         meta = self.redis.lrange("meta:" + job.hash, offset, end)
-        return MatchesSchema(
-            job=self.get_job(job), matches=[json.loads(m) for m in meta]
-        )
+        matches = [json.loads(m) for m in meta]
+        for match in matches:
+            # Compatibility fix for old jobs, without sha256 metadata key.
+            if "sha256" not in match["meta"]:
+                match["meta"]["sha256"] = {
+                    "display_text": "0" * 64,
+                    "hidden": True,
+                }
+        return MatchesSchema(job=self.get_job(job), matches=matches)
 
     def reload_configuration(self, config_version: int):
         # Send request to any of agents that configuration must be reloaded
