@@ -37,8 +37,13 @@ class QueryTimer extends Component {
     }
 
     render() {
-        if (!this.props.job.submitted || this.props.isFinished) {
+        if (!this.props.job.submitted) {
             return null;
+        }
+
+        if (this.props.isFinished) {
+            const duration = this.props.job.finished - this.props.job.submitted;
+            return <i>took {this.getRenderTime(duration)}</i>;
         }
 
         let durationSec;
