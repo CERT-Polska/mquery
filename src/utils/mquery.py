@@ -89,7 +89,7 @@ def process_job(
 def main():
     parser = argparse.ArgumentParser(description="")
 
-    group = parser.add_mutually_exclusive_group()
+    group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--yara", help="Yara rule to use for query")
     group.add_argument("--job", help="Job ID to print or download")
 

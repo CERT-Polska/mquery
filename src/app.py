@@ -29,9 +29,6 @@ from schema import (
     MatchesSchema,
     StatusSchema,
     ConfigSchema,
-    UserSettingsSchema,
-    UserInfoSchema,
-    UserAuthSchema,
     BackendStatusSchema,
     BackendStatusDatasetsSchema,
     AgentSchema,
@@ -55,8 +52,16 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
     return response
 
 
-@app.get("/api/download")
-def download(job_id: str, ordinal: str, file_path: str) -> FileResponse:
+@app.get("/api/download", tags=["stable"])
+def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
+    """
+    Sends a file from given `file_path`. This path should come from
+    results of one of the previous searches.
+
+    This endpoint needs `job_id` that found the specified file, and `ordinal`
+    (index of the file in that job), to ensure that user can't download
+    arbitrary files (for example "/etc/passwd").
+    """
     if not db.job_contains(JobId(job_id), ordinal, file_path):
         raise NotFound("No such file in result set.")
 
@@ -94,10 +99,15 @@ async def download_files(hash: str) -> StreamingResponse:
 @app.post(
     "/api/query",
     response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
+    tags=["stable"],
 )
 def query(
     data: QueryRequestSchema = Body(...),
 ) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
+    """
+    Starts a new search. Response will contain a new job ID that can be used
+    to check the job status and download matched files.
+    """
     try:
         rules = parse_yara(data.raw_yara)
     except Exception as e:
@@ -144,77 +154,112 @@ def query(
     return QueryResponseSchema(query_hash=job.hash)
 
 
-@app.get("/api/matches/{hash}", response_model=MatchesSchema)
+@app.get("/api/matches/{hash}", response_model=MatchesSchema, tags=["stable"])
 def matches(
     hash: str, offset: int = Query(...), limit: int = Query(...)
 ) -> MatchesSchema:
+    """
+    Returns a list of matched files, along with metadata tags and other
+    useful information. Results from this query can be used to download files
+    using the `/download` endpoint.
+    """
     return db.get_job_matches(JobId(hash), offset, limit)
 
 
-@app.get("/api/job/{job_id}", response_model=JobSchema)
+@app.get("/api/job/{job_id}", response_model=JobSchema, tags=["stable"])
 def job_info(job_id: str) -> JobSchema:
+    """
+    Returns a metadata for a single job. May be useful for monitoring
+    a job progress.
+    """
     return db.get_job(JobId(job_id))
 
 
-@app.delete("/api/job/{job_id}", response_model=StatusSchema)
+@app.delete("/api/job/{job_id}", response_model=StatusSchema, tags=["stable"])
 def job_cancel(job_id: str) -> StatusSchema:
+    """
+    Cancels the job with a provided `job_id`.
+    """
     db.cancel_job(JobId(job_id))
     return StatusSchema(status="ok")
 
 
-@app.get("/api/config", response_model=List[ConfigSchema])
-def config_list() -> List[ConfigSchema]:
-    return db.get_plugins_config()
-
-
-@app.post("/api/config/edit", response_model=StatusSchema)
-def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
-    db.set_plugin_configuration_key(data.plugin, data.key, data.value)
-    return StatusSchema(status="ok")
-
-
-@app.get("/api/user/settings", response_model=UserSettingsSchema)
-def user_settings() -> UserSettingsSchema:
-    return UserSettingsSchema(can_register=True, plugin_name="Redis")
-
-
-@app.post("/api/user/register", response_model=StatusSchema)
-def user_register(auth: UserAuthSchema = Body(...)) -> StatusSchema:
-    if auth.username.startswith("a"):
-        return StatusSchema(status="ok")
-    raise HTTPException(status_code=400, detail="This user already exists")
-
-
-@app.post("/api/user/login", response_model=StatusSchema)
-def user_login(auth: UserAuthSchema = Body(...)) -> StatusSchema:
-    if auth.username.startswith("a"):
-        return StatusSchema(status="ok")
-    raise HTTPException(status_code=400, detail="Wrong password")
-
-
-@app.get("/api/user/{name}/info", response_model=UserInfoSchema)
-def user_info(name: str) -> UserInfoSchema:
-    return UserInfoSchema(id=1, name=name)
-
-
-@app.get("/api/user/{name}/jobs", response_model=List[JobSchema])
-def user_jobs(name: str) -> List[JobSchema]:
-    return job_statuses()
-
-
-@app.get("/api/job", response_model=JobsSchema)
+@app.get("/api/job", response_model=JobsSchema, tags=["stable"])
 def job_statuses() -> JobsSchema:
-    jobs = [
-        db.get_job(job)
-        for job in db.get_job_ids()
-        if db.get_job(job).status != "removed"
-    ]
+    """
+    Returns statuses of all the jobs in the system. May take some time (> 1s)
+    when there are a lot of them.
+    """
+    jobs = [db.get_job(job) for job in db.get_job_ids()]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
     return JobsSchema(jobs=jobs)
 
 
-@app.get("/api/backend", response_model=BackendStatusSchema)
+@app.get("/api/config", response_model=List[ConfigSchema], tags=["internal"])
+def config_list() -> List[ConfigSchema]:
+    """
+    Returns the current database configuration.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    return db.get_plugins_config()
+
+
+@app.post("/api/index", response_model=StatusSchema, tags=["internal"])
+def reindex_files() -> StatusSchema:
+    """
+    Reindex files in the configured default directory.
+
+    There are no server-side checks to avoid indexing multiple times at the
+    same time, care should be taken when using it from user scripts.
+    This is also not very efficient for large datasets - take a look at
+    the documentation for indexing and `index.py` script to learn more.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    if config.INDEX_DIR is not None:
+        types = "[gram3, text4, wide8, hash4]"
+        db.broadcast_command(f'index "{config.INDEX_DIR}" with {types};')
+    return StatusSchema(status="ok")
+
+
+@app.post("/api/compact", response_model=StatusSchema, tags=["internal"])
+def compact_files() -> StatusSchema:
+    """
+    Broadcasts compcat command to all ursadb instances. This uses `compact all;`
+    subcommand (which is more intuitive because it ways compacts), except the
+    recommended `compact smart;` which ignores useless merges. Because of this,
+    and also because of lack of control, this it's not recommended for advanced
+    users - see documentation and `compactall.py` script to learn more.
+
+    This still won't merge datasets of different types or with different tags,
+    and will silently do nothing in such case.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    db.broadcast_command(f"compact all;")
+    return StatusSchema(status="ok")
+
+
+@app.post("/api/config/edit", response_model=StatusSchema, tags=["internal"])
+def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
+    """
+    Change a given configuration key to a specified value.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    db.set_plugin_configuration_key(data.plugin, data.key, data.value)
+    return StatusSchema(status="ok")
+
+
+@app.get("/api/backend", response_model=BackendStatusSchema, tags=["internal"])
 def backend_status() -> BackendStatusSchema:
+    """
+    Returns the current status of backend services, and returns it. Intended to
+    be used by the webpage.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
     agents = []
     components = {
         "mquery": mquery_version(),
@@ -240,8 +285,21 @@ def backend_status() -> BackendStatusSchema:
     return BackendStatusSchema(agents=agents, components=components,)
 
 
-@app.get("/api/backend/datasets", response_model=BackendStatusDatasetsSchema)
+@app.get(
+    "/api/backend/datasets",
+    response_model=BackendStatusDatasetsSchema,
+    tags=["internal"],
+)
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
+    """
+    Returns a combined list of datasets from all agents.
+
+    Caveat: In case of collision of dataset ids when there are multiple agents,
+    this API will only return one dataset per colliding ID. Collision is
+    extremally unlikely though and it shouldn't be a problem in the real world.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
     datasets: Dict[str, int] = {}
     for agent_spec in db.get_active_agents().values():
         try:

@@ -299,6 +299,9 @@ class Agent:
             # Reload configuration. Version will be updated during reinitialization,
             # so we don't receive our own request.
             self.__initialize_agent()
+        elif task.type == TaskType.COMMAND:
+            logging.info("Executing raw command: %s", task.data)
+            self.ursa.execute_command(task.data)
         elif task.type == TaskType.SEARCH:
             job = JobId(task.data)
             logging.info(f"search: {job.hash}")
