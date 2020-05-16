@@ -3,7 +3,6 @@ import axios from "axios/index";
 import { API_URL } from "./config";
 import Pagination from "react-js-pagination";
 import QueryTimer from "./QueryTimer";
-import ActionDownload from "./components/ActionDownload";
 import {
     isStatusFinished,
     getProgressBarClass,
@@ -228,28 +227,47 @@ class QueryResultsStatus extends Component {
                                     <span class="d-inline-block mr-4">
                                         Matches
                                     </span>
-                                    <ActionDownload
-                                        title="Download sha256 hashes as .txt"
-                                        icon={faFileAlt}
-                                        downloadUrl={
-                                            API_URL +
-                                            "/download/hashes/" +
-                                            this.props.qhash
-                                        }
-                                        downloadName={
-                                            this.props.qhash + "_sha256.txt"
-                                        }
-                                    />
-                                    <ActionDownload
-                                        title="Download files as .zip"
-                                        icon={faArchive}
-                                        downloadUrl={
-                                            API_URL +
-                                            "/download/files/" +
-                                            this.props.qhash
-                                        }
-                                        downloadName={this.props.qhash + ".zip"}
-                                    />
+                                    <div className="dropdown d-inline">
+                                        <i
+                                            className="dropdown-toggle fa fa-download text-secondary"
+                                            id="dropdown-download"
+                                            data-toggle="dropdown"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                        ></i>
+                                        <div
+                                            className="dropdown-menu"
+                                            aria-labelledby="dropdown-download"
+                                        >
+                                            <a
+                                                className="dropdown-item"
+                                                download={
+                                                    this.props.qhash + ".zip"
+                                                }
+                                                href={
+                                                    API_URL +
+                                                    "/download/files/" +
+                                                    this.props.qhash
+                                                }
+                                            >
+                                                Download files (.zip)
+                                            </a>
+                                            <a
+                                                className="dropdown-item"
+                                                download={
+                                                    this.props.qhash +
+                                                    "_sha256.txt"
+                                                }
+                                                href={
+                                                    API_URL +
+                                                    "/download/hashes/" +
+                                                    this.props.qhash
+                                                }
+                                            >
+                                                Download sha256 hashes (.txt)
+                                            </a>
+                                        </div>
+                                    </div>
                                 </th>
                             </tr>
                         </thead>
