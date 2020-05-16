@@ -195,6 +195,9 @@ class Database:
     ) -> Optional[str]:
         return self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
 
+    def dataset_query_done(self, job: JobId):
+        self.redis.hincrby(job.key, "datasets_to_query", -1)
+
     def job_datasets_left(self, agent_id: str, job: JobId) -> int:
         return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")
 

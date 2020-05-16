@@ -105,6 +105,7 @@ class Agent:
         self.db.update_job_files(job_id, file_count)
         self.db.agent_start_job(self.group_id, job_id, iterator)
         self.db.agent_continue_search(self.group_id, job_id)
+        self.db.dataset_query_done(job_id)
 
     def __load_plugins(self) -> None:
         self.plugin_config_version: int = self.db.get_plugin_config_version()
@@ -262,7 +263,7 @@ class Agent:
         if (
             j.status == "processing"
             and j.files_processed == j.total_files
-            and self.db.job_datasets_left(self.group_id, job) == 0
+            and j.datasets_to_query == 0
         ):
             # The job is over, work of this agent as done.
             self.db.agent_finish_job(job)
