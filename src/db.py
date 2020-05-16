@@ -101,6 +101,7 @@ class Database:
             files_errored=int(data.get("files_errored", 0)),
             iterator=data.get("iterator", None),
             taint=data.get("taint", None),
+            datasets_to_query=data.get("datasets_to_query", 0),
         )
 
     def remove_query(self, job: JobId) -> None:
@@ -170,6 +171,7 @@ class Database:
             "total_files": 0,
             "files_errored": 0,
             "agents_left": len(agents),
+            "datasets_to_query": 0,
         }
         if taint is not None:
             job_obj["taint"] = taint
@@ -188,12 +190,16 @@ class Database:
     ) -> None:
         if datasets:
             self.redis.lpush(f"job-ds:{agent_id}:{job.hash}", *datasets)
+            self.redis.hincrby(job.key, "datasets_to_query", len(datasets))
         self.redis.hset(job.key, "status", "processing")
 
     def get_next_search_dataset(
         self, agent_id: str, job: JobId
     ) -> Optional[str]:
-        return self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
+        next_job = self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
+        if next_job:
+            self.redis.hincrby(job.key, "datasets_to_query", -1)
+        return next_job
 
     def job_datasets_left(self, agent_id: str, job: JobId) -> int:
         return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")

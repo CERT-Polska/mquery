@@ -18,6 +18,7 @@ class JobSchema(BaseModel):
     files_errored: int
     iterator: Optional[str]
     taint: Optional[str]
+    datasets_to_query: int
 
 
 class JobsSchema(BaseModel):
