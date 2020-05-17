@@ -56,7 +56,9 @@ def index_files(
     ursa_url, types, tags, batch, compact_threshold = proc_params
     ursa = UrsaDb(ursa_url)
 
-    current_datasets = len(ursa.topology()["result"]["datasets"])
+    current_datasets = len(
+        ursa.execute_command("topology;")["result"]["datasets"]
+    )
     if current_datasets > compact_threshold:
         ursa.execute_command("compact smart;")
 
@@ -146,7 +148,9 @@ def index(
         working_datasets = workers * 20 + 40
 
     ursa = UrsaDb(ursadb)
-    current_datasets = len(ursa.topology()["result"]["datasets"])
+    current_datasets = len(
+        ursa.execute_command("topology;")["result"]["datasets"]
+    )
     compact_threshold = current_datasets + working_datasets
 
     logging.info("Index.1: Compact threshold = %s.", compact_threshold)
