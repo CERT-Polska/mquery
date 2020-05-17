@@ -77,3 +77,9 @@
     -webkit-box-sizing: border-box;
     border: 2px solid rgb(238, 238, 238);
 }
+
+.dropdown i:hover,
+.dropdown.show i {
+    cursor: pointer;
+    color: var(--blue) !important;
+}
