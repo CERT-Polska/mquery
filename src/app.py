@@ -192,6 +192,7 @@ def job_statuses() -> JobsSchema:
     """
     jobs = [db.get_job(job) for job in db.get_job_ids()]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
+    jobs = [j for j in jobs if j.status != "removed"]
     return JobsSchema(jobs=jobs)
 
 
