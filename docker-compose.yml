@@ -1,6 +1,7 @@
 version: '3'
 services:
   web:
+    restart: always
     build:
       context: .
       dockerfile: deploy/docker/web.Dockerfile
@@ -14,6 +15,7 @@ services:
       - "redis"
       - "ursadb"
   daemon:
+    restart: always
     build:
       context: .
       dockerfile: deploy/docker/daemon.Dockerfile
@@ -26,6 +28,7 @@ services:
       - "redis"
       - "ursadb"
   ursadb:
+    restart: always
     build:
       context: ursadb/
       dockerfile: Dockerfile
@@ -33,4 +36,5 @@ services:
     - "${SAMPLES_DIR}:/mnt/samples"
     - "${INDEX_DIR}:/var/lib/ursadb"
   redis:
+    restart: always
     image: redis
