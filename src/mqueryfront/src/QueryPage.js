@@ -76,7 +76,6 @@ class QueryPage extends Component {
                 matches: null,
                 job: null,
                 activePage: 1,
-                resetPage: false,
             });
         }
     }
@@ -92,6 +91,7 @@ class QueryPage extends Component {
         if (typeof rawYara !== "undefined") {
             this.setState({ rawYara: rawYara });
         }
+
         if (!newQhash) {
             this.props.history.push("/");
         } else {
