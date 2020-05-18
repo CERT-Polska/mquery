@@ -74,6 +74,9 @@ class QueryMonaco extends Component {
         if (this.props.error !== prevProps.error) {
             this.setError(...this.props.error);
         }
+        if (prevProps.rawYara !== "" && this.props.rawYara === "") {
+            this.editor.setValue("");
+        }
     }
 
     render() {

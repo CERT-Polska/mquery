@@ -15,7 +15,6 @@ class QueryPage extends Component {
         if (this.props.match.params.hash) {
             qhash = this.props.match.params.hash;
         }
-
         this.state = {
             mode: "query",
             collapsed: false,
@@ -24,6 +23,8 @@ class QueryPage extends Component {
             queryPlan: null,
             queryError: null,
             datasets: {},
+            matches: null,
+            job: null,
             activePage: 1,
         };
 
@@ -55,6 +56,31 @@ class QueryPage extends Component {
         });
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        if (
+            this.props.match.path === "/" &&
+            this.props.location.state &&
+            this.props.location.state.fromNavigation &&
+            (typeof prevProps.location.state === "undefined" ||
+                typeof prevProps.location.state.fromNavigation === "undefined")
+        ) {
+            //reset page to unitial state
+            this.setState({
+                mode: "query",
+                collapsed: false,
+                qhash: null,
+                rawYara: "",
+                queryPlan: null,
+                queryError: null,
+                datasets: {},
+                matches: null,
+                job: null,
+                activePage: 1,
+                resetPage: false,
+            });
+        }
+    }
+
     availableTaints() {
         var taintList = Object.values(this.state.datasets)
             .map((ds) => ds.taints)
@@ -66,7 +92,6 @@ class QueryPage extends Component {
         if (typeof rawYara !== "undefined") {
             this.setState({ rawYara: rawYara });
         }
-
         if (!newQhash) {
             this.props.history.push("/");
         } else {
@@ -79,8 +104,8 @@ class QueryPage extends Component {
             queryError: null,
             queryPlan: null,
             qhash: newQhash,
-            matches: [],
-            job: [],
+            matches: null,
+            job: null,
             activePage: 1,
         });
         this.loadJob();
@@ -110,6 +135,7 @@ class QueryPage extends Component {
             )
             .then((response) => {
                 const { job, matches } = response.data;
+
                 this.setState({
                     job: job,
                     matches: matches,
@@ -155,7 +181,7 @@ class QueryPage extends Component {
             queryPlan: null,
             rawYara: rawYara,
             job: null,
-            matches: [],
+            matches: null,
         });
     }
 
@@ -166,7 +192,7 @@ class QueryPage extends Component {
             queryError: null,
             rawYara: rawYara,
             job: null,
-            matches: [],
+            matches: null,
         });
     }
 
@@ -177,7 +203,7 @@ class QueryPage extends Component {
     }
 
     render() {
-        var queryParse = (
+        const queryParse = (
             <QueryParseStatus
                 qhash={this.state.qhash}
                 queryPlan={this.state.queryPlan}
@@ -185,7 +211,7 @@ class QueryPage extends Component {
             />
         );
 
-        var queryResults = (
+        const queryResults = (
             <div>
                 <button
                     type="button"
@@ -229,7 +255,9 @@ class QueryPage extends Component {
                     >
                         {this.state.mode === "query"
                             ? queryParse
-                            : queryResults}
+                            : this.state.job
+                            ? queryResults
+                            : null}
                     </div>
                 </div>
             </div>

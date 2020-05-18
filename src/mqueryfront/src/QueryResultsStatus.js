@@ -76,7 +76,7 @@ function MatchItem(props) {
                                 </CopyToClipboard>
                             </small>
                         </div>
-                        <small class="text-secondary">
+                        <small className="text-secondary">
                             {path.basename(props.file)}
                             <CopyToClipboard
                                 text={path.basename(props.file)}
@@ -225,7 +225,7 @@ class QueryResultsStatus extends Component {
                         <thead>
                             <tr>
                                 <th className="col-md-8">
-                                    <span class="d-inline-block mr-4">
+                                    <span className="d-inline-block mr-4">
                                         Matches
                                     </span>
                                     <ActionDownload
