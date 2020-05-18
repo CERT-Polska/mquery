@@ -19,6 +19,8 @@ class JobSchema(BaseModel):
     files_errored: int
     iterator: Optional[str]
     taint: Optional[str]
+    datasets_left: int
+    total_datasets: int
 
 
 class JobsSchema(BaseModel):
