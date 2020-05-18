@@ -78,11 +78,16 @@ class Database:
 
     def cancel_job(self, job: JobId) -> None:
         """ Sets the job status to cancelled """
-        self.redis.hmset(job.key, {"status": "cancelled"})
+        self.redis.hmset(
+            job.key, {"status": "cancelled", "finished": int(time())}
+        )
 
     def fail_job(self, job: JobId, message: str) -> None:
         """ Sets the job status to failed. """
-        self.redis.hmset(job.key, {"status": "failed", "error": message})
+        self.redis.hmset(
+            job.key,
+            {"status": "failed", "error": message, "finished": int(time())},
+        )
 
     def get_job(self, job: JobId) -> JobSchema:
         data = self.redis.hgetall(job.key)
@@ -93,6 +98,7 @@ class Database:
             rule_author=data.get("rule_author", None),
             raw_yara=data.get("raw_yara", "ERROR"),
             submitted=data.get("submitted", 0),
+            finished=data.get("finished", None),
             priority=data.get("priority", "medium"),
             files_processed=int(data.get("files_processed", 0)),
             files_matched=int(data.get("files_matched", 0)),
@@ -264,7 +270,9 @@ class Database:
     def agent_finish_job(self, job: JobId) -> None:
         new_agents = self.redis.hincrby(job.key, "agents_left", -1)
         if new_agents <= 0:
-            self.redis.hmset(job.key, {"status": "done"})
+            self.redis.hmset(
+                job.key, {"status": "done", "finished": int(time())}
+            )
 
     def has_pending_search_tasks(self, agent_id: str, job: JobId) -> bool:
         return self.redis.llen(f"job-ds:{agent_id}:{job.hash}") == 0

@@ -10,6 +10,7 @@ class JobSchema(BaseModel):
     rule_author: Optional[str]
     raw_yara: str
     submitted: int
+    finished: Optional[int]
     priority: str
     files_processed: int
     files_matched: int
