@@ -101,6 +101,11 @@ See the
 If you want to contribute, see our dedicated
 [documentation for contributors](./CONTRIBUTING.md).
 
+## Changelog
+
+Learn how the project has changed by reading our
+[release log](./RELEASES.md).
+
 ## Contact
 
 If you have any problems, bugs or feature requests related to mquery, you're

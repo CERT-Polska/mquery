@@ -14,7 +14,7 @@ def setup_logging() -> None:
 
 
 def mquery_version() -> str:
-    return "1.1.0"
+    return "1.2.0"
 
 
 def make_sha256_tag(filename: str) -> Dict[str, Any]:
