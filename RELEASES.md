@@ -34,7 +34,7 @@
     - Strings that are both `ascii` and `wide` [(#65)](https://github.com/CERT-Polska/mquery/pull/65)
     - `xor` modifier (without ranges) [(#98)](https://github.com/CERT-Polska/mquery/pull/98)
     - Anonymous variables [(#66)](https://github.com/CERT-Polska/mquery/pull/66)
-- Change the web server used to FastAPI (to improve performance and get API documentation for free) 
+- Use FastAPI framework, instead of Flask to improve performance and get API documentation for free
 - Document the API and add swagger UI to `/docs` endpoint
 - Cache parsed Yara rules
 - Batch files when matching yara rules, to improve performance
