@@ -61,10 +61,7 @@ class QueryPage extends Component {
     componentDidUpdate(prevProps, prevState) {
         if (
             this.props.match.path === "/" &&
-            this.props.location.state &&
-            this.props.location.state.fromNavigation &&
-            (typeof prevProps.location.state === "undefined" ||
-                typeof prevProps.location.state.fromNavigation === "undefined")
+            this.props.location.key !== prevProps.location.key
         ) {
             this.setState(INITIAL_STATE);
         }

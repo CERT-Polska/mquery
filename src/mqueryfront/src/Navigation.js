@@ -10,13 +10,9 @@ class Navigation extends Component {
     }
 
     render() {
-        const toHome = {
-            pathname: "/",
-            state: { fromNavigation: true },
-        };
         return (
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
-                <Link className="navbar-brand" to={toHome}>
+                <Link className="navbar-brand" to={"/"}>
                     <img src={logo} width="150" alt="" />
                 </Link>
                 <button
@@ -37,7 +33,7 @@ class Navigation extends Component {
                 >
                     <ul className="navbar-nav mr-auto">
                         <li className="nav-item">
-                            <Link className="nav-link" to={toHome}>
+                            <Link className="nav-link" to={"/"}>
                                 Query
                             </Link>
                         </li>
