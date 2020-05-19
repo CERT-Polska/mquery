@@ -6,7 +6,7 @@
 
 - Results streaming (first results appear faster) [(#59)](https://github.com/CERT-Polska/mquery/pull/59)
 - Support for distributed Ursadb in the backend [(#119)](https://github.com/CERT-Polska/mquery/pull/119)
-- Powerful plugin support (See the [./docs/plugins.md](documentation))
+- Powerful plugin support (See the [documentation](./docs/plugins.md))
     - Configurable from the web UI [(#132)](https://github.com/CERT-Polska/mquery/pull/132)
 - Support for Ursadb tags (for example, to tag collections as benign or malicious) [(#44)](https://github.com/CERT-Polska/mquery/pull/44)
 
