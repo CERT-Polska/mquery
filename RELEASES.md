@@ -8,9 +8,9 @@ A lot of UI improvements
 
 ### New features
 
-- Result streaming (improved time to the first result) [(#59)](https://github.com/CERT-Polska/mquery/pull/59).
-- Support for distributed Ursadb in the backend. [(#119)](https://github.com/CERT-Polska/mquery/pull/119).
-- Powerful plugin suppor (See the [./docs/plugins.md](documentation))
+- Results streaming (first results appear faster) [(#59)](https://github.com/CERT-Polska/mquery/pull/59)
+- Support for distributed Ursadb in the backend [(#119)](https://github.com/CERT-Polska/mquery/pull/119)
+- Powerful plugin support (See the [./docs/plugins.md](documentation))
 - Support for ursadb tags (for example, to tag collections as benign or malicious) [(#44)](https://github.com/CERT-Polska/mquery/pull/44)
 
 ### Improvements
@@ -28,7 +28,7 @@ A lot of UI improvements
 ### Others
 
 - Much better workflow for new contributors [(#47)](https://github.com/CERT-Polska/mquery/pull/47).
-- A lot of [documentation](https://cert-polska.github.io/mquery/).
+- Improved [documentation](https://cert-polska.github.io/mquery/).
 
 # Version 1.0
 
