@@ -332,10 +332,8 @@ class RuleParseEngine:
 
         if left and right:
             return UrsaExpression.or_(left, right)
-        elif not left and not right:
-            return None
         else:
-            return left or right
+            return None
 
     def pare_expr(
         self, condition: ParenthesesExpression
