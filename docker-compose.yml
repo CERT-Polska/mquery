@@ -32,6 +32,8 @@ services:
     build:
       context: ursadb/
       dockerfile: Dockerfile
+    ports:
+    - "127.0.0.1:9281:9281"
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - "${INDEX_DIR}:/var/lib/ursadb"
