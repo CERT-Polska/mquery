@@ -193,7 +193,6 @@ class QueryField extends Component {
                 </div>
                 <div className="mt-1 monaco-container">
                     <QueryMonaco
-                        ref={this.editor}
                         readOnly={this.props.readOnly}
                         onValueChanged={this.handleYaraChanged}
                         rawYara={this.props.rawYara}

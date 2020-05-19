@@ -181,7 +181,8 @@ class QueryResultsStatus extends Component {
         let processed = files_processed + " / " + total_files;
 
         let errored = Math.round((files_errored / total_files) * 100);
-        let errorTooltip = `${files_errored} errors during processing`;
+        const errorString = files_errored === 1 ? "error" : "errors";
+        const errorTooltip = `${files_errored} ${errorString} during processing`;
         let cancel = <ActionCancel onClick={this.handleCancelJob} size="lg" />;
 
         if (!total_files && status !== "done") {

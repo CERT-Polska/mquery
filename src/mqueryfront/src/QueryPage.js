@@ -5,28 +5,30 @@ import QueryParseStatus from "./QueryParseStatus";
 import axios from "axios";
 import { API_URL } from "./config";
 import { isStatusFinished } from "./queryUtils";
+import ToggleLayoutButton from "./components/ToggleLayoutButton";
+
+const INITIAL_STATE = {
+    mode: "query",
+    collapsed: false,
+    qhash: null,
+    rawYara: "",
+    queryPlan: null,
+    queryError: null,
+    datasets: {},
+    matches: null,
+    job: null,
+    activePage: 1,
+};
 
 class QueryPage extends Component {
     constructor(props) {
         super(props);
 
-        let qhash = null;
-
+        let initialState = { ...INITIAL_STATE };
         if (this.props.match.params.hash) {
-            qhash = this.props.match.params.hash;
+            initialState.qhash = this.props.match.params.hash;
         }
-        this.state = {
-            mode: "query",
-            collapsed: false,
-            qhash: qhash,
-            rawYara: "",
-            queryPlan: null,
-            queryError: null,
-            datasets: {},
-            matches: null,
-            job: null,
-            activePage: 1,
-        };
+        this.state = initialState;
 
         this.updateQhash = this.updateQhash.bind(this);
         this.updateQueryError = this.updateQueryError.bind(this);
@@ -64,19 +66,7 @@ class QueryPage extends Component {
             (typeof prevProps.location.state === "undefined" ||
                 typeof prevProps.location.state.fromNavigation === "undefined")
         ) {
-            //reset page to unitial state
-            this.setState({
-                mode: "query",
-                collapsed: false,
-                qhash: null,
-                rawYara: "",
-                queryPlan: null,
-                queryError: null,
-                datasets: {},
-                matches: null,
-                job: null,
-                activePage: 1,
-            });
+            this.setState(INITIAL_STATE);
         }
     }
 
@@ -213,14 +203,11 @@ class QueryPage extends Component {
 
         const queryResults = (
             <div>
-                <button
-                    type="button"
-                    className="btn btn-primary btn-sm pull-left mr-4"
+                <ToggleLayoutButton
+                    buttonClass="btn btn-primary btn-sm pull-left mr-4"
                     onClick={this.collapsePane}
-                >
-                    <span className="fa fa-align-left" />{" "}
-                    {this.state.collapsed ? "Show" : "Hide"} query
-                </button>
+                    label={this.state.collapsed ? "Show query" : "Hide query"}
+                />
                 <QueryResultsStatus
                     qhash={this.state.qhash}
                     job={this.state.job}
