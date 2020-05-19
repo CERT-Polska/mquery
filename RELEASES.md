@@ -7,8 +7,8 @@
 - Results streaming (first results appear faster) [(#59)](https://github.com/CERT-Polska/mquery/pull/59)
 - Support for distributed Ursadb in the backend [(#119)](https://github.com/CERT-Polska/mquery/pull/119)
 - Powerful plugin support (See the [./docs/plugins.md](documentation))
-    - With `/config` endpoint, to configure them using the web UI [(#132)](https://github.com/CERT-Polska/mquery/pull/132)
-- Support for ursadb tags (for example, to tag collections as benign or malicious) [(#44)](https://github.com/CERT-Polska/mquery/pull/44)
+    - Configurable from the web UI [(#132)](https://github.com/CERT-Polska/mquery/pull/132)
+- Support for Ursadb tags (for example, to tag collections as benign or malicious) [(#44)](https://github.com/CERT-Polska/mquery/pull/44)
 
 ### UI Improvements
 
@@ -26,7 +26,7 @@
 
 ### Improvements
 
-- Much better Yara support [issue #41](https://github.com/CERT-Polska/mquery/issues/41):
+- Much better Yara support [(issue #41)](https://github.com/CERT-Polska/mquery/issues/41):
     - Multiple rules in a query [(#55)](https://github.com/CERT-Polska/mquery/pull/55)
     - Private and global rules [(#55)](https://github.com/CERT-Polska/mquery/pull/55)
     - Case insensitive strings (`nocase` modifier) [(#136)](https://github.com/CERT-Polska/mquery/pull/136)
@@ -36,13 +36,13 @@
     - Anonymous variables [(#66)](https://github.com/CERT-Polska/mquery/pull/66)
 - Change the web server used to FastAPI (to improve performance and get API documentation for free) 
 - Document the API and add swagger UI to `/docs` endpoint
-- Cache parsed Yara rules.
+- Cache parsed Yara rules
 - Batch files when matching yara rules, to improve performance
 
 ### Others
 
 - Much better workflow for new contributors [(#47)](https://github.com/CERT-Polska/mquery/pull/47)
-- Varions utility scripts [(#134)](https://github.com/CERT-Polska/mquery/pull/134/), including
+- Various utility scripts [(#134)](https://github.com/CERT-Polska/mquery/pull/134/), including
     command line query tool [(#168)](https://github.com/CERT-Polska/mquery/pull/168)
 - Improved [documentation](https://cert-polska.github.io/mquery/)
 
