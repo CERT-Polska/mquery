@@ -2,13 +2,6 @@ import React, { Component } from "react";
 import QueryMonaco from "./QueryMonaco";
 
 class QueryField extends Component {
-    describeTaint() {
-        if (this.props.selectedTaint == null) {
-            return "everywhere";
-        }
-        return this.props.selectedTaint;
-    }
-
     render() {
         return (
             <div>
@@ -16,8 +9,7 @@ class QueryField extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-sm"
-                        onClick={(event) => {
-                            event.preventDefault();
+                        onClick={() => {
                             this.props.submitQuery("query", "medium");
                         }}
                     >
@@ -34,8 +26,7 @@ class QueryField extends Component {
                         <div className="dropdown-menu">
                             <button
                                 className="dropdown-item"
-                                onClick={(event) => {
-                                    event.preventDefault();
+                                onClick={() => {
                                     this.props.submitQuery("query", "low");
                                 }}
                             >
@@ -43,8 +34,7 @@ class QueryField extends Component {
                             </button>
                             <button
                                 className="dropdown-item"
-                                onClick={(event) => {
-                                    event.preventDefault();
+                                onClick={() => {
                                     this.props.submitQuery("query", "medium");
                                 }}
                             >
@@ -52,8 +42,7 @@ class QueryField extends Component {
                             </button>
                             <button
                                 className="dropdown-item"
-                                onClick={(event) => {
-                                    event.preventDefault();
+                                onClick={() => {
                                     this.props.submitQuery("query", "high");
                                 }}
                             >
@@ -75,8 +64,7 @@ class QueryField extends Component {
                             className="btn btn-secondary btn-sm"
                             name="parse"
                             type="submit"
-                            onClick={(event) => {
-                                event.preventDefault();
+                            onClick={() => {
                                 this.props.submitQuery("parse");
                             }}
                         >
@@ -91,14 +79,12 @@ class QueryField extends Component {
                             aria-haspopup="true"
                             aria-expanded="false"
                         >
-                            Search: {this.describeTaint()}
+                            Search: {this.props.selectedTaint || "everywhere"}
                         </button>
                         <div className="dropdown-menu">
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.props.selectTaint(null)
-                                }
+                                onClick={() => this.props.selectTaint(null)}
                             >
                                 everywhere
                             </button>
@@ -106,7 +92,7 @@ class QueryField extends Component {
                                 return (
                                     <button
                                         className="dropdown-item"
-                                        onClick={(event) =>
+                                        onClick={() =>
                                             this.props.selectTaint(taint)
                                         }
                                     >

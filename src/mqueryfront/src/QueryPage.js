@@ -141,11 +141,7 @@ class QueryPage extends Component {
                 "&limit=" +
                 LIMIT
         );
-        if (response) {
-            const { job, matches } = response.data;
-            return { job, matches };
-        }
-        return {};
+        return response ? response.data : {};
     }
 
     collapsePane() {
