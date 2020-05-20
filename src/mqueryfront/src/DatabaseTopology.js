@@ -11,7 +11,7 @@ class DatasetRow extends Component {
             <tr
                 data-toggle="collapse"
                 data-target={"#collapsed_" + this.props.id}
-                class="accordion-toggle"
+                className="accordion-toggle"
             >
                 <td>
                     <code>{this.props.id}</code>
@@ -30,12 +30,12 @@ class DatasetRow extends Component {
                 </td>
             </tr>,
             <tr>
-                <td colspan="2" class="hiddentablerow p-0">
+                <td colspan="2" className="hiddentablerow p-0">
                     <div
-                        class="accordian-body collapse"
+                        className="accordian-body collapse"
                         id={"collapsed_" + this.props.id}
                     >
-                        <div class="p-3">
+                        <div className="p-3">
                             {this.props.indexes.map((x) => {
                                 return (
                                     <div key={x.type}>
@@ -146,7 +146,7 @@ class DatabaseTopology extends Component {
             <ErrorBoundary error={this.state.error}>
                 <h2 className="text-center mq-bottom">
                     Topology
-                    <div class="btn-group pull-right">
+                    <div className="btn-group pull-right">
                         {compactButton}
                         {reindexButton}
                     </div>

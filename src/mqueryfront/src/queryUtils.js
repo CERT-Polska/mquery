@@ -8,8 +8,8 @@ export const getClassForStatus = (status) => {
         case "done":
             classSufix = "success";
             break;
+        case "new":
         case "processing":
-        case "querying":
             classSufix = "info";
             break;
         case "expired":

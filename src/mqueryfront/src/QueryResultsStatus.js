@@ -75,7 +75,7 @@ function MatchItem(props) {
                                 </CopyToClipboard>
                             </small>
                         </div>
-                        <small class="text-secondary">
+                        <small className="text-secondary">
                             {path.basename(props.file)}
                             <CopyToClipboard
                                 text={path.basename(props.file)}
@@ -180,7 +180,8 @@ class QueryResultsStatus extends Component {
         let processed = files_processed + " / " + total_files;
 
         let errored = Math.round((files_errored / total_files) * 100);
-        let errorTooltip = `${files_errored} errors during processing`;
+        const errorString = files_errored === 1 ? "error" : "errors";
+        const errorTooltip = `${files_errored} ${errorString} during processing`;
         let cancel = <ActionCancel onClick={this.handleCancelJob} size="lg" />;
 
         if (!total_files && status !== "done") {
@@ -224,7 +225,7 @@ class QueryResultsStatus extends Component {
                         <thead>
                             <tr>
                                 <th className="col-md-8">
-                                    <span class="d-inline-block mr-4">
+                                    <span className="d-inline-block mr-4">
                                         Matches
                                     </span>
                                     <div className="dropdown d-inline">
