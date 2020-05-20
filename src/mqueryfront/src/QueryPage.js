@@ -61,7 +61,10 @@ class QueryPage extends Component {
     componentDidUpdate(prevProps, prevState) {
         if (
             this.props.match.path === "/" &&
-            this.props.location.key !== prevProps.location.key
+            this.props.location.key !== prevProps.location.key &&
+            (typeof this.props.location.state === "undefined" ||
+                typeof this.props.location.state.internal === "undefined" ||
+                !this.props.location.state.internal)
         ) {
             this.setState(INITIAL_STATE);
         }
@@ -79,12 +82,14 @@ class QueryPage extends Component {
             this.setState({ rawYara: rawYara });
         }
 
+        let path;
         if (!newQhash) {
-            this.props.history.push("/");
+            path = "/";
         } else {
-            this.props.history.push("/query/" + newQhash);
+            path = "/query/" + newQhash;
             this.collapsePane();
         }
+        this.props.history.push(path, { internal: true });
 
         this.setState({
             mode: "job",
