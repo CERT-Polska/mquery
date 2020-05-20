@@ -74,6 +74,15 @@ class QueryMonaco extends Component {
         if (this.props.error !== prevProps.error) {
             this.setError(...this.props.error);
         }
+
+        //workaround for clearing editor content
+        if (
+            prevProps.rawYara !== "" &&
+            this.props.rawYara === "" &&
+            prevProps.readOnly &&
+            !this.props.readOnly
+        )
+            this.editor.setValue("");
     }
 
     render() {
