@@ -1,93 +1,12 @@
 import React, { Component } from "react";
-import axios from "axios";
-import { API_URL } from "./config";
 import QueryMonaco from "./QueryMonaco";
 
 class QueryField extends Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            selectedTaint: null,
-            error: null,
-        };
-
-        this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleYaraChanged = this.handleYaraChanged.bind(this);
-        this.handleQuery = this.handleQuery.bind(this);
-        this.handleEdit = this.handleEdit.bind(this);
-    }
-
-    componentDidMount() {}
-
-    selectTaint(newTaint) {
-        this.setState({
-            selectedTaint: newTaint,
-        });
-    }
-
     describeTaint() {
-        if (this.state.selectedTaint == null) {
+        if (this.props.selectedTaint == null) {
             return "everywhere";
         }
-        return this.state.selectedTaint;
-    }
-
-    handleYaraChanged(value) {
-        this.props.updateYara(value);
-    }
-
-    handleQuery(event, method, priority) {
-        const yara = this.props.rawYara;
-        axios
-            .create()
-            .post(API_URL + "/query", {
-                raw_yara: yara,
-                method: method,
-                priority: priority,
-                taint: this.state.selectedTaint,
-            })
-            .then((response) => {
-                if (method === "query") {
-                    this.props.updateQhash(response.data.query_hash, yara);
-                } else if (method === "parse") {
-                    this.props.updateQueryPlan(response.data, yara);
-                }
-            })
-            .catch((error) => {
-                let err = error.toString();
-
-                if (error.response) {
-                    err = error.response.data.detail;
-                    // Dirty hack to parse error lines from the error message
-                    // Error format: "Error at 4.2-7:" or  "Error at 5.1:"
-                    let parsedError = err.match(
-                        /Error at (\d+).(\d+)-?(\d+)?: (.*)/
-                    );
-                    if (parsedError) {
-                        this.setState({ error: parsedError });
-                    }
-                }
-
-                this.props.updateQueryError(err, this.props.rawYara);
-            });
-
-        event.preventDefault();
-    }
-
-    handleInputChange(event) {
-        const target = event.target;
-        const value =
-            target.type === "checkbox" ? target.checked : target.value;
-        const name = target.name;
-
-        this.setState({
-            [name]: value,
-        });
-    }
-
-    handleEdit(event) {
-        this.props.updateQhash(null);
+        return this.props.selectedTaint;
     }
 
     render() {
@@ -97,9 +16,10 @@ class QueryField extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-sm"
-                        onClick={(event) =>
-                            this.handleQuery(event, "query", "medium")
-                        }
+                        onClick={(event) => {
+                            event.preventDefault();
+                            this.props.submitQuery("query", "medium");
+                        }}
                     >
                         Query
                     </button>
@@ -114,25 +34,28 @@ class QueryField extends Component {
                         <div className="dropdown-menu">
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "query", "low")
-                                }
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    this.props.submitQuery("query", "low");
+                                }}
                             >
                                 Low Priority Query
                             </button>
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "query", "medium")
-                                }
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    this.props.submitQuery("query", "medium");
+                                }}
                             >
                                 Standard Priority Query
                             </button>
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "query", "high")
-                                }
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    this.props.submitQuery("query", "high");
+                                }}
                             >
                                 High Priority Query
                             </button>
@@ -143,7 +66,7 @@ class QueryField extends Component {
                             className="btn btn-secondary btn-sm"
                             name="clone"
                             type="submit"
-                            onClick={this.handleEdit}
+                            onClick={this.props.editQuery}
                         >
                             <span className="fa fa-clone" /> Edit
                         </button>
@@ -152,9 +75,10 @@ class QueryField extends Component {
                             className="btn btn-secondary btn-sm"
                             name="parse"
                             type="submit"
-                            onClick={(event) =>
-                                this.handleQuery(event, "parse", null)
-                            }
+                            onClick={(event) => {
+                                event.preventDefault();
+                                this.props.submitQuery("parse");
+                            }}
                         >
                             <span className="fa fa-code" /> Parse
                         </button>
@@ -172,7 +96,9 @@ class QueryField extends Component {
                         <div className="dropdown-menu">
                             <button
                                 className="dropdown-item"
-                                onClick={(event) => this.selectTaint(null)}
+                                onClick={(event) =>
+                                    this.props.selectTaint(null)
+                                }
                             >
                                 everywhere
                             </button>
@@ -181,7 +107,7 @@ class QueryField extends Component {
                                     <button
                                         className="dropdown-item"
                                         onClick={(event) =>
-                                            this.selectTaint(taint)
+                                            this.props.selectTaint(taint)
                                         }
                                     >
                                         {taint}
@@ -194,9 +120,9 @@ class QueryField extends Component {
                 <div className="mt-1 monaco-container">
                     <QueryMonaco
                         readOnly={this.props.readOnly}
-                        onValueChanged={this.handleYaraChanged}
+                        onValueChanged={this.props.updateYara}
                         rawYara={this.props.rawYara}
-                        error={this.state.error}
+                        error={this.props.error}
                     />
                 </div>
             </div>

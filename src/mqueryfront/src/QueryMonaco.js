@@ -81,8 +81,9 @@ class QueryMonaco extends Component {
             this.props.rawYara === "" &&
             prevProps.readOnly &&
             !this.props.readOnly
-        )
+        ) {
             this.editor.setValue("");
+        }
     }
 
     render() {
