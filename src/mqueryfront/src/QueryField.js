@@ -11,8 +11,6 @@ class QueryField extends Component {
             };
         });
 
-        console.log("Options: "+options)
-
         var multiselect = null;
 
         if (this.props.availableTaints.length) {

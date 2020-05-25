@@ -14,7 +14,7 @@ const INITIAL_STATE = {
     queryError: null,
     datasets: {},
     matches: [],
-    selectedTaints: null,
+    selectedTaints: [],
     job: null,
     activePage: 1,
 };
@@ -31,9 +31,7 @@ class QueryPage extends Component {
         this.setActivePage = this.setActivePage.bind(this);
         this.submitQuery = this.submitQuery.bind(this);
         this.editQuery = this.editQuery.bind(this);
-        this.selectTaint = this.selectTaint.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        console.log("Czyszcze stan w konstruktorze QueryPage")
     }
 
     get queryHash() {
@@ -65,7 +63,6 @@ class QueryPage extends Component {
                 this.trackJob();
             }
         );
-        console.log("Czyszcze stan w fetchJob")
     }
 
     componentWillUnmount() {
@@ -91,7 +88,6 @@ class QueryPage extends Component {
                 datasets: this.state.datasets,
                 rawYara: editMode ? this.state.rawYara : "",
             });
-            console.log("Czyszcze stan")
         }
     }
 
@@ -103,9 +99,7 @@ class QueryPage extends Component {
     }
 
     handleChange = (selectedTaintsParam) => {
-        console.log("Selected taints param: " + selectedTaintsParam)
         this.setState({ selectedTaints: selectedTaintsParam });
-        console.log("Selected taints: " + this.state.selectedTaints)
     };
 
     updateYara(value) {
@@ -162,8 +156,8 @@ class QueryPage extends Component {
 
     async submitQuery(method, priority) {
         try {
-            console.log("Selected taints in submit query: " + this.state.selectedTaints)
-            var taints = this.state.selectedTaints.map((obj) => obj.value) || [];
+            var taints =
+                this.state.selectedTaints.map((obj) => obj.value) || [];
 
             let response = await axios.post(API_URL + "/query", {
                 raw_yara: this.state.rawYara,
@@ -204,12 +198,6 @@ class QueryPage extends Component {
     editQuery() {
         // Goes to the query mode keeping the original query
         this.props.history.push("/", { editQuery: this.queryHash });
-    }
-
-    selectTaint(newTaint) {
-        this.setState({
-            selectedTaint: newTaint,
-        });
     }
 
     render() {
