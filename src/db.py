@@ -106,7 +106,7 @@ class Database:
             total_files=int(data.get("total_files", 0)),
             files_errored=int(data.get("files_errored", 0)),
             iterator=data.get("iterator", None),
-            taint=data.get("taint", None),
+            taints=json.loads(data.get("taints", "[]")),
             total_datasets=data.get("total_datasets", 0),
             datasets_left=data.get("datasets_left", 0),
         )
@@ -154,7 +154,7 @@ class Database:
         rule_author: str,
         raw_yara: str,
         priority: Optional[str],
-        taint: Optional[str],
+        taints: List[str],
         agents: List[str],
     ) -> JobId:
         job = JobId(
@@ -181,8 +181,8 @@ class Database:
             "datasets_left": 0,
             "total_datasets": 0,
         }
-        if taint is not None:
-            job_obj["taint"] = taint
+
+        job_obj["taints"] = json.dumps(taints)
 
         self.redis.hmset(job.key, job_obj)
         for agent in agents:

@@ -94,7 +94,7 @@ class Agent:
         parsed = combine_rules(rules)
 
         logging.info("Querying backend...")
-        result = self.ursa.query(parsed.query, job.taint, dataset)
+        result = self.ursa.query(parsed.query, job.taints, dataset)
         if "error" in result:
             raise RuntimeError(result["error"])
 

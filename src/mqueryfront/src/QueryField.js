@@ -1,8 +1,28 @@
 import React, { Component } from "react";
 import QueryMonaco from "./QueryMonaco";
+import ReactMultiSelectCheckboxes from "react-multiselect-checkboxes";
 
 class QueryField extends Component {
     render() {
+        var options = this.props.availableTaints.map(function (obj) {
+            return {
+                label: obj,
+                value: obj,
+            };
+        });
+
+        var multiselect = null;
+
+        if (this.props.availableTaints.length) {
+            multiselect = (
+                <ReactMultiSelectCheckboxes
+                    onChange={this.props.handleChange}
+                    options={options}
+                    placeholderButtonLabel="everywhere"
+                />
+            );
+        }
+
         return (
             <div>
                 <div className="btn-group mb-1" role="group">
@@ -71,37 +91,7 @@ class QueryField extends Component {
                             <span className="fa fa-code" /> Parse
                         </button>
                     )}
-                    <div className="btn-group" role="group">
-                        <button
-                            type="button"
-                            className="btn btn-info dropdown-toggle"
-                            data-toggle="dropdown"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                        >
-                            Search: {this.props.selectedTaint || "everywhere"}
-                        </button>
-                        <div className="dropdown-menu">
-                            <button
-                                className="dropdown-item"
-                                onClick={() => this.props.selectTaint(null)}
-                            >
-                                everywhere
-                            </button>
-                            {this.props.availableTaints.map((taint) => {
-                                return (
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={() =>
-                                            this.props.selectTaint(taint)
-                                        }
-                                    >
-                                        {taint}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    {multiselect}
                 </div>
                 <div className="mt-1 monaco-container">
                     <QueryMonaco

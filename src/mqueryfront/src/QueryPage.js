@@ -14,7 +14,7 @@ const INITIAL_STATE = {
     queryError: null,
     datasets: {},
     matches: [],
-    selectedTaint: null,
+    selectedTaints: [],
     job: null,
     activePage: 1,
 };
@@ -31,7 +31,7 @@ class QueryPage extends Component {
         this.setActivePage = this.setActivePage.bind(this);
         this.submitQuery = this.submitQuery.bind(this);
         this.editQuery = this.editQuery.bind(this);
-        this.selectTaint = this.selectTaint.bind(this);
+        this.handleChange = this.handleChange.bind(this);
     }
 
     get queryHash() {
@@ -98,6 +98,10 @@ class QueryPage extends Component {
         return [...new Set(taintList)];
     }
 
+    handleChange = (selectedTaintsParam) => {
+        this.setState({ selectedTaints: selectedTaintsParam });
+    };
+
     updateYara(value) {
         this.setState({ rawYara: value });
     }
@@ -152,11 +156,14 @@ class QueryPage extends Component {
 
     async submitQuery(method, priority) {
         try {
+            var taints =
+                this.state.selectedTaints.map((obj) => obj.value) || [];
+
             let response = await axios.post(API_URL + "/query", {
                 raw_yara: this.state.rawYara,
                 method: method,
                 priority: priority,
-                taint: this.state.selectedTaint,
+                taints: taints,
             });
             if (method === "query") {
                 this.props.history.push("/query/" + response.data.query_hash);
@@ -191,12 +198,6 @@ class QueryPage extends Component {
     editQuery() {
         // Goes to the query mode keeping the original query
         this.props.history.push("/", { editQuery: this.queryHash });
-    }
-
-    selectTaint(newTaint) {
-        this.setState({
-            selectedTaint: newTaint,
-        });
     }
 
     render() {
@@ -237,7 +238,7 @@ class QueryPage extends Component {
                                 updateYara={this.updateYara}
                                 submitQuery={this.submitQuery}
                                 editQuery={this.editQuery}
-                                selectTaint={this.selectTaint}
+                                handleChange={this.handleChange}
                             />
                         </div>
                     ) : (
