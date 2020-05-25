@@ -143,12 +143,15 @@ def query(
                 f"required plugins: {', '.join(missing)}",
             )
 
+    if not data.taints:
+        data.taints = []
+
     job = db.create_search_task(
         rules[-1].name,
         rules[-1].author,
         data.raw_yara,
         data.priority,
-        data.taint,
+        data.taints,
         list(active_agents.keys()),
     )
     return QueryResponseSchema(query_hash=job.hash)

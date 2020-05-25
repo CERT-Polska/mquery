@@ -22,7 +22,8 @@
         "@fortawesome/react-fontawesome": "^0.1.9",
         "prop-types": "^15.7.2",
         "react-js-pagination": "^3.0.3",
-        "react-copy-to-clipboard": "^5.0.2"
+        "react-copy-to-clipboard": "^5.0.2",
+        "react-multiselect-checkboxes": "0.1.1"
     },
     "scripts": {
         "start": "react-scripts start",

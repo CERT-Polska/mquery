@@ -14,7 +14,7 @@ const INITIAL_STATE = {
     queryError: null,
     datasets: {},
     matches: [],
-    selectedTaint: null,
+    selectedTaints: null,
     job: null,
     activePage: 1,
 };
@@ -32,6 +32,8 @@ class QueryPage extends Component {
         this.submitQuery = this.submitQuery.bind(this);
         this.editQuery = this.editQuery.bind(this);
         this.selectTaint = this.selectTaint.bind(this);
+        this.handleChange = this.handleChange.bind(this);
+        console.log("Czyszcze stan w konstruktorze QueryPage")
     }
 
     get queryHash() {
@@ -63,6 +65,7 @@ class QueryPage extends Component {
                 this.trackJob();
             }
         );
+        console.log("Czyszcze stan w fetchJob")
     }
 
     componentWillUnmount() {
@@ -88,6 +91,7 @@ class QueryPage extends Component {
                 datasets: this.state.datasets,
                 rawYara: editMode ? this.state.rawYara : "",
             });
+            console.log("Czyszcze stan")
         }
     }
 
@@ -97,6 +101,12 @@ class QueryPage extends Component {
             .flat();
         return [...new Set(taintList)];
     }
+
+    handleChange = (selectedTaintsParam) => {
+        console.log("Selected taints param: " + selectedTaintsParam)
+        this.setState({ selectedTaints: selectedTaintsParam });
+        console.log("Selected taints: " + this.state.selectedTaints)
+    };
 
     updateYara(value) {
         this.setState({ rawYara: value });
@@ -152,11 +162,14 @@ class QueryPage extends Component {
 
     async submitQuery(method, priority) {
         try {
+            console.log("Selected taints in submit query: " + this.state.selectedTaints)
+            var taints = this.state.selectedTaints.map((obj) => obj.value) || [];
+
             let response = await axios.post(API_URL + "/query", {
                 raw_yara: this.state.rawYara,
                 method: method,
                 priority: priority,
-                taint: this.state.selectedTaint,
+                taints: taints,
             });
             if (method === "query") {
                 this.props.history.push("/query/" + response.data.query_hash);
@@ -237,7 +250,7 @@ class QueryPage extends Component {
                                 updateYara={this.updateYara}
                                 submitQuery={this.submitQuery}
                                 editQuery={this.editQuery}
-                                selectTaint={this.selectTaint}
+                                handleChange={this.handleChange}
                             />
                         </div>
                     ) : (
