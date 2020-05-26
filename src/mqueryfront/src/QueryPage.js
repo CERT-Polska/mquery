@@ -14,7 +14,6 @@ const INITIAL_STATE = {
     queryError: null,
     datasets: {},
     matches: [],
-    selectedTaints: [],
     job: null,
     activePage: 1,
 };
@@ -24,6 +23,7 @@ class QueryPage extends Component {
         super(props);
 
         this.state = { ...INITIAL_STATE };
+        this.state.selectedTaints = [];
         this.trackJobTimeout = null;
 
         this.collapsePane = this.collapsePane.bind(this);
@@ -85,6 +85,7 @@ class QueryPage extends Component {
             this.cancelJob();
             this.setState({
                 ...INITIAL_STATE,
+                selectedTaints: [],
                 datasets: this.state.datasets,
                 rawYara: editMode ? this.state.rawYara : "",
             });
@@ -239,6 +240,7 @@ class QueryPage extends Component {
                                 submitQuery={this.submitQuery}
                                 editQuery={this.editQuery}
                                 handleChange={this.handleChange}
+                                selectedTaints={this.state.selectedTaints}
                             />
                         </div>
                     ) : (

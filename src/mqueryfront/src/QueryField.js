@@ -12,13 +12,22 @@ class QueryField extends Component {
         });
 
         var multiselect = null;
+        var placeHolder = "everywhere";
+
+        if (this.props.selectedTaints.length) {
+            placeHolder = this.props.selectedTaints.map(function (obj) {
+                return obj.value;
+            });
+            placeHolder = placeHolder.toString();
+        }
 
         if (this.props.availableTaints.length) {
             multiselect = (
                 <ReactMultiSelectCheckboxes
                     onChange={this.props.handleChange}
                     options={options}
-                    placeholderButtonLabel="everywhere"
+                    defaultValue={this.props.selectedTaints}
+                    placeholderButtonLabel={placeHolder}
                 />
             );
         }
