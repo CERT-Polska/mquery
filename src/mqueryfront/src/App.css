@@ -10,6 +10,23 @@
 
 .mquery-scroll-matches td {
     word-break: break-all;
+    font-family: "monospace";
+}
+
+.mquery-scroll-matches td i {
+    visibility: hidden;
+}
+
+.mquery-scroll-matches td:hover i {
+    visibility: visible;
+}
+
+.mquery-scroll-matches td i:hover {
+    color: var(--blue);
+}
+
+.copyable-item {
+    cursor: pointer;
 }
 
 .is-collapsed {
@@ -42,4 +59,27 @@
 
 .table-topology tbody tr:nth-child(2n) {
     background: rgba(0, 0, 0, 0.02);
+}
+
+.glyphMargin {
+    background: rgb(255, 134, 134);
+    width: 5px !important;
+}
+
+.contentError {
+    background: #ffc7c7;
+}
+
+.monaco-container {
+    padding: 5px;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    border: 2px solid rgb(238, 238, 238);
+}
+
+.dropdown i:hover,
+.dropdown.show i {
+    cursor: pointer;
+    color: var(--blue) !important;
 }

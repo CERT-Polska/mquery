@@ -43,16 +43,17 @@ class UrsaDb:
     def query(
         self,
         query: str,
-        taint: Optional[str] = None,
+        taints: List[str] = [],
         dataset: Optional[str] = None,
     ) -> Json:
         socket = self.make_socket(recv_timeout=-1)
 
         start = time.clock()
         command = "select "
-        if taint:
-            taint = taint.replace('"', '\\"')
-            command += f'with taints ["{taint}"] '
+        if taints:
+            taints_str = '", "'.join(taints)
+            taints_whole_str = '["' + taints_str + '"]'
+            command += f"with taints {taints_whole_str} "
         if dataset:
             command += f'with datasets ["{dataset}"] '
 

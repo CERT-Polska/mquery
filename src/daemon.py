@@ -5,13 +5,15 @@ import config
 import json
 import sys
 from lib.ursadb import UrsaDb
-from util import setup_logging
-from typing import Any, List, Optional
+from util import setup_logging, make_sha256_tag
+from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache
 from metadata import MetadataPlugin, Metadata
-from plugins import METADATA_PLUGINS
+from plugins import load_plugins
+
+METADATA_PLUGINS = load_plugins(config.PLUGINS)
 
 
 @cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
@@ -56,7 +58,6 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
-        self.plugin_config_version: Optional[str] = None
         self.active_plugins: List[MetadataPlugin] = []
 
     def __search_task(self, job_id: JobId) -> None:
@@ -93,7 +94,7 @@ class Agent:
         parsed = combine_rules(rules)
 
         logging.info("Querying backend...")
-        result = self.ursa.query(parsed.query, job.taint, dataset)
+        result = self.ursa.query(parsed.query, job.taints, dataset)
         if "error" in result:
             raise RuntimeError(result["error"])
 
@@ -104,9 +105,10 @@ class Agent:
         self.db.update_job_files(job_id, file_count)
         self.db.agent_start_job(self.group_id, job_id, iterator)
         self.db.agent_continue_search(self.group_id, job_id)
+        self.db.dataset_query_done(job_id)
 
     def __load_plugins(self) -> None:
-        self.plugin_config_version = self.db.get_plugin_config_version()
+        self.plugin_config_version: int = self.db.get_plugin_config_version()
         active_plugins = []
         for plugin_class in METADATA_PLUGINS:
             plugin_name = plugin_class.get_name()
@@ -135,47 +137,91 @@ class Agent:
         )
 
     def __update_metadata(
-        self, job: JobId, file_path: str, matches: List[str]
+        self, job: JobId, orig_name: str, path: str, matches: List[str]
     ) -> None:
-        """ After finding a match, push it into a database and
-        update the related metadata """
-        metadata: Metadata = {}
+        """
+        Runs metadata plugins for the given file in a given job.
+        :param group_id: Identifier of the agent group this agent belongs to.
+        :type group_id: str
+        :param ursa_url: URL to connected ursadb instance. Ideally this should
+            be public, because this will allow mquery to collect measurements.
+        :type ursa_url: str
+        :param db: Reference to main database/task queue.
+        :type db: Database
+        """
+
+        # Initialise default values in the metadata.
+        metadata: Metadata = {
+            "job": job.hash,
+            "path": path,
+            "sha256": make_sha256_tag(path),
+        }
+        # Run all the plugins in configured order.
         for plugin in self.active_plugins:
+            if not plugin.is_extractor:
+                continue
             try:
-                extracted_meta = plugin.run(file_path, metadata)
+                extracted_meta = plugin.run(orig_name, metadata)
                 metadata.update(extracted_meta)
             except Exception:
                 logging.exception(
                     "Failed to launch plugin %s for %s",
                     plugin.get_name(),
-                    file_path,
+                    orig_name,
                 )
-        match = MatchInfo(file_path, metadata, matches)
+        # Remove unnecessary keys from the metadata.
+        del metadata["job"]
+        del metadata["path"]
+
+        # Update the database.
+        match = MatchInfo(orig_name, metadata, matches)
         self.db.add_match(job, match)
 
     def __execute_yara(self, job: JobId, files: List[str]) -> None:
-        if self.db.get_plugin_config_version() != self.plugin_config_version:
-            logging.info("Configuration changed - reloading plugins.")
-            self.__initialize_agent()
         rule = compile_yara(self.db, job)
         num_matches = 0
-        self.db.job_start_work(job, len(files))
-        for sample in files:
-            try:
-                matches = rule.match(sample)
-                if matches:
-                    num_matches += 1
-                    self.__update_metadata(
-                        job, sample, [r.rule for r in matches]
-                    )
-            except yara.Error:
-                logging.exception(f"Yara failed to check file {sample}")
-            except FileNotFoundError:
-                logging.exception(
-                    f"Failed to open file for yara check: {sample}"
-                )
+        num_errors = 0
+        num_files = len(files)
+        self.db.job_start_work(job, num_files)
 
-        self.db.job_update_work(job, len(files), num_matches)
+        # filenames returned from ursadb are usually paths, but may be
+        # rewritten by plugins. Create a map {original_name: file_path}
+        filemap = {f: f for f in files}
+
+        for plugin in self.active_plugins:
+            if not plugin.is_filter:
+                continue
+            new_filemap = {}
+            for orig_name, current_path in filemap.items():
+                new_path = plugin.filter(orig_name, current_path)
+                if new_path:
+                    new_filemap[orig_name] = new_path
+            filemap = new_filemap
+
+        for orig_name, path in filemap.items():
+            try:
+                matches = rule.match(path)
+                if matches:
+                    self.__update_metadata(
+                        job, orig_name, path, [r.rule for r in matches]
+                    )
+                    num_matches += 1
+            except yara.Error:
+                logging.error("Yara failed to check file %s", orig_name)
+                num_errors += 1
+            except FileNotFoundError:
+                logging.error(
+                    "Failed to open file for yara check: %s", orig_name
+                )
+                num_errors += 1
+
+        for plugin in self.active_plugins:
+            plugin.cleanup()
+
+        if num_errors > 0:
+            self.db.job_update_error(job, num_errors)
+
+        self.db.job_update_work(job, num_files, num_matches)
 
     def __yara_task(self, job: JobId, iterator: str) -> None:
         """Get a next batch of worm from the db. If there are still files
@@ -183,7 +229,7 @@ class Agent:
         that other agents will be able to work on it in parallel). Later,
         process the obtained files.
         """
-        final_statuses = ["cancelled", "failed", "done"]
+        final_statuses = ["cancelled", "failed", "done", "removed"]
         j = self.db.get_job(job)
         if j.status in final_statuses:
             return
@@ -214,7 +260,11 @@ class Agent:
             self.__execute_yara(job, pop_result.files)
 
         j = self.db.get_job(job)
-        if j.status == "processing" and j.files_processed == j.total_files:
+        if (
+            j.status == "processing"
+            and j.files_processed == j.total_files
+            and j.datasets_left == 0
+        ):
             # The job is over, work of this agent as done.
             self.db.agent_finish_job(job)
 
@@ -231,7 +281,29 @@ class Agent:
         :type task: AgentTask
         :raises RuntimeError: Task with unsupported type given.
         """
-        if task.type == TaskType.SEARCH:
+        if task.type == TaskType.RELOAD:
+            if (
+                self.plugin_config_version
+                == self.db.get_plugin_config_version()
+            ):
+                # This should never happen and suggests that there is bug somewhere
+                # and version was not updated properly.
+                logging.error(
+                    "Critical error: Requested to reload configuration, but "
+                    "configuration present in database is still the same (%s).",
+                    self.plugin_config_version,
+                )
+                return
+            logging.info("Configuration changed - reloading plugins.")
+            # Request next agent to reload the configuration
+            self.db.reload_configuration(self.plugin_config_version)
+            # Reload configuration. Version will be updated during reinitialization,
+            # so we don't receive our own request.
+            self.__initialize_agent()
+        elif task.type == TaskType.COMMAND:
+            logging.info("Executing raw command: %s", task.data)
+            self.ursa.execute_command(task.data)
+        elif task.type == TaskType.SEARCH:
             job = JobId(task.data)
             logging.info(f"search: {job.hash}")
 
@@ -264,7 +336,9 @@ class Agent:
         self.__initialize_agent()
 
         while True:
-            task = self.db.agent_get_task(self.group_id)
+            task = self.db.agent_get_task(
+                self.group_id, self.plugin_config_version
+            )
             self.__process_task(task)
 
 

@@ -1,102 +1,25 @@
 import React, { Component } from "react";
-import axios from "axios";
-import { API_URL } from "./config";
+import QueryMonaco from "./QueryMonaco";
+import ReactMultiSelectCheckboxes from "react-multiselect-checkboxes";
 
 class QueryField extends Component {
-    constructor(props) {
-        super(props);
-
-        this.state = {
-            rawYara: props.rawYara,
-            selectedTaint: null,
-        };
-
-        this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleQuery = this.handleQuery.bind(this);
-        this.handleEdit = this.handleEdit.bind(this);
-    }
-
-    componentDidMount() {}
-
-    selectTaint(newTaint) {
-        this.setState({
-            selectedTaint: newTaint,
-        });
-    }
-
-    describeTaint() {
-        if (this.state.selectedTaint == null) {
-            return "everywhere";
-        }
-        return this.state.selectedTaint;
-    }
-
-    componentWillReceiveProps(newProps) {
-        this.setState({
-            rawYara: newProps.rawYara,
-            isLocked: newProps.isLocked,
-        });
-    }
-
-    handleQuery(event, method, priority) {
-        axios
-            .create()
-            .post(API_URL + "/query", {
-                raw_yara: this.state.rawYara,
-                method: method,
-                priority: priority,
-                taint: this.state.selectedTaint,
-            })
-            .then((response) => {
-                if (method === "query") {
-                    this.props.updateQhash(
-                        response.data.query_hash,
-                        this.state.rawYara
-                    );
-                } else if (method === "parse") {
-                    this.props.updateQueryPlan(
-                        response.data,
-                        this.state.rawYara
-                    );
-                }
-            })
-            .catch((error) => {
-                let err = error.toString();
-
-                if (error.response) {
-                    err = error.response.data.detail;
-                }
-
-                this.props.updateQueryError(err, this.state.rawYara);
-            });
-
-        event.preventDefault();
-    }
-
-    handleInputChange(event) {
-        const target = event.target;
-        const value =
-            target.type === "checkbox" ? target.checked : target.value;
-        const name = target.name;
-
-        this.setState({
-            [name]: value,
-        });
-    }
-
-    handleEdit(event) {
-        this.props.updateQhash(null);
-    }
-
     render() {
-        if (this.props.isLoading) {
-            return (
-                <div>
-                    <h2>
-                        <i className="fa fa-spinner fa-spin spin-big" />{" "}
-                        Loading...
-                    </h2>
-                </div>
+        var options = this.props.availableTaints.map(function (obj) {
+            return {
+                label: obj,
+                value: obj,
+            };
+        });
+
+        var multiselect = null;
+
+        if (this.props.availableTaints.length) {
+            multiselect = (
+                <ReactMultiSelectCheckboxes
+                    onChange={this.props.handleChange}
+                    options={options}
+                    placeholderButtonLabel="everywhere"
+                />
             );
         }
 
@@ -106,9 +29,9 @@ class QueryField extends Component {
                     <button
                         type="button"
                         className="btn btn-success btn-sm"
-                        onClick={(event) =>
-                            this.handleQuery(event, "query", "medium")
-                        }
+                        onClick={() => {
+                            this.props.submitQuery("query", "medium");
+                        }}
                     >
                         Query
                     </button>
@@ -123,36 +46,36 @@ class QueryField extends Component {
                         <div className="dropdown-menu">
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "query", "low")
-                                }
+                                onClick={() => {
+                                    this.props.submitQuery("query", "low");
+                                }}
                             >
                                 Low Priority Query
                             </button>
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "query", "medium")
-                                }
+                                onClick={() => {
+                                    this.props.submitQuery("query", "medium");
+                                }}
                             >
                                 Standard Priority Query
                             </button>
                             <button
                                 className="dropdown-item"
-                                onClick={(event) =>
-                                    this.handleQuery(event, "query", "high")
-                                }
+                                onClick={() => {
+                                    this.props.submitQuery("query", "high");
+                                }}
                             >
                                 High Priority Query
                             </button>
                         </div>
                     </div>
-                    {this.state.isLocked ? (
+                    {this.props.readOnly ? (
                         <button
                             className="btn btn-secondary btn-sm"
                             name="clone"
                             type="submit"
-                            onClick={this.handleEdit}
+                            onClick={this.props.editQuery}
                         >
                             <span className="fa fa-clone" /> Edit
                         </button>
@@ -161,52 +84,21 @@ class QueryField extends Component {
                             className="btn btn-secondary btn-sm"
                             name="parse"
                             type="submit"
-                            onClick={(event) =>
-                                this.handleQuery(event, "parse", null)
-                            }
+                            onClick={() => {
+                                this.props.submitQuery("parse");
+                            }}
                         >
                             <span className="fa fa-code" /> Parse
                         </button>
                     )}
-                    <div className="btn-group" role="group">
-                        <button
-                            type="button"
-                            className="btn btn-info dropdown-toggle"
-                            data-toggle="dropdown"
-                            aria-haspopup="true"
-                            aria-expanded="false"
-                        >
-                            Search: {this.describeTaint()}
-                        </button>
-                        <div className="dropdown-menu">
-                            <button
-                                className="dropdown-item"
-                                onClick={(event) => this.selectTaint(null)}
-                            >
-                                everywhere
-                            </button>
-                            {this.props.availableTaints.map((taint) => {
-                                return (
-                                    <button
-                                        className="dropdown-item"
-                                        onClick={(event) =>
-                                            this.selectTaint(taint)
-                                        }
-                                    >
-                                        {taint}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    {multiselect}
                 </div>
-                <div className="form-group">
-                    <textarea
-                        name="rawYara"
-                        className="form-control mquery-yara-input"
-                        onChange={this.handleInputChange}
-                        readOnly={this.state.isLocked}
-                        value={this.state.rawYara}
+                <div className="mt-1 monaco-container">
+                    <QueryMonaco
+                        readOnly={this.props.readOnly}
+                        onValueChanged={this.props.updateYara}
+                        rawYara={this.props.rawYara}
+                        error={this.props.error}
                     />
                 </div>
             </div>

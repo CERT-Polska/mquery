@@ -5,6 +5,7 @@ from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 class ExampleTagPlugin(MetadataPlugin):
     cacheable = True
+    is_extractor = True
     config_fields = {
         "tag": "Everything will be tagged using that tag",
         "tag_url": "Tag URL e.g. http://google.com?q={tag}",
@@ -18,9 +19,4 @@ class ExampleTagPlugin(MetadataPlugin):
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
-        return {
-            "example_tag": {
-                "display_text": self.tag,
-                "url": self.tag_url + self.tag,
-            }
-        }
+        return {"example_tag": {"display_text": self.tag, "url": self.tag_url}}

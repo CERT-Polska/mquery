@@ -83,13 +83,13 @@ def add_files_to_index(check_operational):
     return {"files_to_detect": files_to_detect, "clue_words": clue_words}
 
 
-def request_query(log, i, taint=None):
+def request_query(log, i, taints=[]):
     res = requests.post(
         "http://web:5000/api/query",
         json={
             "method": "query",
             "raw_yara": i,
-            "taint": taint,
+            "taints": taints,
             "priority": "low",
         },
     )
@@ -247,10 +247,10 @@ def test_query_with_taints(add_files_to_index):
             text = file.read()
         assert text in files_to_detect
 
-        res = request_query(log, i, "anothertaint")
+        res = request_query(log, i, ["anothertaint"])
         m = res.json()["matches"]
         assert len(m) == 0
 
-        res = request_query(log, i, random_taint)
+        res = request_query(log, i, [random_taint])
         m = res.json()["matches"]
         assert len(m) == 1

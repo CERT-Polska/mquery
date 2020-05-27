@@ -12,6 +12,8 @@ from enum import Enum
 class TaskType(Enum):
     SEARCH = "search"
     YARA = "yara"
+    RELOAD = "reload"
+    COMMAND = "command"
 
 
 class AgentTask:
@@ -76,11 +78,16 @@ class Database:
 
     def cancel_job(self, job: JobId) -> None:
         """ Sets the job status to cancelled """
-        self.redis.hmset(job.key, {"status": "cancelled"})
+        self.redis.hmset(
+            job.key, {"status": "cancelled", "finished": int(time())}
+        )
 
     def fail_job(self, job: JobId, message: str) -> None:
         """ Sets the job status to failed. """
-        self.redis.hmset(job.key, {"status": "failed", "error": message})
+        self.redis.hmset(
+            job.key,
+            {"status": "failed", "error": message, "finished": int(time())},
+        )
 
     def get_job(self, job: JobId) -> JobSchema:
         data = self.redis.hgetall(job.key)
@@ -91,19 +98,27 @@ class Database:
             rule_author=data.get("rule_author", None),
             raw_yara=data.get("raw_yara", "ERROR"),
             submitted=data.get("submitted", 0),
+            finished=data.get("finished", None),
             priority=data.get("priority", "medium"),
             files_processed=int(data.get("files_processed", 0)),
             files_matched=int(data.get("files_matched", 0)),
             files_in_progress=int(data.get("files_in_progress", 0)),
             total_files=int(data.get("total_files", 0)),
+            files_errored=int(data.get("files_errored", 0)),
             iterator=data.get("iterator", None),
-            taint=data.get("taint", None),
+            taints=json.loads(data.get("taints", "[]")),
+            total_datasets=data.get("total_datasets", 0),
+            datasets_left=data.get("datasets_left", 0),
         )
+
+    def remove_query(self, job: JobId) -> None:
+        """ Sets the job status to removed """
+        self.redis.hmset(job.key, {"status": "removed"})
 
     def add_match(self, job: JobId, match: MatchInfo) -> None:
         self.redis.rpush(job.meta_key, match.to_json())
 
-    def job_contains(self, job: JobId, ordinal: str, file_path: str) -> bool:
+    def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
         file_list = self.redis.lrange(job.meta_key, ordinal, ordinal)
         return file_list and file_path == json.loads(file_list[0])["file"]
 
@@ -117,15 +132,21 @@ class Database:
         self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
 
     def job_update_work(
-        self, job: JobId, files_processed: int, files_matched: int,
+        self, job: JobId, files_processed: int, files_matched: int
     ) -> None:
         """ Update progress for the job. This will increment number of files processed
         and matched, and if as a result all files are processed, will change the job
         status to `done`
         """
         self.redis.hincrby(job.key, "files_processed", files_processed)
-        self.redis.hincrby(job.key, "files_matched", files_matched)
         self.redis.hincrby(job.key, "files_in_progress", -files_processed)
+        self.redis.hincrby(job.key, "files_matched", files_matched)
+
+    def job_update_error(self, job: JobId, files_errored: int) -> None:
+        """ Update error for the job if it appears during agents' work.
+        This will increment number of files errored and write them to the variable.
+        """
+        self.redis.hincrby(job.key, "files_errored", files_errored)
 
     def create_search_task(
         self,
@@ -133,7 +154,7 @@ class Database:
         rule_author: str,
         raw_yara: str,
         priority: Optional[str],
-        taint: Optional[str],
+        taints: List[str],
         agents: List[str],
     ) -> JobId:
         job = JobId(
@@ -155,21 +176,30 @@ class Database:
             "files_processed": 0,
             "files_matched": 0,
             "total_files": 0,
+            "files_errored": 0,
             "agents_left": len(agents),
+            "datasets_left": 0,
+            "total_datasets": 0,
         }
-        if taint is not None:
-            job_obj["taint"] = taint
+
+        job_obj["taints"] = json.dumps(taints)
 
         self.redis.hmset(job.key, job_obj)
         for agent in agents:
             self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
         return job
 
+    def broadcast_command(self, command: str) -> None:
+        for agent in self.get_active_agents().keys():
+            self.redis.rpush(f"agent:{agent}:queue-command", command)
+
     def init_job_datasets(
         self, agent_id: str, job: JobId, datasets: List[str]
     ) -> None:
         if datasets:
             self.redis.lpush(f"job-ds:{agent_id}:{job.hash}", *datasets)
+            self.redis.hincrby(job.key, "total_datasets", len(datasets))
+            self.redis.hincrby(job.key, "datasets_left", len(datasets))
         self.redis.hset(job.key, "status", "processing")
 
     def get_next_search_dataset(
@@ -177,27 +207,57 @@ class Database:
     ) -> Optional[str]:
         return self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
 
+    def dataset_query_done(self, job: JobId):
+        self.redis.hincrby(job.key, "datasets_left", -1)
+
+    def job_datasets_left(self, agent_id: str, job: JobId) -> int:
+        return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")
+
     def agent_continue_search(self, agent_id: str, job: JobId) -> None:
         self.redis.rpush(f"agent:{agent_id}:queue-search", job.hash)
 
     def get_job_matches(
-        self, job: JobId, offset: int, limit: int
+        self, job: JobId, offset: int = 0, limit: Optional[int] = None
     ) -> MatchesSchema:
-        meta = self.redis.lrange(
-            "meta:" + job.hash, offset, offset + limit - 1
-        )
-        return MatchesSchema(
-            job=self.get_job(job), matches=[json.loads(m) for m in meta]
-        )
+        if limit is None:
+            end = -1
+        else:
+            end = offset + limit - 1
+        meta = self.redis.lrange("meta:" + job.hash, offset, end)
+        matches = [json.loads(m) for m in meta]
+        for match in matches:
+            # Compatibility fix for old jobs, without sha256 metadata key.
+            if "sha256" not in match["meta"]:
+                match["meta"]["sha256"] = {
+                    "display_text": "0" * 64,
+                    "hidden": True,
+                }
+        return MatchesSchema(job=self.get_job(job), matches=matches)
 
-    def agent_get_task(self, agent_id: str) -> AgentTask:
+    def reload_configuration(self, config_version: int):
+        # Send request to any of agents that configuration must be reloaded
+        self.redis.lpush(f"config-reload:{config_version}", "reload")
+        # After 300 seconds of inactivity: reload request is deleted
+        self.redis.expire(f"config-reload:{config_version}", 300)
+
+    def agent_get_task(self, agent_id: str, config_version: int) -> AgentTask:
         agent_prefix = f"agent:{agent_id}"
+        # config-reload is a notification queue that is set by web to notify
+        # agents that configuration has been changed
         task_queues = [
+            f"config-reload:{config_version}",
+            f"{agent_prefix}:queue-command",
             f"{agent_prefix}:queue-search",
             f"{agent_prefix}:queue-yara",
         ]
         queue_task: Any = self.redis.blpop(task_queues)
         queue, task = queue_task
+
+        if queue == f"config-reload:{config_version}":
+            return AgentTask(TaskType.RELOAD, task)
+
+        if queue.endswith(":queue-command"):
+            return AgentTask(TaskType.COMMAND, task)
 
         if queue.endswith(":queue-search"):
             return AgentTask(TaskType.SEARCH, task)
@@ -219,7 +279,9 @@ class Database:
     def agent_finish_job(self, job: JobId) -> None:
         new_agents = self.redis.hincrby(job.key, "agents_left", -1)
         if new_agents <= 0:
-            self.redis.hmset(job.key, {"status": "done"})
+            self.redis.hmset(
+                job.key, {"status": "done", "finished": int(time())}
+            )
 
     def has_pending_search_tasks(self, agent_id: str, job: JobId) -> bool:
         return self.redis.llen(f"job-ds:{agent_id}:{job.hash}") == 0
@@ -278,8 +340,8 @@ class Database:
             for key in sorted(plugin_configs[plugin].keys())
         ]
 
-    def get_plugin_config_version(self) -> str:
-        return self.redis.get("plugin-version")
+    def get_plugin_config_version(self) -> int:
+        return int(self.redis.get("plugin-version") or 0)
 
     def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
@@ -288,7 +350,8 @@ class Database:
         self, plugin_name: str, key: str, value: str
     ) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
-        self.redis.set("plugin-version", self.redis.time()[0])
+        prev_version = self.redis.incrby("plugin-version", 1) - 1
+        self.reload_configuration(prev_version)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")

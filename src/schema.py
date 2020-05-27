@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import List, Dict, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class JobSchema(BaseModel):
@@ -10,13 +10,17 @@ class JobSchema(BaseModel):
     rule_author: Optional[str]
     raw_yara: str
     submitted: int
+    finished: Optional[int]
     priority: str
     files_processed: int
     files_matched: int
     files_in_progress: int
     total_files: int
+    files_errored: int
     iterator: Optional[str]
-    taint: Optional[str]
+    taints: List[str]
+    datasets_left: int
+    total_datasets: int
 
 
 class JobsSchema(BaseModel):
@@ -52,9 +56,10 @@ class RequestConfigEdit(BaseModel):
 
 class QueryRequestSchema(BaseModel):
     raw_yara: str
-    taint: Optional[str]
+    taints: Optional[List[str]]
     priority: Optional[str]
     method: str
+    required_plugins: List[str] = Field([])
 
 
 class QueryResponseSchema(BaseModel):

@@ -1,34 +1,17 @@
 import React from "react";
 import PropTypes from "prop-types";
+import { getProgressBarClass } from "../queryUtils";
 
 const StatusProgress = (props) => {
-    let rowClass;
-    switch (props.status) {
-        case "done":
-            rowClass = "success";
-            break;
-        case "processing":
-            rowClass = "info";
-            break;
-        case "querying":
-            rowClass = "info";
-            break;
-        case "cancelled":
-            rowClass = "danger";
-            break;
-        case "expired":
-            rowClass = "warning";
-            break;
-        default:
-            rowClass = "";
-            break;
-    }
+    const { status, isFinished, total_files, files_processed } = props;
 
-    const progressClass = "progress-bar bg-" + rowClass;
+    const progressClass = getProgressBarClass(status);
 
     const percentage = Math.round(
-        props.total_files
-            ? (props.files_processed * 100) / props.total_files
+        total_files
+            ? (files_processed * 100) / total_files
+            : isFinished
+            ? 100
             : 0
     );
 
@@ -59,6 +42,7 @@ const StatusProgress = (props) => {
 
 StatusProgress.propTypes = {
     status: PropTypes.string.isRequired,
+    isFinished: PropTypes.bool.isRequired,
     total_files: PropTypes.number.isRequired,
     files_processed: PropTypes.number.isRequired,
 };

@@ -11,7 +11,7 @@ class DatasetRow extends Component {
             <tr
                 data-toggle="collapse"
                 data-target={"#collapsed_" + this.props.id}
-                class="accordion-toggle"
+                className="accordion-toggle"
             >
                 <td>
                     <code>{this.props.id}</code>
@@ -30,12 +30,12 @@ class DatasetRow extends Component {
                 </td>
             </tr>,
             <tr>
-                <td colspan="2" class="hiddentablerow p-0">
+                <td colspan="2" className="hiddentablerow p-0">
                     <div
-                        class="accordian-body collapse"
+                        className="accordian-body collapse"
                         id={"collapsed_" + this.props.id}
                     >
-                        <div class="p-3">
+                        <div className="p-3">
                             {this.props.indexes.map((x) => {
                                 return (
                                     <div key={x.type}>
@@ -58,9 +58,12 @@ class DatabaseTopology extends Component {
 
         this.state = {
             datasets: [],
-            compacting: false,
             error: null,
+            startedWork: false,
         };
+
+        this.index = this.index.bind(this);
+        this.compact = this.compact.bind(this);
     }
 
     componentDidMount() {
@@ -74,6 +77,16 @@ class DatabaseTopology extends Component {
             });
     }
 
+    index() {
+        this.setState({ startedWork: true });
+        axios.post(API_URL + "/index", {});
+    }
+
+    compact() {
+        this.setState({ startedWork: true });
+        axios.post(API_URL + "/compact", {});
+    }
+
     render() {
         const datasetRows = Object.keys(
             this.state.datasets
@@ -85,18 +98,59 @@ class DatabaseTopology extends Component {
             />
         ));
 
-        let datasets = Object.values(this.state.datasets);
-        let datasetTooltip = `Number of datasets: ${datasets.length}`;
-        let totalCount = datasets
+        const datasets = Object.values(this.state.datasets);
+        const datasetTooltip = `Number of datasets: ${datasets.length}`;
+        const totalCount = datasets
             .map((x) => x.file_count)
             .reduce((a, b) => a + b, 0);
-        let totalBytes = datasets.map((x) => x.size).reduce((a, b) => a + b, 0);
-        let totalSize = filesize(totalBytes, { standard: "iec" });
-        let filesTooltip = `Total files: ${totalCount} (${totalSize})`;
+        const totalBytes = datasets
+            .map((x) => x.size)
+            .reduce((a, b) => a + b, 0);
+        const totalSize = filesize(totalBytes, { standard: "iec" });
+        const filesTooltip = `Total files: ${totalCount} (${totalSize})`;
+
+        const isLocked = this.props.working || this.state.startedWork;
+        const workingMsg = "Another operation is in progress";
+        const compactMsg = isLocked
+            ? workingMsg
+            : "Merge datasets with each other (if there are any candidates)";
+        const compactButton = (
+            <button
+                type="button"
+                className="btn btn-success"
+                data-toggle="tooltip"
+                title={compactMsg}
+                onClick={this.compact}
+                disabled={isLocked}
+            >
+                compact
+            </button>
+        );
+        const reindexMsg = isLocked
+            ? workingMsg
+            : "Scan samples directory for new files and index them";
+        const reindexButton = (
+            <button
+                type="button"
+                className="btn btn-success"
+                data-toggle="tooltip"
+                title={reindexMsg}
+                onClick={this.index}
+                disabled={isLocked}
+            >
+                reindex
+            </button>
+        );
 
         return (
             <ErrorBoundary error={this.state.error}>
-                <h2 className="text-center mq-bottom">Topology</h2>
+                <h2 className="text-center mq-bottom">
+                    Topology
+                    <div className="btn-group pull-right">
+                        {compactButton}
+                        {reindexButton}
+                    </div>
+                </h2>
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>

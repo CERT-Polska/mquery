@@ -1,27 +1,19 @@
-# mquery Internals
+# Yara support
 
-## How does it work?
+## Introduction
 
-YARA is pretty fast, but searching through a large dataset for a given
-signature can take a lot of time. We pre-filter the results, so it is only
-necessary to run YARA against a small fraction of binaries:
+YARA is pretty fast by itself, but it needs to read every file and it takes
+a long time for large collections. To speed up this process, we pre-filter the results,
+so it is only necessary to run YARA against a small fraction of binaries:
 
 ![mquery flowchart](mquery-flowchart.png?raw=1)
 
 Internally this is implemented with an n-gram database called
-ursadb. Visit [ursadb's repository](https://github.com/CERT-Polska/ursadb) for more details.
+Ursadb. Visit [ursadb's repository](https://github.com/CERT-Polska/ursadb) for more details.
 
 In short, we look for short (3-4) byte fragments in indexed files, and we can
-tell (almost) immediately which files contain the given 3-byte pattern. For
-example, let's imagine we have these three files:
-
-```
-echo "abcde" > abcde
-echo "abcxy" > abcxy
-echo "asdfg" > xbcdx
-```
-
-And the following rule:
+tell (almost) immediately which files contain the given 3-byte pattern.
+For example for the following rule:
 
 ```
 rule example
@@ -33,10 +25,10 @@ rule example
 }
 ```
 
-We parse it internally to `"abc" AND "bcd"`, execute both parts of the query
-separately and merge the result.
+Mquery will run yara only on files that have both "abc" and "bcd" substrings,
+instead of running it on every file in the dataset.
 
-# Known limitations and design decisions.
+## Known limitations and design decisions.
 
 Mquery's goal is to accelerate Yara queries. It should **always** return the
 same results as running Yara on the dataset naively. If it doesn't, please
@@ -173,15 +165,14 @@ rule Rule2
 }
 ```
 
-This is not supported **yet**, but it's a limitation we're aware of and will
-fix in the nearest release. The same goes for the _private_ and _global_ rule features.
+This is supported and parsed to `("dummy1" AND "dummy2")`.
 
-# How to write efficient Yara rules.
+## Efficient Yara rules.
 
 If you've read the previous two paragraphs, you probably have a rough idea
 of what will work and what won't.
 
-- Long strings are where mquery really shines. Let's take the following Emotet rule as an example:
+Long strings are where mquery really shines. Let's take the following Emotet rule as an example:
 
 ```
 rule emotet4_basic
@@ -221,5 +212,6 @@ And this is equivalent to:
 And yet this is usually pretty fast to query. But few more question marks in
 the rule could cripple mquery performance.
 
-- The parser is your friend. If your query runs too slow, check the query plan.
+Remember that parser is your friend. If your query runs too slow, click "parse" instead
+of "query" and investigate if the query looks reasonable.
 

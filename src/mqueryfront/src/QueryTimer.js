@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import { finishedStatuses } from "./QueryUtils";
 
 class QueryTimer extends Component {
     constructor(props) {
@@ -38,11 +37,13 @@ class QueryTimer extends Component {
     }
 
     render() {
-        if (
-            !this.props.job.submitted ||
-            finishedStatuses.includes(this.props.job.status)
-        ) {
+        if (!this.props.job.submitted) {
             return null;
+        }
+
+        if (this.props.isFinished) {
+            const duration = this.props.job.finished - this.props.job.submitted;
+            return <i>Duration: {this.getRenderTime(duration)}</i>;
         }
 
         let durationSec;

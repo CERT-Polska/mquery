@@ -2,12 +2,18 @@ import React, { Component } from "react";
 
 class BackendJobRow extends Component {
     render() {
+        let shortRequest = this.props.request;
+        if (shortRequest.length > 200) {
+            let prefix = shortRequest.substring(0, 140);
+            let suffix = shortRequest.substring(shortRequest.length - 60, 60);
+            shortRequest = prefix + " (...) " + suffix;
+        }
         return (
             <tr>
                 <td>{this.props.id}</td>
                 <td>{this.props.connection_id}</td>
                 <td>
-                    <code>{this.props.request}</code>
+                    <code>{shortRequest}</code>
                 </td>
                 <td>
                     {this.props.work_done} / {this.props.work_estimated}

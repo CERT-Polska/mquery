@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.6'
-      - name: install mypy
+      - name: install mypy==0.770
         run: pip3 install mypy==0.770
       - name: install requirements
         run: pip3 install -r requirements.txt
@@ -43,9 +43,9 @@ jobs:
           python-version: '3.6'
       - name: copy config
         run: cp src/config.example.py src/config.py
-      - name: install mypy
-        run: pip3 install flake8
-      - name: run flake8==3.7.9
+      - name: install flake8==3.7.9
+        run: pip3 install flake8==3.7.9
+      - name: run flake8
         run: flake8 src
   test_python_lint:
     name: python black
