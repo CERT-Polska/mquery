@@ -21,7 +21,6 @@ const INITIAL_STATE = {
 class QueryPage extends Component {
     constructor(props) {
         super(props);
-
         this.state = { ...INITIAL_STATE };
         this.state.selectedTaints = [];
         this.trackJobTimeout = null;
@@ -85,10 +84,12 @@ class QueryPage extends Component {
             this.cancelJob();
             this.setState({
                 ...INITIAL_STATE,
-                selectedTaints: [],
                 datasets: this.state.datasets,
                 rawYara: editMode ? this.state.rawYara : "",
             });
+            if (!editMode) {
+                window.location.reload(true);
+            }
         }
     }
 
