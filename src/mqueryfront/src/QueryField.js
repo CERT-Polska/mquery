@@ -9,15 +9,14 @@ class QueryField extends Component {
             value: obj,
         }));
 
-        let multiselect = null;
         let placeholder = "everywhere";
         if (this.props.selectedTaints.length) {
             placeholder = this.props.selectedTaints
                 .map((obj) => obj.value)
                 .toString();
-            placeholder = placeholder.toString();
         }
 
+        let multiselect = null;
         if (this.props.availableTaints.length) {
             multiselect = (
                 <ReactMultiSelectCheckboxes
