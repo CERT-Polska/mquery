@@ -26,7 +26,7 @@ class QueryField extends Component {
                 <ReactMultiSelectCheckboxes
                     onChange={this.props.handleChange}
                     options={options}
-                    defaultValue={this.props.selectedTaints}
+                    value={this.props.selectedTaints}
                     placeholderButtonLabel={placeHolder}
                 />
             );

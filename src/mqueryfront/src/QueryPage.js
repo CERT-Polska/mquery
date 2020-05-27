@@ -14,6 +14,7 @@ const INITIAL_STATE = {
     queryError: null,
     datasets: {},
     matches: [],
+    selectedTaints: [],
     job: null,
     activePage: 1,
 };
@@ -22,7 +23,6 @@ class QueryPage extends Component {
     constructor(props) {
         super(props);
         this.state = { ...INITIAL_STATE };
-        this.state.selectedTaints = [];
         this.trackJobTimeout = null;
 
         this.collapsePane = this.collapsePane.bind(this);
@@ -57,6 +57,10 @@ class QueryPage extends Component {
                 collapsed: true,
                 job: response.data,
                 datasets: this.state.datasets,
+                selectedTaints: response.data.taints.map((taint) => ({
+                    label: taint,
+                    value: taint,
+                })),
             },
             () => {
                 this.trackJob();
@@ -87,9 +91,6 @@ class QueryPage extends Component {
                 datasets: this.state.datasets,
                 rawYara: editMode ? this.state.rawYara : "",
             });
-            if (!editMode) {
-                window.location.reload(true);
-            }
         }
     }
 
