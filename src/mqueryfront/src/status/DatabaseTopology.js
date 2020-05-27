@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import filesize from "filesize";
 
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "../components/ErrorBoundary";
 import axios from "axios";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 class DatasetRow extends Component {
     render() {

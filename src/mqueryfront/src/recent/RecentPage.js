@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import SearchJobs from "./SearchJobs";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "../components/ErrorBoundary";
 import axios from "axios";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 class RecentPage extends Component {
     constructor(props) {
@@ -20,10 +20,20 @@ class RecentPage extends Component {
         this.handleCancelJob = this.handleCancelJob.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
         this.handleFilter = this.handleFilter.bind(this);
-        this.getHead = this.getHead.bind(this);
-        this.getDistinctList = this.getDistinctList.bind(this);
         this.handlePageChange = this.handlePageChange.bind(this);
-        this.getJobsPage = this.getJobsPage.bind(this);
+    }
+
+    componentDidMount() {
+        axios
+            .get(API_URL + "/job")
+            .then((response) => {
+                const { jobs } = response.data;
+
+                this.setState({ jobs: jobs, head: this.getHead(jobs) });
+            })
+            .catch((error) => {
+                this.setState({ error: error });
+            });
     }
 
     handlePageChange(pageNumber) {
@@ -131,19 +141,6 @@ class RecentPage extends Component {
         return jobs.slice(indexOfFistJob, indexOfLastJob);
     }
 
-    componentDidMount() {
-        axios
-            .get(API_URL + "/job")
-            .then((response) => {
-                const { jobs } = response.data;
-
-                this.setState({ jobs: jobs, head: this.getHead(jobs) });
-            })
-            .catch((error) => {
-                this.setState({ error: error });
-            });
-    }
-
     render() {
         const { jobs, head, filter, itemsPerPage } = this.state;
         let { activePage } = this.state;
@@ -163,6 +160,14 @@ class RecentPage extends Component {
             jobsPage = this.getJobsPage(jobsFiltered, activePage, itemsPerPage);
         }
 
+        const pagination = {
+            activePage: activePage,
+            itemsCountPerPage: itemsPerPage,
+            totalItemsCount: jobCount,
+            pageRangeDisplayed: 5,
+            onChange: this.handlePageChange,
+        };
+
         return (
             <ErrorBoundary error={this.state.error}>
                 <SearchJobs
@@ -172,10 +177,7 @@ class RecentPage extends Component {
                     onFilter={this.handleFilter}
                     onRemove={this.handleRemove}
                     onCancel={this.handleCancelJob}
-                    activePage={activePage}
-                    itemsPerPage={itemsPerPage}
-                    jobCount={jobCount}
-                    onPageChange={this.handlePageChange}
+                    pagination={pagination}
                 />
             </ErrorBoundary>
         );

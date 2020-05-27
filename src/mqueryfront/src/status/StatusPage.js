@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "../components/ErrorBoundary";
 import BackendStatus from "./BackendStatus";
 import DatabaseTopology from "./DatabaseTopology";
 import VersionStatus from "./VersionStatus";
 import axios from "axios";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 class StatusPage extends Component {
     constructor(props) {

@@ -26,6 +26,7 @@ ActionCancel.defaultProps = {
 ActionCancel.propTypes = {
     onClick: PropTypes.func.isRequired,
     size: PropTypes.oneOf(FONTAWESOMESIZES),
+    tooltipMessage: PropTypes.string,
 };
 
 export default ActionCancel;

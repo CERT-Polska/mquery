@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 import { Switch, Route } from "react-router-dom";
 import Navigation from "./Navigation";
-import QueryPage from "./QueryPage";
-import RecentPage from "./RecentPage";
-import StatusPage from "./StatusPage";
-import ConfigPage from "./ConfigPage";
+import QueryPage from "./query/QueryPage";
+import RecentPage from "./recent/RecentPage";
+import StatusPage from "./status/StatusPage";
+import ConfigPage from "./config/ConfigPage";
 import "./App.css";
 
 class App extends Component {
