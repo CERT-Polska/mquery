@@ -24,7 +24,7 @@ const QueryProgressBar = (props) => {
     } = job;
 
     const isFinished = isStatusFinished(status);
-    const inProgeressPc = getPercentage(files_in_progress, total_files);
+    const inProgeressPct = getPercentage(files_in_progress, total_files);
     const erroredPct = getPercentage(files_errored, total_files);
     const processedPct =
         total_files === 0 && isFinished
@@ -52,13 +52,13 @@ const QueryProgressBar = (props) => {
                 >
                     {`${files_processed} / ${total_files} (${processedPct}%)`}
                 </div>
-                {total_files > 0 && inProgeressPc > 0 && (
+                {total_files > 0 && inProgeressPct > 0 && (
                     <div
                         className={"progress-bar bg-warning"}
                         role="progressbar"
-                        style={{ width: Math.max(3, inProgeressPc) + "%" }}
+                        style={{ width: Math.max(3, inProgeressPct) + "%" }}
                     >
-                        {inProgeressPc}%
+                        {inProgeressPct}%
                     </div>
                 )}
                 {files_errored > 0 && (

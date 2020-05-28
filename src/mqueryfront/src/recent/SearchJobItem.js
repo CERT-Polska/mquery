@@ -33,9 +33,7 @@ const SearchJobItem = (props) => {
         ? props.job.rule_author
         : "(no author)";
     const isFinished = isStatusFinished(status);
-
     const submittedDate = new Date(submitted * 1000).toISOString();
-
     const actionBtn = isFinished ? (
         <ActionRemove onClick={onRemove} />
     ) : (

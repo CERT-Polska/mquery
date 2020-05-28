@@ -23,7 +23,7 @@ const QueryNavigation = (props) => {
                 onParseQuery={onParseQuery}
             />
             <QuerySearchNav
-                onClick={onTaintSelect}
+                onChange={onTaintSelect}
                 availableTaints={availableTaints}
             />
         </div>

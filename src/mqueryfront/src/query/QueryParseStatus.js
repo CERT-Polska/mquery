@@ -17,7 +17,7 @@ const QueryParseStatus = (props) => {
             ) : null;
 
         return (
-            <div key={rule_name} style={{ marginTop: 20 }}>
+            <div key={rule_name} className="mt-3">
                 <div className="form-group">
                     <label>
                         <span className="mr-2 font-weight-bold">
@@ -25,10 +25,7 @@ const QueryParseStatus = (props) => {
                         </span>
                         {badge}
                     </label>
-                    <div
-                        className="rounded text-monospace text-break"
-                        style={{ backgroundColor: "#e9ecef" }}
-                    >
+                    <div className="jumbotron text-monospace text-break p-2">
                         {parsed}
                     </div>
                 </div>

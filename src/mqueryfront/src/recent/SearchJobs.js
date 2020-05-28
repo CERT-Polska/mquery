@@ -28,11 +28,9 @@ const SearchJobs = (props) => {
         />
     ));
 
-    // make table itemsPerPage size
-    let i = backendJobRows.length;
-    while (i < pagination.itemsCountPerPage) {
-        backendJobRows.push(<SearchJobItemEmpty key={i} />);
-        i++;
+    // make table itemsCountPerPage size
+    while (backendJobRows.length < pagination.itemsCountPerPage) {
+        backendJobRows.push(<SearchJobItemEmpty key={backendJobRows.length} />);
     }
 
     return (
