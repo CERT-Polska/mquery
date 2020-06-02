@@ -211,7 +211,7 @@ def check_operational():
 
     for attempt in range(60):
         try:
-            res = requests.get("http://dev-web:5000/api/backend", timeout=1)
+            res = requests.get("http://web:5000/api/backend", timeout=1)
             res.raise_for_status()
             return
         except requests.exceptions.ConnectionError:
@@ -228,7 +228,7 @@ def check_operational():
 
 def request_query(log, i, taints=[]):
     res = requests.post(
-        "http://dev-web:5000/api/query",
+        "http://web:5000/api/query",
         json={
             "method": "query",
             "raw_yara": i,
@@ -243,7 +243,7 @@ def request_query(log, i, taints=[]):
 
     for j in range(15):
         res = requests.get(
-            "http://dev-web:5000/api/matches/{}?offset=0&limit=50".format(
+            "http://web:5000/api/matches/{}?offset=0&limit=50".format(
                 query_hash
             )
         )

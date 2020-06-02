@@ -6,12 +6,12 @@ services:
       dockerfile: src/e2etests/Dockerfile
     depends_on:
       - "ursadb"
-      - "dev-web"
+      - "web"
       - "dev-daemon"
       - "redis"
     volumes:
-      - "./src/utils/e2e-state/samples:/mnt/samples"
-  dev-web:
+      - "./e2e-state/samples:/mnt/samples"
+  web:
     build:
       context: .
       dockerfile: deploy/docker/dev.web.Dockerfile
@@ -20,7 +20,7 @@ services:
     links:
       - redis
     volumes:
-      - "./src/utils/e2e-state/samples:/mnt/samples"
+      - "./e2e-state/samples:/mnt/samples"
       - ./src:/usr/src/app/src
     depends_on:
       - "redis"
@@ -33,7 +33,7 @@ services:
       - redis
       - ursadb
     volumes:
-      - "./src/utils/e2e-state/samples:/mnt/samples"
+      - "./e2e-state/samples:/mnt/samples"
       - ./src:/usr/src/app/src
     depends_on:
       - "redis"
@@ -45,8 +45,8 @@ services:
     ports:
       - "9281:9281"
     volumes:
-      - "./src/utils/e2e-state/samples:/mnt/samples"
-      - "./src/utils/e2e-state/index:/var/lib/ursadb"
+      - "./e2e-state/samples:/mnt/samples"
+      - "./e2e-state/index:/var/lib/ursadb"
   redis:
     restart: always
     image: redis
