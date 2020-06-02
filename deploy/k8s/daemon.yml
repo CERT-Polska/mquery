@@ -17,11 +17,23 @@ spec:
         app: mquery-daemon
     spec:
       containers:
-      - envFrom:
-        - configMapRef:
-            name: mquery-config
-        - secretRef:
-            name: mquery-secret
+      - env:
+        - name: MWDB_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: secret-mquery-mwdb-token
+              key: token
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: secret-mquery-secret-key
+              key: key
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: MQUERY_PLUGINS
+          value: "plugins.mwdb_uploads:MalwarecageUploadsMetadata"
         image: dr.cert.pl/mquery/mquery_daemon:latest
         imagePullPolicy: Always
         name: mquery-daemon-container

@@ -39,10 +39,17 @@ def walk_directory(dir: Path, ignores: List[str]) -> Iterator[Path]:
 
 
 def find_new_files(
-    existing: Set[str], files_root: Path, mounted_as: str, max_file_size: int
+    existing: Set[str],
+    files_root: Path,
+    mounted_as: str,
+    min_file_size: int,
+    max_file_size: int,
 ) -> Iterator[str]:
     for abspath in walk_directory(files_root.resolve(), [".ursadb"]):
-        if Path(abspath).stat().st_size > max_file_size:
+        stat = Path(abspath).stat()
+        if stat.st_size > max_file_size:
+            continue
+        if stat.st_size <= min_file_size:
             continue
         relpath = os.path.relpath(abspath, files_root)
         mounted_path = os.path.join(mounted_as, relpath)
@@ -97,6 +104,7 @@ def prepare(
     workdir: Path,
     path: Path,
     batch: int,
+    min_file_size: int,
     max_file_size: int,
     mounted_as: str,
 ) -> None:
@@ -113,7 +121,9 @@ def prepare(
     current_batch = 10 ** 20  # As good as infinity.
     new_files = 0
     batch_id = 0
-    for f in find_new_files(fileset, path, mounted_as, max_file_size):
+    for f in find_new_files(
+        fileset, path, mounted_as, min_file_size, max_file_size
+    ):
         if current_batch > batch:
             if tmpfile is not None:
                 tmpfile.close()
@@ -211,6 +221,12 @@ def main() -> None:
         default=None,
     )
     parser.add_argument(
+        "--min-file-size-mb",
+        type=int,
+        help="Minimum file size, in MB, to index. 0 By default.",
+        default=0,
+    )
+    parser.add_argument(
         "--max-file-size-mb",
         type=int,
         help="Maximum file size, in MB, to index. 128 By default.",
@@ -284,8 +300,16 @@ def main() -> None:
             return
 
         max_file_size = args.max_file_size_mb * 1024 * 1024
+        min_file_size = args.min_file_size_mb * 1024 * 1024
+        assert min_file_size < max_file_size
         prepare(
-            args.ursadb, workdir, path, args.batch, max_file_size, path_mount
+            args.ursadb,
+            workdir,
+            path,
+            args.batch,
+            min_file_size,
+            max_file_size,
+            path_mount,
         )
 
     if args.mode == "index" or args.mode == "prepare-and-index":

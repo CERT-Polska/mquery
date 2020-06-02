@@ -22,7 +22,6 @@ const INITIAL_STATE = {
 class QueryPage extends Component {
     constructor(props) {
         super(props);
-
         this.state = { ...INITIAL_STATE };
         this.trackJobTimeout = null;
 
@@ -58,6 +57,10 @@ class QueryPage extends Component {
                 collapsed: true,
                 job: response.data,
                 datasets: this.state.datasets,
+                selectedTaints: response.data.taints.map((taint) => ({
+                    label: taint,
+                    value: taint,
+                })),
             },
             () => {
                 this.trackJob();
@@ -239,6 +242,7 @@ class QueryPage extends Component {
                                 submitQuery={this.submitQuery}
                                 editQuery={this.editQuery}
                                 handleChange={this.handleChange}
+                                selectedTaints={this.state.selectedTaints}
                             />
                         </div>
                     ) : (

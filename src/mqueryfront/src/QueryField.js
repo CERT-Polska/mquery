@@ -4,21 +4,26 @@ import ReactMultiSelectCheckboxes from "react-multiselect-checkboxes";
 
 class QueryField extends Component {
     render() {
-        var options = this.props.availableTaints.map(function (obj) {
-            return {
-                label: obj,
-                value: obj,
-            };
-        });
+        const options = this.props.availableTaints.map((obj) => ({
+            label: obj,
+            value: obj,
+        }));
 
-        var multiselect = null;
+        let placeholder = "everywhere";
+        if (this.props.selectedTaints.length) {
+            placeholder = this.props.selectedTaints
+                .map((obj) => obj.value)
+                .toString();
+        }
 
+        let multiselect = null;
         if (this.props.availableTaints.length) {
             multiselect = (
                 <ReactMultiSelectCheckboxes
                     onChange={this.props.handleChange}
                     options={options}
-                    placeholderButtonLabel="everywhere"
+                    value={this.props.selectedTaints}
+                    placeholderButtonLabel={placeholder}
                 />
             );
         }
