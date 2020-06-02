@@ -1,7 +1,6 @@
 """
-End-to-end tests for the whole infrastructore
+End-to-end tests for the whole infrastructure
 """
-
 
 import sys
 import json
@@ -16,100 +15,6 @@ import os
 
 sys.path = [".."] + sys.path
 from lib.ursadb import UrsaDb  # noqa
-
-
-@pytest.fixture(scope="session", autouse=True)
-def check_operational(request):
-    log = logging.getLogger()
-
-    for attempt in range(60):
-        try:
-            res = requests.get("http://web:5000/api/backend", timeout=1)
-            res.raise_for_status()
-            return
-        except requests.exceptions.ConnectionError:
-            if attempt % 15 == 0:
-                log.info(
-                    "Connection to mquery failed, retrying in a moment..."
-                )
-        except requests.exceptions.RequestException:
-            if attempt % 15 == 0:
-                log.info("Request to mquery failed, retrying...")
-
-        time.sleep(1)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def add_files_to_index(check_operational):
-    num_files = 100
-    word_length = 10
-    words_list = []
-
-    for i in range(1, num_files):
-        words_list.append(
-            "".join(
-                random.choice(string.ascii_uppercase + string.digits)
-                for _ in range(word_length)
-            )
-        )
-
-    random.shuffle(words_list)
-    files_to_detect = words_list[:10]
-    clue_words = words_list[:5]
-
-    for i in range(1, 6):
-        files_to_detect[i + 4] = (
-            files_to_detect[i - 1] + files_to_detect[i + 4]
-        )
-
-    all_files = files_to_detect + files_to_detect[10:]
-    random.shuffle(all_files)
-
-    num = 0
-    for i in all_files:
-        num = num + 1
-        with open("/mnt/samples/file{0}.txt".format(num), "w") as f:
-            f.write(i)
-
-    context = zmq.Context()
-    socket = context.socket(zmq.REQ)
-    socket.connect("tcp://ursadb:9281")
-
-    socket.send_string(
-        'index "/mnt/samples" with [gram3, text4, hash4, wide8];'
-    )
-    assert json.loads(socket.recv_string()).get("result").get("status") == "ok"
-
-    return {"files_to_detect": files_to_detect, "clue_words": clue_words}
-
-
-def request_query(log, i, taints=[]):
-    res = requests.post(
-        "http://web:5000/api/query",
-        json={
-            "method": "query",
-            "raw_yara": i,
-            "taints": taints,
-            "priority": "low",
-        },
-    )
-    log.info("API response: %s", res.json())
-    res.raise_for_status()
-
-    query_hash = res.json()["query_hash"]
-
-    for j in range(15):
-        res = requests.get(
-            "http://web:5000/api/matches/{}?offset=0&limit=50".format(
-                query_hash
-            )
-        )
-        log.info("API response: %s", res.json())
-        if res.json()["job"]["status"] == "done":
-            break
-        time.sleep(1)
-
-    return res
 
 
 @pytest.mark.timeout(30)
@@ -254,3 +159,97 @@ def test_query_with_taints(add_files_to_index):
         res = request_query(log, i, [random_taint])
         m = res.json()["matches"]
         assert len(m) == 1
+
+
+@pytest.fixture(scope="session", autouse=True)
+def add_files_to_index(check_operational):
+    num_files = 100
+    word_length = 10
+    words_list = []
+
+    for i in range(1, num_files):
+        words_list.append(
+            "".join(
+                random.choice(string.ascii_uppercase + string.digits)
+                for _ in range(word_length)
+            )
+        )
+
+    random.shuffle(words_list)
+    files_to_detect = words_list[:10]
+    clue_words = words_list[:5]
+
+    for i in range(1, 6):
+        files_to_detect[i + 4] = (
+            files_to_detect[i - 1] + files_to_detect[i + 4]
+        )
+
+    all_files = files_to_detect + files_to_detect[10:]
+    random.shuffle(all_files)
+
+    num = 0
+    for i in all_files:
+        num = num + 1
+        with open("/mnt/samples/file{0}.txt".format(num), "w") as f:
+            f.write(i)
+
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect("tcp://ursadb:9281")
+
+    socket.send_string(
+        'index "/mnt/samples" with [gram3, text4, hash4, wide8];'
+    )
+    assert json.loads(socket.recv_string()).get("result").get("status") == "ok"
+
+    return {"files_to_detect": files_to_detect, "clue_words": clue_words}
+
+
+@pytest.fixture(scope="session", autouse=True)
+def check_operational():
+    log = logging.getLogger()
+
+    for attempt in range(60):
+        try:
+            res = requests.get("http://dev-web:5000/api/backend", timeout=1)
+            res.raise_for_status()
+            return
+        except requests.exceptions.ConnectionError:
+            if attempt % 15 == 0:
+                log.info(
+                    "Connection to mquery failed, retrying in a moment..."
+                )
+        except requests.exceptions.RequestException:
+            if attempt % 15 == 0:
+                log.info("Request to mquery failed, retrying...")
+
+        time.sleep(1)
+
+
+def request_query(log, i, taints=[]):
+    res = requests.post(
+        "http://dev-web:5000/api/query",
+        json={
+            "method": "query",
+            "raw_yara": i,
+            "taints": taints,
+            "priority": "low",
+        },
+    )
+    log.info("API response: %s", res.json())
+    res.raise_for_status()
+
+    query_hash = res.json()["query_hash"]
+
+    for j in range(15):
+        res = requests.get(
+            "http://dev-web:5000/api/matches/{}?offset=0&limit=50".format(
+                query_hash
+            )
+        )
+        log.info("API response: %s", res.json())
+        if res.json()["job"]["status"] == "done":
+            break
+        time.sleep(1)
+
+    return res

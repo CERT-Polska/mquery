@@ -1,8 +1,0 @@
-version: '3'
-services:
-  tests:
-    build:
-      context: .
-      dockerfile: src/e2etests/Dockerfile
-    volumes:
-      - "${SAMPLES_DIR}:/mnt/samples"
