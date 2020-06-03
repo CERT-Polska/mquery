@@ -27,6 +27,7 @@ const QueryLayoutManager = (props) => {
         rawYara,
         onYaraUpdate,
         parsedError,
+        selectedTaints,
     } = props;
 
     const queryParse = queryError ? (
@@ -66,6 +67,7 @@ const QueryLayoutManager = (props) => {
                 rawYara={rawYara}
                 onYaraUpdate={onYaraUpdate}
                 parsedError={parsedError}
+                selectedTaints={selectedTaints}
             />
         </div>
     );
@@ -102,6 +104,7 @@ QueryLayoutManager.propTypes = {
     rawYara: PropTypes.string.isRequired,
     onYaraUpdate: PropTypes.func.isRequired,
     parsedError: PropTypes.arrayOf(PropTypes.string).isRequired,
+    selectedTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default QueryLayoutManager;

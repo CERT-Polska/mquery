@@ -12,6 +12,7 @@ const QueryNavigation = (props) => {
         onTaintSelect,
         isEditActive,
         availableTaints,
+        selectedTaints,
     } = props;
 
     return (
@@ -25,6 +26,7 @@ const QueryNavigation = (props) => {
             <QuerySearchNav
                 onChange={onTaintSelect}
                 availableTaints={availableTaints}
+                selectedTaints={selectedTaints}
             />
         </div>
     );
@@ -37,6 +39,7 @@ QueryNavigation.propTypes = {
     onTaintSelect: PropTypes.func.isRequired,
     isEditActive: PropTypes.bool.isRequired,
     availableTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
+    selectedTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default QueryNavigation;

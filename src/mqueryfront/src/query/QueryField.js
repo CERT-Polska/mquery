@@ -13,6 +13,7 @@ const QueryField = (props) => {
                 onParseQuery={props.onParseQuery}
                 onTaintSelect={props.onTaintSelect}
                 availableTaints={props.availableTaints}
+                selectedTaints={props.selectedTaints}
             />
             <div className="mt-2 monaco-container">
                 <QueryMonaco
@@ -36,6 +37,7 @@ QueryField.propTypes = {
     onEditQuery: PropTypes.func.isRequired,
     onParseQuery: PropTypes.func.isRequired,
     onTaintSelect: PropTypes.func.isRequired,
+    selectedTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default QueryField;

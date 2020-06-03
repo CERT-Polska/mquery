@@ -119,6 +119,10 @@ class QueryPage extends Component {
                 isCollapsed: true,
                 job: response.data,
                 datasets: this.state.datasets,
+                selectedTaints: response.data.taints.map((taint) => ({
+                    label: taint,
+                    value: taint,
+                })),
             },
             () => {
                 this.trackJob();
@@ -243,6 +247,7 @@ class QueryPage extends Component {
                 rawYara={this.state.rawYara}
                 onYaraUpdate={this.handleYaraUpdate}
                 parsedError={this.parsedError}
+                selectedTaints={this.state.selectedTaints}
             />
         );
     }
