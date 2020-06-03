@@ -329,6 +329,7 @@ def query_remove(job_id: str) -> StatusSchema:
 @app.get("/recent", include_in_schema=False)
 @app.get("/status", include_in_schema=False)
 @app.get("/query", include_in_schema=False)
+@app.get("/config", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     return FileResponse("mqueryfront/build/index.html")
 
