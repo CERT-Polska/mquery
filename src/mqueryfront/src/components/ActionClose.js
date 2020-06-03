@@ -22,6 +22,7 @@ ActionClose.defaultProps = {
 ActionClose.propTypes = {
     onClick: PropTypes.func.isRequired,
     size: PropTypes.oneOf(FONTAWESOMESIZES),
+    tooltipMessage: PropTypes.string,
 };
 
 export default ActionClose;

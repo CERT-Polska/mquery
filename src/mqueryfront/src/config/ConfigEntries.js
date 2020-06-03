@@ -1,7 +1,7 @@
 import React, { Component } from "react";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "../components/ErrorBoundary";
 import axios from "axios";
-import { API_URL } from "./config";
+import { API_URL } from "../config";
 
 class ConfigRow extends Component {
     constructor(props) {

@@ -1,9 +1,8 @@
 import React, { Component } from "react";
-import ErrorBoundary from "./ErrorBoundary";
+import ErrorBoundary from "../components/ErrorBoundary";
 import ConfigEntryList from "./ConfigEntries";
 import axios from "axios";
-import { API_URL } from "./config";
-import { Link } from "react-router-dom";
+import { API_URL } from "../config";
 
 class ConfigPage extends Component {
     constructor(props) {
