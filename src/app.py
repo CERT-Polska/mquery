@@ -151,6 +151,7 @@ def query(
         rules[-1].author,
         data.raw_yara,
         data.priority,
+        data.reference or "",
         data.taints,
         list(active_agents.keys()),
     )
