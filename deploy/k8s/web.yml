@@ -52,6 +52,8 @@ spec:
           name: mquery-nfs-volume-prod
         - mountPath: /mnt/kuku-analyses
           name: mquery-nfs-analyses-volume-prod
+        - mountPath: /mnt/binaries
+          name: mquery-cuckoo-binaries-volume-prod
       dnsPolicy: ClusterFirst
       imagePullSecrets:
       - name: dr-auth
@@ -68,6 +70,10 @@ spec:
       - name: mquery-nfs-analyses-volume-prod
         persistentVolumeClaim:
           claimName: mquery-nfs-analyses-claim-prod
+      - name: mquery-cuckoo-binaries-volume-prod
+        persistentVolumeClaim:
+          claimName: mquery-cuckoo-binaries-pv-claim-prod
+
 ---
 apiVersion: v1
 kind: Service
