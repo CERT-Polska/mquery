@@ -76,6 +76,12 @@ class Agent:
             # First search request - find datasets to query
             logging.info("New job, generate subtasks...")
             result = self.ursa.topology()
+
+            if not result["result"]["datasets"].keys():
+                logging.info("No datasets found. Finish the job and return...")
+                self.db.agent_finish_job(job_id)
+                return
+
             if "error" in result:
                 raise RuntimeError(result["error"])
             self.db.init_job_datasets(

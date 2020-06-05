@@ -2,7 +2,6 @@
 End-to-end tests for the whole infrastructure
 """
 
-import sys
 import json
 import logging
 import string
@@ -11,10 +10,29 @@ import zmq  # type: ignore
 import pytest  # type: ignore
 import requests
 import random
+from lib.ursadb import UrsaDb  # noqa
 import os
 
-sys.path = [".."] + sys.path
-from lib.ursadb import UrsaDb  # noqa
+
+@pytest.mark.timeout(30)
+def test_query_with_no_indexes():
+    log = logging.getLogger()
+
+    test_yara = """
+        rule exception {
+            strings:
+                $check = "Exception"
+            condition:
+                any of them
+        }
+        """
+
+    res = request_query(log, test_yara)
+    job_status = res.json()["job"]["status"]
+    assert job_status == "done"
+
+    matches = res.json()["matches"]
+    assert len(matches) == 0
 
 
 @pytest.mark.timeout(30)
