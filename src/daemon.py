@@ -68,9 +68,7 @@ class Agent:
         logging.info("Parsing...")
 
         db_topology = self.ursa.topology()
-        logging.info(
-            "No datasets found. Finish the job and return..."
-        )
+        logging.info("No datasets found. Finish the job and return...")
         if not db_topology["result"]["datasets"].keys():
             self.db.agent_finish_job(job_id)
             return
