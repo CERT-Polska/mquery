@@ -112,7 +112,7 @@ class Agent:
         if job.files_limit and total_files > job.files_limit:
             raise RuntimeError(
                 f"Too many candidates after prefiltering (limit: {job.files_limit}). "
-                f"Try a more specific query."
+                "Try a more specific query."
             )
 
         self.db.agent_start_job(self.group_id, job_id, iterator)
