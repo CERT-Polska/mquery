@@ -100,6 +100,7 @@ class Database:
             submitted=data.get("submitted", 0),
             finished=data.get("finished", None),
             priority=data.get("priority", "medium"),
+            files_limit=data.get("files_limit", 0),
             files_processed=int(data.get("files_processed", 0)),
             files_matched=int(data.get("files_matched", 0)),
             files_in_progress=int(data.get("files_in_progress", 0)),
@@ -155,6 +156,7 @@ class Database:
         rule_author: str,
         raw_yara: str,
         priority: Optional[str],
+        files_limit: int,
         reference: str,
         taints: List[str],
         agents: List[str],
@@ -174,6 +176,7 @@ class Database:
             "raw_yara": raw_yara,
             "submitted": int(time()),
             "priority": priority or "medium",
+            "files_limit": files_limit,
             "reference": reference,
             "files_in_progress": 0,
             "files_processed": 0,
@@ -270,8 +273,8 @@ class Database:
 
         raise RuntimeError("Unexpected queue")
 
-    def update_job_files(self, job: JobId, total_files: int) -> None:
-        self.redis.hincrby(job.key, "total_files", total_files)
+    def update_job_files(self, job: JobId, total_files: int) -> int:
+        return self.redis.hincrby(job.key, "total_files", total_files)
 
     def agent_start_job(
         self, agent_id: str, job: JobId, iterator: str

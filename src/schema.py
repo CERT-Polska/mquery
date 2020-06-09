@@ -12,6 +12,7 @@ class JobSchema(BaseModel):
     submitted: int
     finished: Optional[int]
     priority: str
+    files_limit: int
     reference: str
     files_processed: int
     files_matched: int
@@ -60,6 +61,7 @@ class QueryRequestSchema(BaseModel):
     taints: Optional[List[str]]
     priority: Optional[str]
     method: str
+    files_limit: Optional[int]
     reference: Optional[str]  # arbitrary data specified by the user
     required_plugins: List[str] = Field([])
 
