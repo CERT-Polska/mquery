@@ -12,7 +12,7 @@ class JobSchema(BaseModel):
     submitted: int
     finished: Optional[int]
     priority: str
-    files_limit: Optional[int]
+    files_limit: int
     reference: str
     files_processed: int
     files_matched: int
