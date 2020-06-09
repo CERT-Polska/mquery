@@ -108,7 +108,13 @@ class Agent:
         iterator = result["iterator"]
         logging.info(f"Iterator {iterator} contains {file_count} files")
 
-        self.db.update_job_files(job_id, file_count)
+        total_files = self.db.update_job_files(job_id, file_count)
+        if job.files_limit and total_files > job.files_limit:
+            raise RuntimeError(
+                "Exceeded the limit of files to be processed (%d). Try more specific query.",
+                job.files_limit,
+            )
+
         self.db.agent_start_job(self.group_id, job_id, iterator)
         self.db.agent_continue_search(self.group_id, job_id)
         self.db.dataset_query_done(job_id)
