@@ -94,6 +94,7 @@ class Database:
         return JobSchema(
             id=job.hash,
             status=data.get("status", "ERROR"),
+            error=data.get("error", None),
             rule_name=data.get("rule_name", "ERROR"),
             rule_author=data.get("rule_author", None),
             raw_yara=data.get("raw_yara", "ERROR"),

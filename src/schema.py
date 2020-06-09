@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 class JobSchema(BaseModel):
     id: str
     status: str
+    error: Optional[str]
     rule_name: str
     rule_author: Optional[str]
     raw_yara: str

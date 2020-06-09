@@ -9,10 +9,6 @@ const QueryResultsStatus = (props) => {
     const { job, matches, qhash, pagination, onCancel } = props;
     const { status, files_matched } = job;
 
-    if (job.error) {
-        return <ErrorPage error={job.error} />;
-    }
-
     if (status === "expired") {
         return (
             <div className="mquery-scroll-matches">
@@ -21,18 +17,25 @@ const QueryResultsStatus = (props) => {
         );
     }
 
-    const results =
-        files_matched === 0 ? (
-            status === "done" ? (
-                <div className="alert alert-info">No matches found.</div>
-            ) : null
-        ) : (
+    let results = null;
+
+    if (job.error) {
+        results = (
+            <div className="alert alert-danger">
+                <b>Job error occured</b>: {job.error}
+            </div>
+        );
+    } else if (files_matched > 0) {
+        results = (
             <QueryMatches
                 matches={matches}
                 qhash={qhash}
                 pagination={pagination}
             />
         );
+    } else if (status === "done") {
+        results = <div className="alert alert-info">No matches found.</div>;
+    }
 
     return (
         <div>
