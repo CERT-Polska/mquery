@@ -14,13 +14,13 @@ testdir = current_path + "/testdata/"
 class TestYaraRules(unittest.TestCase):
     def test_regression(self):
 
-        yara_files = [f for f in os.listdir(testdir) if ".txt" not in f]
+        yara_files = [f for f in os.listdir(testdir) if f.endswith('.yar')]
 
-        for file in yara_files:
-            with open(testdir + file) as f:
+        for filename in yara_files:
+            with open(testdir + filename) as f:
                 data = f.read()
 
-            expected_file_txt = file + ".txt"
+            expected_file_txt = file[:-4] + ".txt"
             self.assert_query(data, expected_file_txt)
 
     def assert_query(self, data, expected_file_txt):
