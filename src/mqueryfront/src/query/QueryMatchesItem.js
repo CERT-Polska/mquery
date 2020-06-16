@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
 import PropTypes from "prop-types";
@@ -7,6 +7,10 @@ import { PT_MATCH } from "../queryUtils";
 const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
     const { matches, meta, file } = match;
+
+    const addFilter = (event) => {
+        props.changeFilter(event);
+    };
 
     const path = require("path");
     const fileBasename = path.basename(file);
@@ -22,7 +26,11 @@ const QueryMatchesItem = (props) => {
         ));
 
     const matchBadges = Object.values(matches).map((v) => (
-        <span key={v} className="badge badge-pill badge-primary ml-1 mt-1">
+        <span
+            key={v}
+            className="badge badge-pill badge-primary ml-1 mt-1"
+            onClick={() => addFilter(v)}
+        >
             {v}
         </span>
     ));

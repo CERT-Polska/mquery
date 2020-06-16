@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { API_URL } from "../config";
 import Pagination from "react-js-pagination";
 import DownloadDropdown from "../components/DownloadDropdown";
@@ -9,24 +9,48 @@ import { PT_MATCHES, PT_PAGINATION } from "../queryUtils";
 const QueryMatches = (props) => {
     const { matches, qhash, pagination } = props;
 
-    const matchesList = matches.map((match, index) => {
-        const download_url =
-            API_URL +
-            "/download?job_id=" +
-            encodeURIComponent(qhash) +
-            "&ordinal=" +
-            encodeURIComponent(index) +
-            "&file_path=" +
-            encodeURIComponent(match.file);
+    const [filters, setFilter] = useState([]);
 
-        return (
-            <QueryMatchesItem
-                key={match.file}
-                match={match}
-                download_url={download_url}
-            />
-        );
-    });
+    const updateFilter = (name) => {
+        if (!filters.includes(name)) {
+            setFilter([...filters, name]);
+        } else {
+            setFilter(filters.filter((e) => e !== name));
+        }
+    };
+
+    const matchesList = matches
+        .filter((match) => {
+            if (
+                filters.length > 0 &&
+                match.matches.some((v) => filters.includes(v))
+            ) {
+                return match;
+            } else {
+                return match;
+            }
+        })
+        .map((match, index) => {
+            const download_url =
+                API_URL +
+                "/download?job_id=" +
+                encodeURIComponent(qhash) +
+                "&ordinal=" +
+                encodeURIComponent(index) +
+                "&file_path=" +
+                encodeURIComponent(match.file);
+
+            return (
+                <QueryMatchesItem
+                    key={match.file}
+                    match={match}
+                    download_url={download_url}
+                    filters={filters}
+                    setFilter={setFilter}
+                    changeFilter={updateFilter}
+                />
+            );
+        });
 
     const downloadDropdownList = [
         {
@@ -58,6 +82,15 @@ const QueryMatches = (props) => {
                                     itemList={downloadDropdownList}
                                 />
                             </span>
+                            {filters.map((v) => (
+                                <span
+                                    key={v}
+                                    className="badge badge-pill badge-primary ml-1 mt-1"
+                                    onClick={() => updateFilter(v)}
+                                >
+                                    {v}
+                                </span>
+                            ))}
                         </th>
                     </tr>
                 </thead>
