@@ -57,6 +57,12 @@ class QueryMonaco extends Component {
                         ]);
                     }
                 });
+                editor.addCommand(
+                    [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+                    () => {
+                        this.props.onSubmitQuery("medium");
+                    }
+                );
             })
             .catch((error) =>
                 console.error(

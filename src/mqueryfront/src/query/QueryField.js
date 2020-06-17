@@ -21,6 +21,7 @@ const QueryField = (props) => {
                     rawYara={props.rawYara}
                     onValueChanged={props.onYaraUpdate}
                     error={props.parsedError}
+                    onSubmitQuery={props.onSubmitQuery}
                 />
             </div>
         </div>
