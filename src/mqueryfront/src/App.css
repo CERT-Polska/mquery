@@ -83,3 +83,7 @@
     cursor: pointer;
     color: var(--blue) !important;
 }
+
+.cursor-pointer{
+    cursor: pointer;
+  }

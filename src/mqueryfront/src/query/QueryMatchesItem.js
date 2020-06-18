@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
 import PropTypes from "prop-types";
@@ -28,7 +28,7 @@ const QueryMatchesItem = (props) => {
     const matchBadges = Object.values(matches).map((v) => (
         <span
             key={v}
-            className="badge badge-pill badge-primary ml-1 mt-1"
+            className="badge badge-pill badge-primary ml-1 mt-1 cursor-pointer"
             onClick={() => addFilter(v)}
         >
             {v}

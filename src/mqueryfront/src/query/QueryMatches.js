@@ -31,7 +31,7 @@ const QueryMatches = (props) => {
             }
         })
         .map((match, index) => {
-            const download_url =
+            const downloadUrl =
                 API_URL +
                 "/download?job_id=" +
                 encodeURIComponent(qhash) +
@@ -44,13 +44,23 @@ const QueryMatches = (props) => {
                 <QueryMatchesItem
                     key={match.file}
                     match={match}
-                    download_url={download_url}
+                    download_url={downloadUrl}
                     filters={filters}
                     setFilter={setFilter}
                     changeFilter={updateFilter}
                 />
             );
         });
+
+    const filtersHead = filters.map((v) => (
+        <span
+            key={v}
+            className="badge badge-pill badge-primary ml-1 mt-1  cursor-pointer"
+            onClick={() => updateFilter(v)}
+        >
+            {v}
+        </span>
+    ));
 
     const downloadDropdownList = [
         {
@@ -82,15 +92,7 @@ const QueryMatches = (props) => {
                                     itemList={downloadDropdownList}
                                 />
                             </span>
-                            {filters.map((v) => (
-                                <span
-                                    key={v}
-                                    className="badge badge-pill badge-primary ml-1 mt-1"
-                                    onClick={() => updateFilter(v)}
-                                >
-                                    {v}
-                                </span>
-                            ))}
+                            {filtersHead}
                         </th>
                     </tr>
                 </thead>
