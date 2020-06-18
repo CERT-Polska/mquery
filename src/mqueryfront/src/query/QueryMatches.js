@@ -21,11 +21,10 @@ const QueryMatches = (props) => {
 
     const matchesList = matches
         .filter((match) => {
-            if (
-                filters.length > 0 &&
-                match.matches.some((v) => filters.includes(v))
-            ) {
-                return match;
+            if (filters.length > 0) {
+                if (match.matches.some((v) => filters.includes(v))) {
+                    return match;
+                }
             } else {
                 return match;
             }
