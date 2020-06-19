@@ -55,7 +55,7 @@ const QueryMatches = (props) => {
     const filtersHead = filters.map((v) => (
         <span
             key={v}
-            className="badge badge-pill badge-primary ml-1 mt-1  cursor-pointer"
+            className="badge badge-pill badge-secondary ml-1 mt-1  cursor-pointer"
             onClick={() => updateFilter(v)}
         >
             {v}
@@ -93,8 +93,8 @@ const QueryMatches = (props) => {
                                 />
                             </span>
                             {filters.length > 0 && (
-                                <span class="border rounded p-1 pull-right">
-                                    <FilterIcon color="grey" />
+                                <span class="border rounded p-1 pull-right text-secondary">
+                                    <FilterIcon color="text-secondary" />
                                     {filtersHead}
                                 </span>
                             )}
