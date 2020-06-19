@@ -94,7 +94,7 @@ const QueryMatches = (props) => {
                             </span>
                             {filters.length > 0 && (
                                 <span class="border rounded p-1 pull-right">
-                                    <FilterIcon />
+                                    <FilterIcon color="grey" />
                                     {filtersHead}
                                 </span>
                             )}
