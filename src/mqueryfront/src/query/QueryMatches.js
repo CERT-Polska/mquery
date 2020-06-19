@@ -91,7 +91,12 @@ const QueryMatches = (props) => {
                                     itemList={downloadDropdownList}
                                 />
                             </span>
-                            {filtersHead}
+                            {filters.length > 0 && (
+                                <span class="border rounded p-1 pull-right">
+                                    <i class="fa fa-filter text-secondary mr-2"></i>
+                                    {filtersHead}
+                                </span>
+                            )}
                         </th>
                     </tr>
                 </thead>
