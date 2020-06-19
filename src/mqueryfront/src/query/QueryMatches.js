@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { API_URL } from "../config";
 import Pagination from "react-js-pagination";
+import FilterIcon from "../components/FilterIcon";
 import DownloadDropdown from "../components/DownloadDropdown";
 import QueryMatchesItem from "./QueryMatchesItem";
 import PropTypes from "prop-types";
@@ -93,7 +94,7 @@ const QueryMatches = (props) => {
                             </span>
                             {filters.length > 0 && (
                                 <span class="border rounded p-1 pull-right">
-                                    <i class="fa fa-filter text-secondary mr-2"></i>
+                                    <FilterIcon />
                                     {filtersHead}
                                 </span>
                             )}
