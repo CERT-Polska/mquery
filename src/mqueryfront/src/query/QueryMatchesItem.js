@@ -8,10 +8,6 @@ const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
     const { matches, meta, file } = match;
 
-    const addFilter = (event) => {
-        props.changeFilter(event);
-    };
-
     const path = require("path");
     const fileBasename = path.basename(file);
 
