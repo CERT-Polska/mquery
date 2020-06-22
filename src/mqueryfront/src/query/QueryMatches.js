@@ -93,7 +93,7 @@ const QueryMatches = (props) => {
                                 />
                             </span>
                             {filters.length > 0 && (
-                                <span class="border rounded p-1 pull-right text-secondary">
+                                <span className="border rounded p-1 pull-right text-secondary">
                                     <FilterIcon color="text-secondary" />
                                     {filtersHead}
                                 </span>
