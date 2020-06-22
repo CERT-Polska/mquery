@@ -29,7 +29,7 @@ const QueryMatchesItem = (props) => {
         <span
             key={v}
             className="badge badge-pill badge-primary ml-1 mt-1 cursor-pointer"
-            onClick={() => addFilter(v)}
+            onClick={() => props.changeFilter(v)}
         >
             {v}
         </span>
