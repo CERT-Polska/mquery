@@ -22,7 +22,11 @@ const QueryMatchesItem = (props) => {
         ));
 
     const matchBadges = Object.values(matches).map((v) => (
-        <span key={v} className="badge badge-pill badge-primary ml-1 mt-1">
+        <span
+            key={v}
+            className="badge badge-pill badge-primary ml-1 mt-1 cursor-pointer"
+            onClick={() => props.changeFilter(v)}
+        >
             {v}
         </span>
     ));

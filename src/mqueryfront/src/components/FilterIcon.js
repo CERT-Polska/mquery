@@ -17,7 +17,6 @@ const FilterIcon = (props) => {
 
 FilterIcon.defaultProps = {
     size: "xs",
-    color: "black",
     tooltipMessage: "filter",
 };
 
