@@ -112,7 +112,6 @@ const QueryMatches = (props) => {
                 itemClass="page-item"
                 linkClass="page-link"
             />
-            )
         </div>
     );
 };
