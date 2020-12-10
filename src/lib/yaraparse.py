@@ -4,7 +4,9 @@ import re
 from typing import Any, Dict, List, Optional
 
 from yaramod import (  # type: ignore
+    AllExpression,
     AndExpression,
+    AnyExpression,
     EqExpression,
     GtExpression,
     IdExpression,
@@ -372,9 +374,16 @@ class RuleParseEngine:
         return parsed_elements
 
     def of_expr(self, condition: OfExpression) -> Optional[UrsaExpression]:
-        how_many = condition.text[: condition.text.find("of")].strip()
+        if type(condition.variable) is AnyExpression:
+            how_many = "any"
+        elif type(condition.variable) is AllExpression:
+            how_many = "all"
+        elif type(condition.variable) is IntLiteralExpression:
+            how_many = condition.variable.value
+        else:
+            raise RuntimeError(f"Unknown of expression type: {type(condition.variable)}")
 
-        children = condition.iterated_set
+        children = condition.iterable
 
         if type(children) is SetExpression:
             all_elements = self.expand_set_expression(children)
