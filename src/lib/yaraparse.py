@@ -381,7 +381,9 @@ class RuleParseEngine:
         elif type(condition.variable) is IntLiteralExpression:
             how_many = condition.variable.value
         else:
-            raise RuntimeError(f"Unknown of expression type: {type(condition.variable)}")
+            raise RuntimeError(
+                f"Unknown of expression type: {type(condition.variable)}"
+            )
 
         children = condition.iterable
 
