@@ -1,1 +1,1 @@
-Error at 4.36-41: Syntax error: Unexpected identifier, expected one of private, condition, ascii, nocase, wide, fullword, xor, string identifier
+(({546869732070726f6772616d2063616e6e6f74}))
