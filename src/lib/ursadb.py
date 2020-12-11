@@ -48,7 +48,7 @@ class UrsaDb:
     ) -> Json:
         socket = self.make_socket(recv_timeout=-1)
 
-        start = time.clock()
+        start = time.perf_counter()
         command = "select "
         if taints:
             taints_str = '", "'.join(taints)
@@ -62,7 +62,7 @@ class UrsaDb:
 
         response = socket.recv_string()
         socket.close()
-        end = time.clock()
+        end = time.perf_counter()
 
         res = json.loads(response)
 
@@ -76,7 +76,7 @@ class UrsaDb:
         file_count = res["result"]["file_count"]
 
         return {
-            "time": (end - start) * 1000,
+            "time": (end - start),
             "iterator": iterator,
             "file_count": file_count,
         }
