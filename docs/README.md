@@ -19,13 +19,13 @@ Ursadb is the backend doing the heavy lifting for mquery. If you need to work wi
 datasets, it's a very useful read. It is also a prerequisite for understanding
 many things in mquery.
 
-- [Index types](https://cert-polska.github.io/ursadb/docs/indextypes.md): Picking
+- [Index types](https://cert-polska.github.io/ursadb/docs/indextypes.html): Picking
     index types you need is an important decision that's hard to change later.
-- [Datasets](https://cert-polska.github.io/ursadb/docs/datasets.md): Introduction to
+- [Datasets](https://cert-polska.github.io/ursadb/docs/datasets.html): Introduction to
     datasets.
-- [Performance and limits](https://cert-polska.github.io/ursadb/docs/ursadb.md):
+- [Performance and limits](https://cert-polska.github.io/ursadb/docs/limits.html):
     Read in case you're not sure if Ursadb can handle your collection.
-- [On-disk format](https://cert-polska.github.io/ursadb/docs/ondiskformat.md):
+- [On-disk format](https://cert-polska.github.io/ursadb/docs/ondiskformat.html):
     Ursadb index format is relatively simple - reading this may be useful for
     advanced users.
 
