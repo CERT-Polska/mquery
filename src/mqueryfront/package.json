@@ -4,7 +4,7 @@
     "private": true,
     "dependencies": {
         "@babel/runtime": "^7.9.2",
-        "@monaco-editor/react": "^3.3.0",
+        "@monaco-editor/react": "3.7.5",
         "axios": "^0.18.0",
         "bootstrap": "^4.2.1",
         "filesize": "^4.0.0",
