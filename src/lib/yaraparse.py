@@ -1,7 +1,7 @@
 import argparse
 import itertools
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Match, Optional
 
 from yaramod import (  # type: ignore
     AllExpression,
@@ -165,6 +165,22 @@ def encode_wide_bytes(raw: bytes) -> bytes:
     return bytes(x for y in raw for x in [y, 0])
 
 
+def replace_escape(matchobj: Match) -> bytes:
+    escapes = {b"n": b"\n", b"t": b"\t", b"r": b"\r", b"f": b"\f", b"a": b"\a"}
+
+    if matchobj.group(2) is not None:
+        # hex byte escape
+        return bytes.fromhex(matchobj.group(2).decode())
+    elif matchobj.group(1) in escapes:
+        return escapes[matchobj.group(1)]
+    else:
+        return matchobj.group(1)
+
+
+def unescape_regex_text(raw_text: bytes) -> bytes:
+    return re.sub(rb"\\([^x]|x([0-9a-fA-F]{2}))", replace_escape, raw_text)
+
+
 def flatten_regex_or_tree(unit: Any) -> Optional[List[bytes]]:
     if type(unit) is RegexpText:
         return [unit.text.encode()]
@@ -203,7 +219,7 @@ def urisfy_regex(
             if or_strings and all(s is not None for s in or_strings):
                 or_ursa_strings = [
                     ursify_plain_string(
-                        s,
+                        unescape_regex_text(s),
                         is_ascii=is_ascii,
                         is_wide=is_wide,
                         is_nocase=is_nocase,
@@ -217,7 +233,7 @@ def urisfy_regex(
         ):
             strings.append(
                 ursify_plain_string(
-                    joined_string,
+                    unescape_regex_text(joined_string),
                     is_ascii=is_ascii,
                     is_wide=is_wide,
                     is_nocase=is_nocase,
