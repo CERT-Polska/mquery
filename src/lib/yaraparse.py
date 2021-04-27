@@ -239,7 +239,7 @@ def urisfy_regex_or_tree(
     unit: Any, is_ascii: bool, is_wide: bool, is_nocase: bool,
 ) -> Optional[UrsaExpression]:
     or_strings = flatten_regex_or_tree(unit)
-    if or_strings and all(s is not None for s in or_strings):
+    if or_strings and all(or_strings):
         or_ursa_strings: List[UrsaExpression] = []
         for s in or_strings:
             ursified_s = ursify_regex_text(
@@ -247,6 +247,9 @@ def urisfy_regex_or_tree(
             )
             if ursified_s:
                 or_ursa_strings.append(ursified_s)
+            else:
+                return None
+
         if or_ursa_strings:
             return UrsaExpression.or_(*or_ursa_strings)
         else:
@@ -263,11 +266,7 @@ def urisfy_regex(
 ) -> Optional[UrsaExpression]:
     strings: List[UrsaExpression] = []
 
-    if type(regex) is not RegexpConcat:
-        expression = urisfy_regex_or_tree(regex, is_ascii, is_wide, is_nocase)
-        if expression:
-            strings.append(expression)
-    else:
+    if type(regex) is RegexpConcat:
         units = regex.units
         joined_string = b""
         for i, unit in enumerate(units):
@@ -292,6 +291,10 @@ def urisfy_regex(
                 if ursified_string:
                     strings.append(ursified_string)
                 joined_string = b""
+    else:
+        expression = urisfy_regex_or_tree(regex, is_ascii, is_wide, is_nocase)
+        if expression:
+            strings.append(expression)
 
     if strings:
         return UrsaExpression.and_(*strings)
