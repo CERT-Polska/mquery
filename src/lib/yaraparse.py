@@ -1,7 +1,7 @@
 import argparse
 import itertools
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Match, Optional
 
 from yaramod import (  # type: ignore
     AllExpression,
@@ -165,6 +165,55 @@ def encode_wide_bytes(raw: bytes) -> bytes:
     return bytes(x for y in raw for x in [y, 0])
 
 
+def replace_escape(matchobj: Match) -> bytes:
+    escapes = {
+        b"n": b"\n",
+        b"t": b"\t",
+        b"r": b"\r",
+        b"f": b"\f",
+        b"a": b"\a",
+        b"b": b"",
+        b"B": b"",
+    }
+
+    if matchobj.group(2) is not None:
+        # hex byte escape
+        return bytes.fromhex(matchobj.group(2).decode())
+    elif matchobj.group(1) in escapes:
+        return escapes[matchobj.group(1)]
+    else:
+        return matchobj.group(1)
+
+
+def unescape_regex_text(raw_text: bytes) -> bytes:
+    return re.sub(rb"\\([^x]|x([0-9a-fA-F]{2}))", replace_escape, raw_text)
+
+
+def ursify_regex_text(
+    text: bytes, is_ascii: bool, is_wide: bool, is_nocase: bool,
+) -> Optional[UrsaExpression]:
+    ursa_strings: List[UrsaExpression] = []
+    for s in re.split(rb"(?<!\\)\\[wWsSdD]", text):
+        unescaped = unescape_regex_text(s)
+        if unescaped:
+            ursa_strings.append(
+                ursify_plain_string(
+                    unescaped,
+                    is_ascii=is_ascii,
+                    is_wide=is_wide,
+                    is_nocase=is_nocase,
+                )
+            )
+
+    if ursa_strings:
+        if len(ursa_strings) == 1:
+            return ursa_strings[0]
+        else:
+            return UrsaExpression.and_(*ursa_strings)
+    else:
+        return None
+
+
 def flatten_regex_or_tree(unit: Any) -> Optional[List[bytes]]:
     if type(unit) is RegexpText:
         return [unit.text.encode()]
@@ -186,44 +235,66 @@ def flatten_regex_or_tree(unit: Any) -> Optional[List[bytes]]:
         return None
 
 
+def urisfy_regex_or_tree(
+    unit: Any, is_ascii: bool, is_wide: bool, is_nocase: bool,
+) -> Optional[UrsaExpression]:
+    or_strings = flatten_regex_or_tree(unit)
+    if or_strings and all(or_strings):
+        or_ursa_strings: List[UrsaExpression] = []
+        for s in or_strings:
+            ursified_s = ursify_regex_text(
+                s, is_ascii=is_ascii, is_wide=is_wide, is_nocase=is_nocase
+            )
+            if ursified_s:
+                or_ursa_strings.append(ursified_s)
+            else:
+                return None
+
+        if or_ursa_strings:
+            return UrsaExpression.or_(*or_ursa_strings)
+        else:
+            return None
+    else:
+        return None
+
+
 def urisfy_regex(
-    units: List[Any],
+    regex: Any,
     is_ascii: bool = False,
     is_wide: bool = False,
     is_nocase: bool = False,
 ) -> Optional[UrsaExpression]:
     strings: List[UrsaExpression] = []
 
-    joined_string = b""
-    for i, unit in enumerate(units):
-        if type(unit) is RegexpText:
-            joined_string += unit.text.encode()
-        elif type(unit) is RegexpGroup:
-            or_strings = flatten_regex_or_tree(unit.unit)
-            if or_strings and all(s is not None for s in or_strings):
-                or_ursa_strings = [
-                    ursify_plain_string(
-                        s,
-                        is_ascii=is_ascii,
-                        is_wide=is_wide,
-                        is_nocase=is_nocase,
-                    )
-                    for s in or_strings
-                ]
-                strings.append(UrsaExpression.or_(*or_ursa_strings))
+    if type(regex) is RegexpConcat:
+        units = regex.units
+        joined_string = b""
+        for i, unit in enumerate(units):
+            if type(unit) is RegexpText:
+                joined_string += unit.text.encode()
+            elif type(unit) is RegexpGroup:
+                expression = urisfy_regex_or_tree(
+                    unit.unit, is_ascii, is_wide, is_nocase
+                )
+                if expression:
+                    strings.append(expression)
 
-        if joined_string and (
-            type(unit) is not RegexpText or i == len(units) - 1
-        ):
-            strings.append(
-                ursify_plain_string(
+            if joined_string and (
+                type(unit) is not RegexpText or i == len(units) - 1
+            ):
+                ursified_string = ursify_regex_text(
                     joined_string,
                     is_ascii=is_ascii,
                     is_wide=is_wide,
                     is_nocase=is_nocase,
                 )
-            )
-            joined_string = b""
+                if ursified_string:
+                    strings.append(ursified_string)
+                joined_string = b""
+    else:
+        expression = urisfy_regex_or_tree(regex, is_ascii, is_wide, is_nocase)
+        if expression:
+            strings.append(expression)
 
     if strings:
         return UrsaExpression.and_(*strings)
@@ -233,10 +304,10 @@ def urisfy_regex(
 
 def ursify_regex_string(string: Regexp) -> Optional[UrsaExpression]:
     regex_ascii = urisfy_regex(
-        string.unit.units, is_ascii=True, is_nocase=string.is_nocase
+        string.unit, is_ascii=True, is_nocase=string.is_nocase
     )
     regex_wide = urisfy_regex(
-        string.unit.units, is_wide=True, is_nocase=string.is_nocase
+        string.unit, is_wide=True, is_nocase=string.is_nocase
     )
 
     if not regex_ascii or not regex_wide:
