@@ -20,7 +20,7 @@ class TestYaraRules(unittest.TestCase):
             with open(testdir + filename) as f:
                 data = f.read()
 
-            expected_file_txt = file[:-4] + ".txt"
+            expected_file_txt = filename[:-4] + ".txt"
             self.assert_query(data, expected_file_txt)
 
     def assert_query(self, data, expected_file_txt):
