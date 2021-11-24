@@ -14,7 +14,7 @@ testdir = current_path + "/testdata/"
 class TestYaraRules(unittest.TestCase):
     def test_regression(self):
 
-        yara_files = [f for f in os.listdir(testdir) if f.endswith('.yar')]
+        yara_files = [f for f in os.listdir(testdir) if f.endswith(".yar")]
 
         for filename in yara_files:
             with open(testdir + filename) as f:
