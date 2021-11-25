@@ -3,37 +3,24 @@ Yara rule test corpus
 """
 
 import unittest
-import os
+from pathlib import Path
 from lib.yaraparse import combine_rules
 from lib.yaraparse import parse_yara
 
-current_path = os.path.abspath(os.path.dirname(__file__))
-testdir = current_path + "/testdata/"
+testdir = Path(__file__).parent / "testdata"
 
 
 class TestYaraRules(unittest.TestCase):
-    def test_regression(self):
+    def test_regression(self) -> None:
+        for yara_path in testdir.glob("*.yar"):
+            self.assert_query(yara_path, yara_path.with_suffix(".txt"))
 
-        yara_files = [f for f in os.listdir(testdir) if ".txt" not in f]
-
-        for file in yara_files:
-            with open(testdir + file) as f:
-                data = f.read()
-
-            expected_file_txt = file + ".txt"
-            self.assert_query(data, expected_file_txt)
-
-    def assert_query(self, data, expected_file_txt):
+    def assert_query(self, yara_path: Path, results_path: Path) -> None:
+        expected_data = results_path.read_text()
         try:
-            rules = parse_yara(data)
-            print(combine_rules(rules).query)
-
-            with open(testdir + expected_file_txt, "rb") as exp:
-                expected_data = exp.read().decode("utf-8")
+            rules = parse_yara(yara_path.read_text())
             self.assertEqual(expected_data, combine_rules(rules).query + "\n")
         except Exception as e:
-            with open(testdir + expected_file_txt, "rb") as exp:
-                expected_data = exp.read().decode("utf-8")
             self.assertEqual(expected_data, str(e) + "\n")
 
 
