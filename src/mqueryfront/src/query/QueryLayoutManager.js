@@ -78,7 +78,13 @@ const QueryLayoutManager = (props) => {
         <div className="container-fluid">
             <div className="row wrapper">
                 {queryFieldPane}
-                <div className={isCollapsed ? "col-md-12" : "col-md-7"}>
+                <div
+                    className={
+                        isCollapsed
+                            ? "col-md-12"
+                            : "col-md-7 order-first order-md-last"
+                    }
+                >
                     {queryResultOrParse}
                 </div>
             </div>

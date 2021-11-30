@@ -4,7 +4,7 @@
 }
 
 .mquery-scroll-matches {
-    height: calc(100vh - 235px);
+    max-height: calc(100vh - 235px);
     overflow-y: scroll;
 }
 
