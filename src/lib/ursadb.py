@@ -91,9 +91,7 @@ class UrsaDb:
         return PopResult(False, res["files"], iterator_pos, total_files)
 
     def status(self) -> Json:
-        x = self.__execute(f'status;')
-        print(x)
-        return x
+        return self.__execute(f'status;')
 
     def topology(self) -> Json:
         return self.__execute(f'topology;')
