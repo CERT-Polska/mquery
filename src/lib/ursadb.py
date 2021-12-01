@@ -32,13 +32,17 @@ class UrsaDb:
     def __init__(self, backend: str) -> None:
         self.backend = backend
 
-    def make_socket(self, recv_timeout: int = 2000) -> zmq.Context:
+    def __execute(self, command: str, recv_timeout: int = 2000) -> zmq.Context:
         context = zmq.Context()
-        socket = context.socket(zmq.REQ)
-        socket.setsockopt(zmq.LINGER, 0)
-        socket.setsockopt(zmq.RCVTIMEO, recv_timeout)
-        socket.connect(self.backend)
-        return socket
+        try:
+            socket = context.socket(zmq.REQ)
+            socket.setsockopt(zmq.LINGER, 0)
+            socket.setsockopt(zmq.RCVTIMEO, recv_timeout)
+            socket.connect(self.backend)
+            socket.send_string(command)
+            return json.loads(socket.recv_string())
+        finally:
+            socket.close()
 
     def query(
         self,
@@ -46,51 +50,34 @@ class UrsaDb:
         taints: List[str] = [],
         dataset: Optional[str] = None,
     ) -> Json:
-        socket = self.make_socket(recv_timeout=-1)
-
-        start = time.perf_counter()
         command = "select "
         if taints:
             taints_str = '", "'.join(taints)
-            taints_whole_str = '["' + taints_str + '"]'
+            taints_whole_str = f'["{taints_str}"]'
             command += f"with taints {taints_whole_str} "
         if dataset:
             command += f'with datasets ["{dataset}"] '
-
         command += f"into iterator {query};"
-        socket.send_string(command)
 
-        response = socket.recv_string()
-        socket.close()
+        start = time.perf_counter()
+        res = self.__execute(command, recv_timeout=-1)
         end = time.perf_counter()
 
-        res = json.loads(response)
-
         if "error" in res:
+            error = res.get("error", {}).get("message", "(no message)")
             return {
-                "error": "ursadb failed: "
-                + res.get("error", {}).get("message", "(no message)")
+                "error": f"ursadb failed: {error}"
             }
-
-        iterator = res["result"]["iterator"]
-        file_count = res["result"]["file_count"]
 
         return {
             "time": (end - start),
-            "iterator": iterator,
-            "file_count": file_count,
+            "iterator": res["result"]["iterator"],
+            "file_count": res["result"]["file_count"],
         }
 
     def pop(self, iterator: str, count: int) -> PopResult:
-        socket = self.make_socket(recv_timeout=-1)
+        res = self.__execute(f'iterator "{iterator}" pop {count};', -1)
 
-        query = f'iterator "{iterator}" pop {count};'
-        socket.send_string(query)
-
-        response = socket.recv_string()
-        socket.close()
-
-        res = json.loads(response)
         if "error" in res:
             if res["error"].get("retry", False):
                 # iterator locked, try again in a sec
@@ -101,32 +88,15 @@ class UrsaDb:
         res = res["result"]
         iterator_pos = res["iterator_position"]
         total_files = res["total_files"]
-
         return PopResult(False, res["files"], iterator_pos, total_files)
 
     def status(self) -> Json:
-        socket = self.make_socket()
-        socket.send_string("status;")
-        response = socket.recv_string()
-        socket.close()
-
-        return json.loads(response)
+        x = self.__execute(f'status;')
+        print(x)
+        return x
 
     def topology(self) -> Json:
-        socket = self.make_socket()
-        socket.send_string("topology;")
-        response = socket.recv_string()
-        socket.close()
-
-        return json.loads(response)
+        return self.__execute(f'topology;')
 
     def execute_command(self, command: str) -> Json:
-        socket = self.make_socket(recv_timeout=-1)
-        socket.send_string(command)
-        response = socket.recv_string()
-        socket.close()
-
-        return json.loads(response)
-
-    def close(self) -> None:
-        pass
+        return self.__execute(command, -1)
