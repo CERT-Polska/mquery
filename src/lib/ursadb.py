@@ -45,10 +45,7 @@ class UrsaDb:
             socket.close()
 
     def query(
-        self,
-        query: str,
-        taints: List[str] = [],
-        dataset: Optional[str] = None,
+        self, query: str, taints: List[str] = [], dataset: Optional[str] = None
     ) -> Json:
         command = "select "
         if taints:
@@ -65,9 +62,7 @@ class UrsaDb:
 
         if "error" in res:
             error = res.get("error", {}).get("message", "(no message)")
-            return {
-                "error": f"ursadb failed: {error}"
-            }
+            return {"error": f"ursadb failed: {error}"}
 
         return {
             "time": (end - start),
@@ -91,10 +86,10 @@ class UrsaDb:
         return PopResult(False, res["files"], iterator_pos, total_files)
 
     def status(self) -> Json:
-        return self.__execute(f'status;')
+        return self.__execute(f"status;")
 
     def topology(self) -> Json:
-        return self.__execute(f'topology;')
+        return self.__execute(f"topology;")
 
     def execute_command(self, command: str) -> Json:
         return self.__execute(command, -1)
