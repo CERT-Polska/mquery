@@ -2,7 +2,9 @@ import React from "react";
 import QueryField from "./QueryField";
 import QueryResultsStatus from "./QueryResultsStatus";
 import QueryParseStatus from "./QueryParseStatus";
-import ToggleLayoutButton from "../components/ToggleLayoutButton";
+// import ToggleLayoutButton from "../components/ToggleLayoutButton";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAlignLeft } from "@fortawesome/free-solid-svg-icons";
 import ErrorPage from "../components/ErrorPage";
 import LoadingPage from "../components/LoadingPage";
 import PropTypes from "prop-types";
@@ -38,11 +40,14 @@ const QueryLayoutManager = (props) => {
 
     const queryResults = job ? (
         <div>
-            <ToggleLayoutButton
-                buttonClass="btn btn-primary btn-sm pull-left mr-4"
+            <button
+                type="button"
+                className="btn btn-primary btn-sm pull-left mr-4"
                 onClick={onCollapsePane}
-                label={isCollapsed ? "Show query" : "Hide query"}
-            />
+            >
+                <FontAwesomeIcon icon={faAlignLeft} />
+                {isCollapsed ? "Show query" : "Hide query"}
+            </button>
             <QueryResultsStatus
                 qhash={qhash}
                 job={job}
@@ -56,7 +61,7 @@ const QueryLayoutManager = (props) => {
     );
 
     const queryFieldPane = isCollapsed ? null : (
-        <div className="col-md-5">
+        <div className={queryParse ? "col-md-6" : "col-md-12"}>
             <QueryField
                 readOnly={!!qhash}
                 onSubmitQuery={onSubmitQuery}
@@ -82,7 +87,7 @@ const QueryLayoutManager = (props) => {
                     className={
                         isCollapsed
                             ? "col-md-12"
-                            : "col-md-7 order-first order-md-last"
+                            : "col-md-6 order-first order-md-last"
                     }
                 >
                     {queryResultOrParse}
