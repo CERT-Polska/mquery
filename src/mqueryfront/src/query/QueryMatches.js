@@ -2,10 +2,62 @@ import React, { useState } from "react";
 import { API_URL } from "../config";
 import Pagination from "react-js-pagination";
 import FilterIcon from "../components/FilterIcon";
-import DownloadDropdown from "../components/DownloadDropdown";
 import QueryMatchesItem from "./QueryMatchesItem";
 import PropTypes from "prop-types";
 import { PT_MATCHES, PT_PAGINATION } from "../queryUtils";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import axios from "axios";
+import {
+    faCopy,
+    faDownload,
+    faFileArchive,
+    faFileDownload,
+} from "@fortawesome/free-solid-svg-icons";
+
+const copyHashesToClipboard = async (qhash) => {
+    axios.get(`${API_URL}/download/hashes/${qhash}`).then((response) => {
+        navigator.clipboard.writeText(response.data);
+    });
+};
+
+const DownloadDropdown = (props) => (
+    <div className="dropdown">
+        <button
+            type="button"
+            className="btn shadow-none text-secondary dropdown-toggle"
+            data-toggle="dropdown"
+        >
+            <FontAwesomeIcon icon={faDownload} size="sm" />
+        </button>
+        <div className="dropdown-menu">
+            <a
+                className="dropdown-item"
+                download={`${props.qhash}.zip`}
+                href={`${API_URL}/download/files/${props.qhash}`}
+            >
+                <FontAwesomeIcon icon={faFileDownload} />
+                <span className="ml-3">Download files (.zip)</span>
+            </a>
+            <a
+                className="dropdown-item"
+                download={`${props.qhash}_sha256.txt`}
+                href={`${API_URL}/download/hashes/${props.qhash}`}
+            >
+                <FontAwesomeIcon icon={faFileArchive} />
+                <span className="ml-3">Download sha256 hashes (.txt)</span>
+            </a>
+            <a
+                className="dropdown-item btn"
+                onClick={() => {
+                    copyHashesToClipboard(props.qhash);
+                }}
+            >
+                <FontAwesomeIcon icon={faCopy} />
+                <span className="ml-3">Copy sha256 hashes to clipboard</span>
+            </a>
+        </div>
+    </div>
+);
 
 const QueryMatches = (props) => {
     const { matches, qhash, pagination } = props;
@@ -62,21 +114,6 @@ const QueryMatches = (props) => {
         </span>
     ));
 
-    const downloadDropdownList = [
-        {
-            text: "Download files (.zip)",
-            file: qhash + ".zip",
-            href: API_URL + "/download/files/" + qhash,
-            icon: "archive",
-        },
-        {
-            text: "Download sha256 hashes (.txt)",
-            file: qhash + "_sha256.txt",
-            href: API_URL + "/download/hashes/" + qhash,
-            icon: "file",
-        },
-    ];
-
     return (
         <div className="mquery-scroll-matches">
             <table
@@ -88,9 +125,7 @@ const QueryMatches = (props) => {
                         <th className="col-md-8">
                             Matches
                             <span className="d-inline-block ml-4">
-                                <DownloadDropdown
-                                    itemList={downloadDropdownList}
-                                />
+                                <DownloadDropdown qhash={qhash} />
                             </span>
                             {filters.length > 0 && (
                                 <span className="border rounded p-1 pull-right text-secondary">
