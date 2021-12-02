@@ -60,8 +60,10 @@ const QueryLayoutManager = (props) => {
         <LoadingPage />
     );
 
+    const queryResultOrParse = qhash ? queryResults : queryParse;
+
     const queryFieldPane = isCollapsed ? null : (
-        <div className={queryParse ? "col-md-6" : "col-md-12"}>
+        <div className={queryResultOrParse ? "col-md-6" : "col-md-12"}>
             <QueryField
                 readOnly={!!qhash}
                 onSubmitQuery={onSubmitQuery}
@@ -76,8 +78,6 @@ const QueryLayoutManager = (props) => {
             />
         </div>
     );
-
-    const queryResultOrParse = qhash ? queryResults : queryParse;
 
     return (
         <div className="container-fluid">
