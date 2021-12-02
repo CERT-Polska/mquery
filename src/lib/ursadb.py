@@ -45,7 +45,10 @@ class UrsaDb:
             socket.close()
 
     def query(
-        self, query: str, taints: List[str] = [], dataset: Optional[str] = None
+        self,
+        query: str,
+        taints: List[str] = None,
+        dataset: Optional[str] = None,
     ) -> Json:
         command = "select "
         if taints:
