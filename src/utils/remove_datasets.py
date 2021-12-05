@@ -41,7 +41,7 @@ def get_datasets() -> List[str]:
         db = json.load(f)
     datasets = db["datasets"]
     return list(
-        map(lambda x: re.search(get_id_from_set_fmt, x).group(1), datasets)
+        map(lambda x: re.search(get_id_from_set_fmt, x).group(1), datasets)  # type: ignore
     )
 
 
@@ -58,7 +58,7 @@ def main() -> None:
             id = next(
                 filter(None, [re.search(fmt, fname) for fmt in all_fmts])
             ).group(1)
-        except:
+        except StopIteration:
             # Should happen if non-ursadb files exists in index directory.
             continue
 
