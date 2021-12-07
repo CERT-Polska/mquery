@@ -62,7 +62,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
     arbitrary files (for example "/etc/passwd").
     """
     if not db.job_contains(JobId(job_id), ordinal, file_path):
-        raise Response("No such file in result set.", status_code=404)
+        return Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     return FileResponse(file_path, filename=attach_name + ext + "_")
