@@ -32,7 +32,7 @@ class UrsaDb:
     def __init__(self, backend: str) -> None:
         self.backend = backend
 
-    def __execute(self, command: str, recv_timeout: int = 2000) -> zmq.Context:
+    def __execute(self, command: str, recv_timeout: int = 2000) -> Json:
         context = zmq.Context()
         try:
             socket = context.socket(zmq.REQ)

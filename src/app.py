@@ -1,7 +1,7 @@
 from lib.ursadb import UrsaDb
 import os
 
-import uvicorn
+import uvicorn  # type: ignore
 import config
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
