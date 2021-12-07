@@ -1,6 +1,5 @@
 import React from "react";
 import QueryProgressBar from "../components/QueryProgressBar";
-import ErrorPage from "../components/ErrorPage";
 import QueryMatches from "./QueryMatches";
 import PropTypes from "prop-types";
 import { PT_JOB, PT_MATCHES, PT_PAGINATION } from "../queryUtils";
