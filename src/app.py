@@ -7,7 +7,6 @@ from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.staticfiles import StaticFiles
-from werkzeug.exceptions import NotFound
 from zmq import Again
 
 from lib.yaraparse import parse_yara
@@ -63,7 +62,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
     arbitrary files (for example "/etc/passwd").
     """
     if not db.job_contains(JobId(job_id), ordinal, file_path):
-        raise NotFound("No such file in result set.")
+        raise Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     return FileResponse(file_path, filename=attach_name + ext + "_")
