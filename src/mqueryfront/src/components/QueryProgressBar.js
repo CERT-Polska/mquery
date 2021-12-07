@@ -25,13 +25,20 @@ const QueryProgressBar = (props) => {
         datasets_left,
     } = job;
 
+    const datasetsDone = total_datasets - datasets_left;
+    const datasetFrac = total_datasets > 0 ? datasetsDone / total_datasets : 0;
+    const datasetPct = Math.round(datasetFrac * 100);
+
     const isFinished = isStatusFinished(status);
-    const inProgeressPct = getPercentage(files_in_progress, total_files);
-    const erroredPct = getPercentage(files_errored, total_files);
+    const inProgeressPct = getPercentage(
+        files_in_progress * datasetFrac,
+        total_files
+    );
+    const erroredPct = getPercentage(files_errored * datasetFrac, total_files);
     const processedPct =
         total_files === 0 && isFinished
             ? 100
-            : getPercentage(files_processed, total_files);
+            : getPercentage(files_processed * datasetFrac, total_files);
 
     const errorString = files_errored === 1 ? "error" : "errors";
     const errorTooltip = `${files_errored} ${errorString} during processing`;
@@ -39,10 +46,6 @@ const QueryProgressBar = (props) => {
     const cancelButton = isFinished ? null : (
         <ActionCancel onClick={onCancel} size="sm" />
     );
-
-    const datasetsDone = total_datasets - datasets_left;
-    const datasetFrac = total_datasets > 0 ? datasetsDone / total_datasets : 0;
-    const datasetPct = Math.round(datasetFrac * 100);
 
     let statusInfo = null;
     if (total_datasets === 0 && status === "new") {
@@ -59,7 +62,7 @@ const QueryProgressBar = (props) => {
                 <div
                     className={getProgressBarClass(status)}
                     role="progressbar"
-                    style={{ width: processedPct * datasetFrac + "%" }}
+                    style={{ width: processedPct + "%" }}
                     data-toggle="tooltip"
                     title={status}
                 >
@@ -69,14 +72,14 @@ const QueryProgressBar = (props) => {
                     <div
                         className={"progress-bar bg-warning"}
                         role="progressbar"
-                        style={{ width: inProgeressPct * datasetFrac + "%" }}
+                        style={{ width: inProgeressPct + "%" }}
                     ></div>
                 )}
                 {files_errored > 0 && (
                     <div
                         className={"progress-bar bg-danger"}
                         role="progressbar"
-                        style={{ width: erroredPct * datasetFrac + "%" }}
+                        style={{ width: erroredPct + "%" }}
                         data-toggle="tooltip"
                         title={errorTooltip}
                     />
