@@ -52,7 +52,7 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 
 @app.get("/api/download", tags=["stable"])
-def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
+def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
     results of one of the previous searches.
