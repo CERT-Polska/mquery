@@ -1,6 +1,5 @@
 import React from "react";
 import ReactMultiSelectCheckboxes from "react-multiselect-checkboxes";
-import PropTypes from "prop-types";
 
 const QuerySearchNav = (props) => {
     const { onChange, availableTaints } = props;
@@ -27,9 +26,4 @@ const QuerySearchNav = (props) => {
     );
 };
 
-QuerySearchNav.propTypes = {
-    availableTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
-    selectedTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
-    onChange: PropTypes.func.isRequired,
-};
 export default QuerySearchNav;

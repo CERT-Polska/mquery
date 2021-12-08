@@ -1,8 +1,6 @@
 import React from "react";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
-import PropTypes from "prop-types";
-import { PT_MATCH } from "../queryUtils";
 
 const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
@@ -72,11 +70,6 @@ const QueryMatchesItem = (props) => {
             </td>
         </tr>
     );
-};
-
-QueryMatchesItem.propTypes = {
-    match: PT_MATCH.isRequired,
-    download_url: PropTypes.string.isRequired,
 };
 
 export default QueryMatchesItem;

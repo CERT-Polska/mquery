@@ -1,5 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
 
 const QuerySubmitNav = (props) => {
     const { onClick } = props;
@@ -44,10 +43,6 @@ const QuerySubmitNav = (props) => {
             </div>
         </React.Fragment>
     );
-};
-
-QuerySubmitNav.propTypes = {
-    onClick: PropTypes.func.isRequired,
 };
 
 export default QuerySubmitNav;

@@ -1,6 +1,5 @@
 import React from "react";
 import FilterIcon from "./FilterIcon";
-import PropTypes from "prop-types";
 
 const FilteringThead = (props) => {
     let activeColumn = false;
@@ -8,7 +7,7 @@ const FilteringThead = (props) => {
 
     if (
         props.currentFilter &&
-        props.currentFilter.name === props.filterData.attrubuteName
+        props.currentFilter.name === props.filterData.attributeName
     ) {
         activeColumn = true;
         icon = (
@@ -32,7 +31,7 @@ const FilteringThead = (props) => {
                     className="dropdown-item"
                     onClick={() =>
                         props.filterData.onClick(
-                            props.filterData.attrubuteName,
+                            props.filterData.attributeName,
                             el,
                             index
                         )
@@ -62,21 +61,6 @@ const FilteringThead = (props) => {
     return (
         <th className="align-middle text-center text-nowrap">{thContent}</th>
     );
-};
-
-FilteringThead.propTypes = {
-    title: PropTypes.string.isRequired,
-    filterData: PropTypes.shape({
-        attrubuteName: PropTypes.string,
-        valueList: PropTypes.arrayOf(
-            PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-        ),
-        onClick: PropTypes.func,
-    }).isRequired,
-    currentFilter: PropTypes.shape({
-        name: PropTypes.string,
-        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    }),
 };
 
 export default FilteringThead;

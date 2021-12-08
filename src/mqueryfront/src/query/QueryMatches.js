@@ -3,8 +3,6 @@ import { API_URL } from "../config";
 import Pagination from "react-js-pagination";
 import FilterIcon from "../components/FilterIcon";
 import QueryMatchesItem from "./QueryMatchesItem";
-import PropTypes from "prop-types";
-import { PT_MATCHES, PT_PAGINATION } from "../queryUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import axios from "axios";
 import {
@@ -81,6 +79,7 @@ const QueryMatches = (props) => {
             } else {
                 return match;
             }
+            return null;
         })
         .map((match, index) => {
             const downloadUrl =
@@ -149,12 +148,6 @@ const QueryMatches = (props) => {
             />
         </div>
     );
-};
-
-QueryMatches.propTypes = {
-    matches: PT_MATCHES.isRequired,
-    qhash: PropTypes.string.isRequired,
-    pagination: PT_PAGINATION.isRequired,
 };
 
 export default QueryMatches;

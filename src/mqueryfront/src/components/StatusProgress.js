@@ -4,9 +4,7 @@ import { getProgressBarClass } from "../queryUtils";
 
 const StatusProgress = (props) => {
     const { status, isFinished, total_files, files_processed } = props;
-
     const progressClass = getProgressBarClass(status);
-
     const percentage = Math.round(
         total_files
             ? (files_processed * 100) / total_files

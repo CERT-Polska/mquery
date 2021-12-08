@@ -2,7 +2,6 @@ import React from "react";
 import QueryField from "./QueryField";
 import QueryResultsStatus from "./QueryResultsStatus";
 import QueryParseStatus from "./QueryParseStatus";
-// import ToggleLayoutButton from "../components/ToggleLayoutButton";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAlignLeft } from "@fortawesome/free-solid-svg-icons";
 import ErrorPage from "../components/ErrorPage";
