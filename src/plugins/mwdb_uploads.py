@@ -3,7 +3,7 @@ import urllib.parse
 
 from typing import Optional
 
-from mwdblib import Malwarecage
+from mwdblib import Malwarecage  # type: ignore
 
 from db import Database
 from metadata import Metadata, MetadataPlugin, MetadataPluginConfig

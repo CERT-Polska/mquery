@@ -1,13 +1,12 @@
 from lib.ursadb import UrsaDb
 import os
 
-import uvicorn
+import uvicorn  # type: ignore
 import config
 from fastapi import FastAPI, Body, Query, HTTPException
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.staticfiles import StaticFiles
-from werkzeug.exceptions import NotFound
 from zmq import Again
 
 from lib.yaraparse import parse_yara
@@ -53,7 +52,7 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 
 @app.get("/api/download", tags=["stable"])
-def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
+def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
     results of one of the previous searches.
@@ -63,7 +62,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
     arbitrary files (for example "/etc/passwd").
     """
     if not db.job_contains(JobId(job_id), ordinal, file_path):
-        raise NotFound("No such file in result set.")
+        return Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     return FileResponse(file_path, filename=attach_name + ext + "_")

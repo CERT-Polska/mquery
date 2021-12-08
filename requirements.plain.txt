@@ -1,0 +1,10 @@
+fastapi
+pydantic
+pyzmq
+redis
+requests
+typing-extensions
+uvicorn
+yara-python
+yaramod
+cachetools
