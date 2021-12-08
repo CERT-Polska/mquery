@@ -1,11 +1,7 @@
 import React from "react";
 import ActionCancel from "./ActionCancel";
 import QueryTimer from "./QueryTimer";
-import {
-    isStatusFinished,
-    getProgressBarClass,
-    getBadgeClass,
-} from "../queryUtils";
+import { isStatusFinished, getProgressBarClass } from "../queryUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
@@ -47,13 +43,14 @@ const QueryProgressBar = (props) => {
         <ActionCancel onClick={onCancel} size="sm" />
     );
 
+    const matches = `${files_matched} matches`;
     let statusInfo = null;
     if (total_datasets === 0 && status === "new") {
         statusInfo = "Collecting datasets...";
     } else if (datasets_left > 0) {
         statusInfo = `Searching for candidates: ${datasetsDone}/${total_datasets} (${datasetPct}%)...`;
     } else if (status === "processing") {
-        statusInfo = `Matching Yara: ${files_processed} / ${total_files} (${processedPct}%)`;
+        statusInfo = `Matching Yara: ${files_processed} / ${total_files} (${processedPct}%), ${matches}`;
     }
 
     return (
@@ -85,39 +82,37 @@ const QueryProgressBar = (props) => {
                     />
                 )}
             </div>
-            {!compact && (
-                <div className="d-flex justify-content-between m-0 pt-2">
-                    {statusInfo && (
-                        <div>
+            {
+                <div className={compact ? "small" : ""}>
+                    <div class="float-left">
+                        {statusInfo && (
                             <FontAwesomeIcon
                                 icon={faSpinner}
                                 spin
                                 size={props.size}
                                 className="mr-1"
                             />
-                            {statusInfo}
-                        </div>
-                    )}
-                    <div>
-                        Matches: <span>{files_matched}</span>
+                        )}
+                        {statusInfo || matches}
                     </div>
-                    <div>
-                        Status:
-                        <span className={getBadgeClass(status) + " ml-2"}>
-                            {status}
-                        </span>
-                    </div>
-                    <div>
+                    <div class="float-right">
                         <QueryTimer
                             job={job}
                             isFinished={isFinished}
                             duration={true}
                             countDown={true}
                         />
-                        <span className="ml-2">{cancelButton}</span>
+                        {compact || isFinished ? null : (
+                            <ActionCancel
+                                onClick={onCancel}
+                                size="sm"
+                                className="ml2"
+                            />
+                        )}
                     </div>
+                    <div class="clearfix"></div>
                 </div>
-            )}
+            }
         </div>
     );
 };

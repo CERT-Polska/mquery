@@ -68,43 +68,17 @@ export const PT_PAGINATION = PropTypes.shape({
 export const isStatusFinished = (status) =>
     ["done", "cancelled", "failed", "expired", "removed"].includes(status);
 
-export const getClassForStatus = (status) => {
-    let classSufix = null;
-
-    switch (status) {
-        case "done":
-            classSufix = "success";
-            break;
-        case "new":
-        case "processing":
-            classSufix = "info";
-            break;
-        case "expired":
-            classSufix = "warning";
-            break;
-        case "cancelled":
-        case "failed":
-            classSufix = "danger";
-            break;
-        case "removed":
-            classSufix = "dark";
-            break;
-        default:
-            console.log(`getClassForStatus: unknown status="${status}"`);
-            break;
-    }
-
-    return classSufix;
+const statusClassMap = {
+    done: "success",
+    new: "info",
+    processing: "info",
+    expired: "warning",
+    cancelled: "danger",
+    failed: "danger",
+    removed: "dark",
 };
 
 export const getProgressBarClass = (status) => {
-    const classSufix = getClassForStatus(status);
-
+    const classSufix = statusClassMap[status];
     return "progress-bar" + (classSufix ? " bg-" + classSufix : "");
-};
-
-export const getBadgeClass = (status) => {
-    const classSufix = getClassForStatus(status);
-
-    return "badge" + (classSufix ? " badge-" + classSufix : "");
 };

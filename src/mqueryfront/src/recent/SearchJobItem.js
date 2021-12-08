@@ -6,7 +6,6 @@ import ActionCancel from "../components/ActionCancel";
 import QueryProgressBar from "../components/QueryProgressBar";
 import PropTypes from "prop-types";
 import { PT_JOB, isStatusFinished } from "../queryUtils";
-import QueryTimer from "../components/QueryTimer";
 
 export const SearchJobItemEmpty = () => {
     return (
@@ -66,15 +65,6 @@ const SearchJobItem = (props) => {
             <td className="align-middle text-center">{rule_author}</td>
             <td className="text-center align-middle w-50">
                 <QueryProgressBar job={job} compact={true} />
-                <div class="small float-left">{files_matched} matches</div>
-                <div class="d-inline small float-right">
-                    <QueryTimer
-                        job={job}
-                        isFinished={isFinished}
-                        duration={true}
-                        countDown={true}
-                    />
-                </div>
             </td>
             <td className="text-center align-middle">{actionBtn}</td>
         </tr>
