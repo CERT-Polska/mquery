@@ -21,7 +21,6 @@ export const SearchJobItemEmpty = () => {
             <td></td>
             <td></td>
             <td></td>
-            <td></td>
         </tr>
     );
 };
@@ -64,9 +63,8 @@ const SearchJobItem = (props) => {
                 </p>
             </td>
             <td className="align-middle text-center">{rule_author}</td>
-            <td className="align-middle text-center">{files_matched}</td>
             <td className="text-center align-middle w-50">
-                <QueryProgressBar job={job} displayBarOnly={true} />
+                <QueryProgressBar job={job} compact={true} />
             </td>
             <td className="text-center align-middle">{actionBtn}</td>
         </tr>
