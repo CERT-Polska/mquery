@@ -36,7 +36,7 @@ const QueryResultsStatus = (props) => {
 
     return (
         <div>
-            <QueryProgressBar job={job} onCancel={onCancel} />
+            <QueryProgressBar job={job} onCancel={onCancel} compact={false} />
             {results}
         </div>
     );

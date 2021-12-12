@@ -94,11 +94,6 @@ class RecentPage extends Component {
                 valueList: this.getDistinctList(jobs, "rule_author"),
             },
             {
-                title: "Matches",
-                attributeName: "files_matched",
-                valueList: this.getDistinctList(jobs, "files_matched", true),
-            },
-            {
                 title: "Status/Progress",
                 attributeName: "status",
                 valueList: this.getDistinctList(jobs, "status"),
