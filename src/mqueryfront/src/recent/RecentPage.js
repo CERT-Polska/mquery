@@ -25,7 +25,7 @@ class RecentPage extends Component {
 
     componentDidMount() {
         axios
-            .get(API_URL + "/job")
+            .get(`${API_URL}/job`)
             .then((response) => {
                 const { jobs } = response.data;
 
@@ -48,7 +48,7 @@ class RecentPage extends Component {
             const newJobs = [...jobs];
             newJobs[index].status = "cancelled";
 
-            axios.delete(API_URL + "/job/" + id).then((response) => {
+            axios.delete(`${API_URL}/job/${id}`).then((response) => {
                 this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
             });
         }
@@ -61,7 +61,7 @@ class RecentPage extends Component {
         if (index >= 0) {
             const newJobs = [...jobs.slice(0, index), ...jobs.slice(index + 1)];
 
-            axios.delete(API_URL + "/query/" + id).then((response) => {
+            axios.delete(`${API_URL}/query/${id}`).then((response) => {
                 this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
             });
         }
@@ -85,22 +85,22 @@ class RecentPage extends Component {
         const head = [
             {
                 title: "Job name",
-                attrubuteName: "rule_name",
+                attributeName: "rule_name",
                 valueList: this.getDistinctList(jobs, "rule_name"),
             },
             {
                 title: "Author",
-                attrubuteName: "rule_author",
+                attributeName: "rule_author",
                 valueList: this.getDistinctList(jobs, "rule_author"),
             },
             {
                 title: "Status/Progress",
-                attrubuteName: "status",
+                attributeName: "status",
                 valueList: this.getDistinctList(jobs, "status"),
             },
             {
                 title: "Actions",
-                attrubuteName: "",
+                attributeName: "",
                 valueList: null,
             },
         ];

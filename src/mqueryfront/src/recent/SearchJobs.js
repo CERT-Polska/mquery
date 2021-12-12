@@ -2,8 +2,6 @@ import React from "react";
 import FilteringTableHeader from "../components/FilteringTableHeader";
 import FilteringTitle from "../components/FilteringTitle";
 import Pagination from "react-js-pagination";
-import PropTypes from "prop-types";
-import { PT_JOBS, PT_PAGINATION } from "../queryUtils";
 import SearchJobItem, { SearchJobItemEmpty } from "./SearchJobItem";
 
 const SearchJobs = (props) => {
@@ -61,24 +59,6 @@ const SearchJobs = (props) => {
             </div>
         </div>
     );
-};
-
-SearchJobs.propTypes = {
-    jobs: PT_JOBS.isRequired,
-    head: PropTypes.arrayOf(
-        PropTypes.shape({
-            title: PropTypes.string.isRequired,
-            attrubuteName: PropTypes.string,
-            valueList: PropTypes.arrayOf(
-                PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-            ),
-        })
-    ).isRequired,
-    filterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    onFilter: PropTypes.func.isRequired,
-    onRemove: PropTypes.func.isRequired,
-    onCancel: PropTypes.func.isRequired,
-    pagination: PT_PAGINATION.isRequired,
 };
 
 export default SearchJobs;

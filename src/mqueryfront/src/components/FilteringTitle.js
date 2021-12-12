@@ -1,6 +1,5 @@
 import React from "react";
 import FilterIcon from "./FilterIcon";
-import PropTypes from "prop-types";
 
 const FilteringTitle = (props) => {
     const { title, filterValue } = props;
@@ -45,11 +44,6 @@ const FilteringTitle = (props) => {
             </div>
         );
     else return <h1 className="text-center mq-bottom">{title}</h1>;
-};
-
-FilteringTitle.propTypes = {
-    title: PropTypes.string.isRequired,
-    filterValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default FilteringTitle;

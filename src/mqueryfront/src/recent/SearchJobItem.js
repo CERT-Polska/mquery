@@ -4,8 +4,7 @@ import PriorityIcon from "../components/PriorityIcon";
 import ActionRemove from "../components/ActionRemove";
 import ActionCancel from "../components/ActionCancel";
 import QueryProgressBar from "../components/QueryProgressBar";
-import PropTypes from "prop-types";
-import { PT_JOB, isStatusFinished } from "../queryUtils";
+import { isStatusFinished } from "../queryUtils";
 
 export const SearchJobItemEmpty = () => {
     return (
@@ -55,7 +54,7 @@ const SearchJobItem = (props) => {
                         </Link>
                     </div>
                     <span className="ml-2">
-                        <PriorityIcon priority={priority} />
+                        <PriorityIcon priority={priority} size="1x" />
                     </span>
                 </div>
                 <p className="mb-0" style={{ fontSize: 11 }}>
@@ -69,12 +68,6 @@ const SearchJobItem = (props) => {
             <td className="text-center align-middle">{actionBtn}</td>
         </tr>
     );
-};
-
-SearchJobItem.propTypes = {
-    job: PT_JOB.isRequired,
-    onRemove: PropTypes.func.isRequired,
-    onCancel: PropTypes.func.isRequired,
 };
 
 export default SearchJobItem;

@@ -5,7 +5,6 @@ import PropTypes from "prop-types";
 
 const QueryEditParseNav = (props) => {
     const { onEditQuery, onParseQuery, isEditActive } = props;
-
     let label, onClick, icon, name;
 
     if (isEditActive) {

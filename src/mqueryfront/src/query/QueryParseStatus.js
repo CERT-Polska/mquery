@@ -1,5 +1,4 @@
 import React from "react";
-import { PT_QUERYPLAN } from "../queryUtils";
 
 const QueryParseStatus = (props) => {
     const { queryPlan } = props;
@@ -39,10 +38,6 @@ const QueryParseStatus = (props) => {
             {parseResult}
         </div>
     );
-};
-
-QueryParseStatus.propTypes = {
-    queryPlan: PT_QUERYPLAN.isRequired,
 };
 
 export default QueryParseStatus;

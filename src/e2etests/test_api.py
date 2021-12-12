@@ -261,9 +261,7 @@ def request_query(log, i, taints=[]):
 
     for j in range(15):
         res = requests.get(
-            "http://web:5000/api/matches/{}?offset=0&limit=50".format(
-                query_hash
-            )
+            f"http://web:5000/api/matches/{query_hash}?offset=0&limit=50"
         )
         log.info("API response: %s", res.json())
         if res.json()["job"]["status"] == "done":

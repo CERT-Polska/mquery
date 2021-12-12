@@ -5,7 +5,6 @@ import {
     faAngleUp,
     faAngleDoubleUp,
 } from "@fortawesome/free-solid-svg-icons";
-import PropTypes from "prop-types";
 
 const PriorityIcon = (props) => {
     let icon;
@@ -27,14 +26,6 @@ const PriorityIcon = (props) => {
             <FontAwesomeIcon icon={icon} size={props.size} color={color} />
         </span>
     );
-};
-
-PriorityIcon.defaultProps = {
-    size: "1x",
-};
-
-PriorityIcon.propTypes = {
-    priority: PropTypes.oneOf(["low", "medium", "high"]).isRequired,
 };
 
 export default PriorityIcon;
