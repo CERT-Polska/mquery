@@ -6,15 +6,8 @@ import RecentPage from "./recent/RecentPage";
 import StatusPage from "./status/StatusPage";
 import ConfigPage from "./config/ConfigPage";
 import AuthPage from "./auth/AuthPage";
-import axios from "axios";
-import { API_URL } from "./config";
+import api, { parseJWT } from "./api";
 import "./App.css";
-
-function parseJWT(token) {
-    const base64Url = token.split(".")[1];
-    const base64 = base64Url.replace("-", "+").replace("_", "/");
-    return JSON.parse(Buffer.from(base64, "base64").toString("binary"));
-}
 
 function App() {
     const [config, setConfig] = useState(null);
@@ -22,7 +15,7 @@ function App() {
     const token = rawToken ? parseJWT(rawToken) : null;
 
     useEffect(() => {
-        axios.get(`${API_URL}/server`).then((response) => {
+        api.get(`/server`).then((response) => {
             setConfig(response.data);
         });
     }, []);

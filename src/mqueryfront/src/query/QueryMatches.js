@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { API_URL } from "../config";
 import Pagination from "react-js-pagination";
 import FilterIcon from "../components/FilterIcon";
 import QueryMatchesItem from "./QueryMatchesItem";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import axios from "axios";
+import api, { api_url } from "../api";
 import {
     faCopy,
     faDownload,
@@ -13,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const copyHashesToClipboard = async (qhash) => {
-    axios.get(`${API_URL}/download/hashes/${qhash}`).then((response) => {
+    api.get(`/download/hashes/${qhash}`).then((response) => {
         navigator.clipboard.writeText(response.data);
     });
 };
@@ -31,7 +30,7 @@ const DownloadDropdown = (props) => (
             <a
                 className="dropdown-item"
                 download={`${props.qhash}.zip`}
-                href={`${API_URL}/download/files/${props.qhash}`}
+                href={`${api_url}/download/files/${props.qhash}`}
             >
                 <FontAwesomeIcon icon={faFileDownload} />
                 <span className="ml-3">Download files (.zip)</span>
@@ -39,12 +38,12 @@ const DownloadDropdown = (props) => (
             <a
                 className="dropdown-item"
                 download={`${props.qhash}_sha256.txt`}
-                href={`${API_URL}/download/hashes/${props.qhash}`}
+                href={`${api_url}/download/hashes/${props.qhash}`}
             >
                 <FontAwesomeIcon icon={faFileArchive} />
                 <span className="ml-3">Download sha256 hashes (.txt)</span>
             </a>
-            <a
+            <button
                 className="dropdown-item btn"
                 onClick={() => {
                     copyHashesToClipboard(props.qhash);
@@ -52,7 +51,7 @@ const DownloadDropdown = (props) => (
             >
                 <FontAwesomeIcon icon={faCopy} />
                 <span className="ml-3">Copy sha256 hashes to clipboard</span>
-            </a>
+            </button>
         </div>
     </div>
 );
@@ -82,16 +81,21 @@ const QueryMatches = (props) => {
             return null;
         })
         .map((match, index) => {
-            const qhashElm = encodeURIComponent(qhash);
-            const indexElm = encodeURIComponent(index);
-            const fileElm = encodeURIComponent(match.file);
-            const downloadUrl = `${API_URL}/download?job_id=${qhashElm}&ordinal=${indexElm}&file_path=${fileElm}`;
+            const downloadUrl = new URL(
+                `${api_url}/download`,
+                document.baseURI
+            );
+            downloadUrl.search = new URLSearchParams({
+                job_id: qhash,
+                ordinal: index,
+                file_path: match.file,
+            });
 
             return (
                 <QueryMatchesItem
                     key={match.file}
                     match={match}
-                    download_url={downloadUrl}
+                    download_url={downloadUrl.href}
                     filters={filters}
                     setFilter={setFilter}
                     changeFilter={updateFilter}

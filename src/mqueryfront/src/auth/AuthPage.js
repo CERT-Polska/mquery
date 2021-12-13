@@ -25,7 +25,7 @@ class AuthPage extends Component {
         const params = new URLSearchParams();
         params.append("grant_type", "authorization_code");
         params.append("code", code);
-        params.append("client_id", "app");
+        params.append("client_id", this.props.config["openid_client_id"]);
         axios
             .post(this.props.config["openid_auth_url"], params)
             .then((response) => {

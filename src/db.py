@@ -325,6 +325,7 @@ class Database:
         return {
             "openid_auth_url": "OpenID Connect auth url",
             "openid_login_url": "OpenID Connect login url",
+            "openid_client_id": "OpenID client ID",
         }
 
     def get_config(self) -> List[ConfigSchema]:

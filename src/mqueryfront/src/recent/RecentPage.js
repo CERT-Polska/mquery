@@ -1,8 +1,7 @@
 import React, { Component } from "react";
 import SearchJobs from "./SearchJobs";
 import ErrorBoundary from "../components/ErrorBoundary";
-import axios from "axios";
-import { API_URL } from "../config";
+import api from "../api";
 
 class RecentPage extends Component {
     constructor(props) {
@@ -24,8 +23,7 @@ class RecentPage extends Component {
     }
 
     componentDidMount() {
-        axios
-            .get(`${API_URL}/job`)
+        api.get("/job")
             .then((response) => {
                 const { jobs } = response.data;
 
@@ -48,7 +46,7 @@ class RecentPage extends Component {
             const newJobs = [...jobs];
             newJobs[index].status = "cancelled";
 
-            axios.delete(`${API_URL}/job/${id}`).then((response) => {
+            api.delete(`/job/${id}`).then(() => {
                 this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
             });
         }
@@ -61,7 +59,7 @@ class RecentPage extends Component {
         if (index >= 0) {
             const newJobs = [...jobs.slice(0, index), ...jobs.slice(index + 1)];
 
-            axios.delete(`${API_URL}/query/${id}`).then((response) => {
+            api.delete(`/query/${id}`).then(() => {
                 this.setState({ jobs: newJobs, head: this.getHead(newJobs) });
             });
         }

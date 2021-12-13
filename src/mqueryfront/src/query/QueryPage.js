@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import axios from "axios";
-import { API_URL } from "../config";
+import api from "../api";
 import { isStatusFinished } from "../queryUtils";
 import QueryLayoutManager from "./QueryLayoutManager";
+import ErrorBoundary from "../components/ErrorBoundary";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 
 const INITIAL_STATE = {
@@ -40,10 +40,14 @@ class QueryPageInner extends Component {
         if (this.queryHash) {
             this.fetchJob();
         }
-        const response = await axios.get(`${API_URL}/backend/datasets`);
-        const datasets = response.data.datasets;
-
-        this.setState({ datasets: datasets });
+        api.get(`/backend/datasets`)
+            .then((response) => {
+                const datasets = response.data.datasets;
+                this.setState({ datasets: datasets });
+            })
+            .catch((error) => {
+                this.setState({ error: error });
+            });
     }
 
     componentWillUnmount() {
@@ -94,7 +98,7 @@ class QueryPageInner extends Component {
     }
 
     async handleCancelJob() {
-        await axios.delete(`${API_URL}/job/${this.queryHash}`);
+        await api.delete(`/job/${this.queryHash}`);
     }
 
     handlePageChange(pageNumber) {
@@ -112,7 +116,7 @@ class QueryPageInner extends Component {
     async fetchJob() {
         // Go to the job mode
         // Load initial job information and start tracking results
-        const response = await axios.get(`${API_URL}/job/${this.queryHash}`);
+        const response = await api.get(`/job/${this.queryHash}`);
         this.setState(
             {
                 ...INITIAL_STATE,
@@ -146,8 +150,8 @@ class QueryPageInner extends Component {
     async loadMatches() {
         // Loads matches from the current page
         const OFFSET = (this.state.activePage - 1) * PAGE_SIZE;
-        const response = await axios.get(
-            `${API_URL}/matches/${this.queryHash}?offset=${OFFSET}&limit=${PAGE_SIZE}`
+        const response = await api.get(
+            `/matches/${this.queryHash}?offset=${OFFSET}&limit=${PAGE_SIZE}`
         );
         return response ? response.data : {};
     }
@@ -157,7 +161,7 @@ class QueryPageInner extends Component {
             const taints =
                 this.state.selectedTaints.map((obj) => obj.value) || [];
 
-            const response = await axios.post(`${API_URL}/query`, {
+            const response = await api.post("/query", {
                 raw_yara: this.state.rawYara,
                 method: method,
                 priority: priority,
@@ -224,26 +228,28 @@ class QueryPageInner extends Component {
             : null;
 
         return (
-            <QueryLayoutManager
-                isCollapsed={this.state.isCollapsed}
-                onCollapsePane={this.handleCollapsePane}
-                qhash={this.queryHash}
-                queryPlan={this.state.queryPlan}
-                queryError={this.state.queryError}
-                job={this.state.job}
-                matches={this.state.matches}
-                pagination={pagination}
-                onCancel={this.handleCancelJob}
-                onSubmitQuery={this.handleSubmitQuery}
-                onEditQuery={this.handleEditQuery}
-                onParseQuery={this.handleParseQuery}
-                onTaintSelect={this.handleTaintsSelection}
-                availableTaints={this.availableTaints}
-                rawYara={this.state.rawYara}
-                onYaraUpdate={this.handleYaraUpdate}
-                parsedError={this.parsedError}
-                selectedTaints={this.state.selectedTaints}
-            />
+            <ErrorBoundary error={this.state.error}>
+                <QueryLayoutManager
+                    isCollapsed={this.state.isCollapsed}
+                    onCollapsePane={this.handleCollapsePane}
+                    qhash={this.queryHash}
+                    queryPlan={this.state.queryPlan}
+                    queryError={this.state.queryError}
+                    job={this.state.job}
+                    matches={this.state.matches}
+                    pagination={pagination}
+                    onCancel={this.handleCancelJob}
+                    onSubmitQuery={this.handleSubmitQuery}
+                    onEditQuery={this.handleEditQuery}
+                    onParseQuery={this.handleParseQuery}
+                    onTaintSelect={this.handleTaintsSelection}
+                    availableTaints={this.availableTaints}
+                    rawYara={this.state.rawYara}
+                    onYaraUpdate={this.handleYaraUpdate}
+                    parsedError={this.parsedError}
+                    selectedTaints={this.state.selectedTaints}
+                />
+            </ErrorBoundary>
         );
     }
 }

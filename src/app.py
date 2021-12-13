@@ -3,7 +3,7 @@ import os
 
 import uvicorn  # type: ignore
 import config
-from fastapi import FastAPI, Body, Query, HTTPException
+from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header
 from starlette.requests import Request
 from starlette.responses import Response, FileResponse, StreamingResponse
 from starlette.staticfiles import StaticFiles
@@ -13,7 +13,7 @@ from lib.yaraparse import parse_yara
 
 from util import mquery_version
 from db import Database, JobId, MQUERY_PLUGIN_NAME
-from typing import Any, Callable, List, Union, Dict, Iterable
+from typing import Any, Callable, List, Union, Dict, Iterable, Optional
 import tempfile
 import zipfile
 
@@ -39,6 +39,41 @@ db = Database(config.REDIS_HOST, config.REDIS_PORT)
 app = FastAPI()
 
 
+class User:
+    def __init__(self, token: Optional[str]) -> None:
+        self.__token = token
+
+    @property
+    def is_anonymous(self) -> bool:
+        return self.__token is None
+
+    @property
+    def name(self) -> str:
+        if self.is_anonymous:
+            return "anonymous"
+        # This feature is still WIP. TODO - token parsing and validating
+        return "username"
+
+    @property
+    def roles(self) -> List[str]:
+        if self.is_anonymous:
+            # Temporarily enable everything to everyone
+            return ["loggedin", "admin"]
+        # This feature is still WIP. TODO - user roles and configuration
+        return ["loggedin", "admin"]
+
+
+async def current_user(authorization: Optional[str] = Header(None)) -> User:
+    if not authorization:
+        return User(None)
+
+    bearer, token = authorization.split()
+    if bearer != "Bearer":
+        return User(None)
+
+    return User(token)
+
+
 @app.middleware("http")
 async def add_headers(request: Request, call_next: Callable) -> Response:
     response = await call_next(request)
@@ -53,7 +88,89 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
     return response
 
 
-@app.get("/api/download", tags=["stable"])
+class RoleChecker:
+    def __init__(self, allowed_roles: List[str]) -> None:
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: User = Depends(current_user)):
+        if not any(role in self.allowed_roles for role in user.roles):
+            message = (
+                f"Operation not allowed for user {user.name} "
+                f"(user roles: {user.roles}) "
+                f"(required roles: any of {self.allowed_roles})"
+            )
+            raise HTTPException(
+                status_code=403, detail=message,
+            )
+
+
+is_admin = RoleChecker(["admin"])
+logged_in = RoleChecker(["loggedin"])
+
+
+# Admin-only routes (when user permissions are configured).
+# Non-admins can't use them, and shouldn't see them in the UI.
+
+
+@app.get(
+    "/api/config",
+    response_model=List[ConfigSchema],
+    tags=["internal"],
+    dependencies=[Depends(is_admin)],
+)
+def config_list() -> List[ConfigSchema]:
+    """
+    Returns the current database configuration.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    return db.get_config()
+
+
+@app.post(
+    "/api/compact",
+    response_model=StatusSchema,
+    tags=["internal"],
+    dependencies=[Depends(is_admin)],
+)
+def compact_files() -> StatusSchema:
+    """
+    Broadcasts compcat command to all ursadb instances. This uses `compact all;`
+    subcommand (which is more intuitive because it ways compacts), except the
+    recommended `compact smart;` which ignores useless merges. Because of this,
+    and also because of lack of control, this it's not recommended for advanced
+    users - see documentation and `compactall.py` script to learn more.
+
+    This still won't merge datasets of different types or with different tags,
+    and will silently do nothing in such case.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    db.broadcast_command(f"compact all;")
+    return StatusSchema(status="ok")
+
+
+@app.post(
+    "/api/config/edit",
+    response_model=StatusSchema,
+    tags=["internal"],
+    dependencies=[Depends(is_admin)],
+)
+def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
+    """
+    Change a given configuration key to a specified value.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    db.set_config_key(data.plugin, data.key, data.value)
+    return StatusSchema(status="ok")
+
+
+# Standard authenticated routes (when user permissions are configured).
+# Accessible for every logged in user (permission: "reader")
+
+
+@app.get("/api/download", tags=["stable"], dependencies=[Depends(logged_in)])
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
@@ -70,7 +187,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     return FileResponse(file_path, filename=attach_name + ext + "_")
 
 
-@app.get("/api/download/hashes/{hash}")
+@app.get("/api/download/hashes/{hash}", dependencies=[Depends(logged_in)])
 def download_hashes(hash: str) -> Response:
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
@@ -91,7 +208,7 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
             yield reader.read()
 
 
-@app.get("/api/download/files/{hash}")
+@app.get("/api/download/files/{hash}", dependencies=[Depends(logged_in)])
 async def download_files(hash: str) -> StreamingResponse:
     matches = db.get_job_matches(JobId(hash)).matches
     return StreamingResponse(zip_files(matches))
@@ -101,6 +218,7 @@ async def download_files(hash: str) -> StreamingResponse:
     "/api/query",
     response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
     tags=["stable"],
+    dependencies=[Depends(logged_in)],
 )
 def query(
     data: QueryRequestSchema = Body(...),
@@ -160,7 +278,12 @@ def query(
     return QueryResponseSchema(query_hash=job.hash)
 
 
-@app.get("/api/matches/{hash}", response_model=MatchesSchema, tags=["stable"])
+@app.get(
+    "/api/matches/{hash}",
+    response_model=MatchesSchema,
+    tags=["stable"],
+    dependencies=[Depends(logged_in)],
+)
 def matches(
     hash: str, offset: int = Query(...), limit: int = Query(...)
 ) -> MatchesSchema:
@@ -172,7 +295,12 @@ def matches(
     return db.get_job_matches(JobId(hash), offset, limit)
 
 
-@app.get("/api/job/{job_id}", response_model=JobSchema, tags=["stable"])
+@app.get(
+    "/api/job/{job_id}",
+    response_model=JobSchema,
+    tags=["stable"],
+    dependencies=[Depends(logged_in)],
+)
 def job_info(job_id: str) -> JobSchema:
     """
     Returns a metadata for a single job. May be useful for monitoring
@@ -181,7 +309,12 @@ def job_info(job_id: str) -> JobSchema:
     return db.get_job(JobId(job_id))
 
 
-@app.delete("/api/job/{job_id}", response_model=StatusSchema, tags=["stable"])
+@app.delete(
+    "/api/job/{job_id}",
+    response_model=StatusSchema,
+    tags=["stable"],
+    dependencies=[Depends(logged_in)],
+)
 def job_cancel(job_id: str) -> StatusSchema:
     """
     Cancels the job with a provided `job_id`.
@@ -190,7 +323,12 @@ def job_cancel(job_id: str) -> StatusSchema:
     return StatusSchema(status="ok")
 
 
-@app.get("/api/job", response_model=JobsSchema, tags=["stable"])
+@app.get(
+    "/api/job",
+    response_model=JobsSchema,
+    tags=["stable"],
+    dependencies=[Depends(logged_in)],
+)
 def job_statuses() -> JobsSchema:
     """
     Returns statuses of all the jobs in the system. May take some time (> 1s)
@@ -202,17 +340,12 @@ def job_statuses() -> JobsSchema:
     return JobsSchema(jobs=jobs)
 
 
-@app.get("/api/config", response_model=List[ConfigSchema], tags=["internal"])
-def config_list() -> List[ConfigSchema]:
-    """
-    Returns the current database configuration.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    return db.get_config()
-
-
-@app.post("/api/index", response_model=StatusSchema, tags=["internal"])
+@app.post(
+    "/api/index",
+    response_model=StatusSchema,
+    tags=["internal"],
+    dependencies=[Depends(logged_in)],
+)
 def reindex_files() -> StatusSchema:
     """
     Reindex files in the configured default directory.
@@ -230,36 +363,12 @@ def reindex_files() -> StatusSchema:
     return StatusSchema(status="ok")
 
 
-@app.post("/api/compact", response_model=StatusSchema, tags=["internal"])
-def compact_files() -> StatusSchema:
-    """
-    Broadcasts compcat command to all ursadb instances. This uses `compact all;`
-    subcommand (which is more intuitive because it ways compacts), except the
-    recommended `compact smart;` which ignores useless merges. Because of this,
-    and also because of lack of control, this it's not recommended for advanced
-    users - see documentation and `compactall.py` script to learn more.
-
-    This still won't merge datasets of different types or with different tags,
-    and will silently do nothing in such case.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    db.broadcast_command(f"compact all;")
-    return StatusSchema(status="ok")
-
-
-@app.post("/api/config/edit", response_model=StatusSchema, tags=["internal"])
-def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
-    """
-    Change a given configuration key to a specified value.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    db.set_config_key(data.plugin, data.key, data.value)
-    return StatusSchema(status="ok")
-
-
-@app.get("/api/backend", response_model=BackendStatusSchema, tags=["internal"])
+@app.get(
+    "/api/backend",
+    response_model=BackendStatusSchema,
+    tags=["internal"],
+    dependencies=[Depends(is_admin)],
+)
 def backend_status() -> BackendStatusSchema:
     """
     Returns the current status of backend services, and returns it. Intended to
@@ -296,6 +405,7 @@ def backend_status() -> BackendStatusSchema:
     "/api/backend/datasets",
     response_model=BackendStatusDatasetsSchema,
     tags=["internal"],
+    dependencies=[Depends(logged_in)],
 )
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
     """
@@ -318,6 +428,21 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
     return BackendStatusDatasetsSchema(datasets=datasets)
 
 
+@app.delete(
+    "/api/query/{job_id}",
+    response_model=StatusSchema,
+    dependencies=[Depends(logged_in)],
+)
+def query_remove(job_id: str) -> StatusSchema:
+    db.remove_query(JobId(job_id))
+    return StatusSchema(status="ok")
+
+
+# Permissionless routes.
+# 1. Static routes are always publicly accessible without authorisation.
+# 2. /api/server is a special route always accessible for everyone.
+
+
 @app.get("/api/server", response_model=ServerSchema, tags=["stable"])
 def server() -> ServerSchema:
     return ServerSchema(
@@ -328,6 +453,9 @@ def server() -> ServerSchema:
         openid_login_url=db.get_config_key(
             MQUERY_PLUGIN_NAME, "openid_login_url"
         ),
+        openid_client_id=db.get_config_key(
+            MQUERY_PLUGIN_NAME, "openid_client_id"
+        ),
     )
 
 
@@ -336,17 +464,12 @@ def serve_index(path: str) -> FileResponse:
     return FileResponse("mqueryfront/build/index.html")
 
 
-@app.delete("/api/query/{job_id}", response_model=StatusSchema)
-def query_remove(job_id: str) -> StatusSchema:
-    db.remove_query(JobId(job_id))
-    return StatusSchema(status="ok")
-
-
 @app.get("/recent", include_in_schema=False)
 @app.get("/status", include_in_schema=False)
 @app.get("/query", include_in_schema=False)
 @app.get("/config", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
+    # Static routes are always publicly accessible without authorisation.
     return FileResponse("mqueryfront/build/index.html")
 
 

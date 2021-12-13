@@ -2,8 +2,7 @@ import React, { Component } from "react";
 import filesize from "filesize";
 
 import ErrorBoundary from "../components/ErrorBoundary";
-import axios from "axios";
-import { API_URL } from "../config";
+import api from "../api";
 
 class DatasetRow extends Component {
     render() {
@@ -67,8 +66,7 @@ class DatabaseTopology extends Component {
     }
 
     componentDidMount() {
-        axios
-            .get(`${API_URL}/backend/datasets`)
+        api.get("/backend/datasets")
             .then((response) => {
                 this.setState({ datasets: response.data.datasets });
             })
@@ -79,12 +77,12 @@ class DatabaseTopology extends Component {
 
     index() {
         this.setState({ startedWork: true });
-        axios.post(`${API_URL}/index`, {});
+        api.post("/index", {});
     }
 
     compact() {
         this.setState({ startedWork: true });
-        axios.post(`${API_URL}/compact`, {});
+        api.post("/compact", {});
     }
 
     render() {

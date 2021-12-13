@@ -3,8 +3,7 @@ import ErrorBoundary from "../components/ErrorBoundary";
 import BackendStatus from "./BackendStatus";
 import DatabaseTopology from "./DatabaseTopology";
 import VersionStatus from "./VersionStatus";
-import axios from "axios";
-import { API_URL } from "../config";
+import api from "../api";
 
 class StatusPage extends Component {
     constructor(props) {
@@ -22,8 +21,7 @@ class StatusPage extends Component {
     }
 
     componentDidMount() {
-        axios
-            .get(`${API_URL}/backend`)
+        api.get(`/backend`)
             .then((response) => {
                 this.setState({ backend: response.data });
             })
