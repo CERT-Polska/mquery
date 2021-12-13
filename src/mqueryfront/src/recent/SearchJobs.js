@@ -35,16 +35,14 @@ const SearchJobs = (props) => {
         <div className="row">
             <div className="col-md-8 offset-md-2">
                 <FilteringTitle title="Recent jobs" filterValue={filterValue} />
-                <div className="table-responsive">
-                    <table className="table table-striped table-bordered">
-                        <FilteringTableHeader
-                            head={head}
-                            currentFilter={filter}
-                            onClick={onFilter}
-                        />
-                        <tbody>{backendJobRows}</tbody>
-                    </table>
-                </div>
+                <table className="table table-striped table-bordered">
+                    <FilteringTableHeader
+                        head={head}
+                        currentFilter={filter}
+                        onClick={onFilter}
+                    />
+                    <tbody>{backendJobRows}</tbody>
+                </table>
                 <div className="d-flex justify-content-center">
                     <Pagination
                         activePage={pagination.activePage}

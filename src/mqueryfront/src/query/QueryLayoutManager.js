@@ -6,8 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAlignLeft } from "@fortawesome/free-solid-svg-icons";
 import ErrorPage from "../components/ErrorPage";
 import LoadingPage from "../components/LoadingPage";
-import PropTypes from "prop-types";
-import { PT_JOB, PT_MATCHES, PT_QUERYPLAN, PT_PAGINATION } from "../queryUtils";
 
 const QueryLayoutManager = (props) => {
     const {
@@ -94,27 +92,6 @@ const QueryLayoutManager = (props) => {
             </div>
         </div>
     );
-};
-
-QueryLayoutManager.propTypes = {
-    isCollapsed: PropTypes.bool.isRequired,
-    onCollapsePane: PropTypes.func.isRequired,
-    job: PT_JOB,
-    matches: PT_MATCHES,
-    pagination: PT_PAGINATION,
-    onCancel: PropTypes.func.isRequired,
-    qhash: PropTypes.string,
-    queryPlan: PT_QUERYPLAN,
-    queryError: PropTypes.string,
-    onSubmitQuery: PropTypes.func.isRequired,
-    onEditQuery: PropTypes.func.isRequired,
-    onParseQuery: PropTypes.func.isRequired,
-    onTaintSelect: PropTypes.func.isRequired,
-    availableTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
-    rawYara: PropTypes.string.isRequired,
-    onYaraUpdate: PropTypes.func.isRequired,
-    parsedError: PropTypes.arrayOf(PropTypes.string).isRequired,
-    selectedTaints: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 export default QueryLayoutManager;

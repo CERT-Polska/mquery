@@ -4,46 +4,17 @@ import FilterIcon from "./FilterIcon";
 const FilteringTitle = (props) => {
     const { title, filterValue } = props;
 
-    const icon = (
-        <span className="mr-1">
-            <FilterIcon tooltipMessage="filtered by:" />
-        </span>
-    );
-
-    if (filterValue)
-        return (
-            <div className="d-flex justify-content-between align-items-center">
-                <div className="flex-fill">
-                    <div
-                        className="text-truncate invisible"
-                        style={{
-                            minWidth: 50,
-                            maxWidth: "20vw",
-                        }}
-                    >
-                        {icon}
-                        {filterValue}
-                    </div>
-                </div>
-                <div className="flex-fill">
-                    <h1 className="text-center">{title}</h1>
-                </div>
-
-                <div className="flex-fill">
-                    <div
-                        className="text-truncate text-right"
-                        style={{
-                            minWidth: 50,
-                            maxWidth: "20vw",
-                        }}
-                    >
-                        {icon}
-                        {filterValue}
-                    </div>
-                </div>
+    const filter = filterValue && <FilterIcon tooltipMessage="filtered by:" />;
+    return (
+        <div class="d-flex justify-content-between">
+            <div class="col"></div>
+            <h1 className="">{title}</h1>
+            <div class="col text-right">
+                {filter}
+                {filterValue}
             </div>
-        );
-    else return <h1 className="text-center mq-bottom">{title}</h1>;
+        </div>
+    );
 };
 
 export default FilteringTitle;

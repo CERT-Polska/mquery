@@ -82,7 +82,7 @@ class RecentPage extends Component {
     }
 
     getHead(jobs) {
-        const head = [
+        return [
             {
                 title: "Job name",
                 attributeName: "rule_name",
@@ -104,8 +104,6 @@ class RecentPage extends Component {
                 valueList: null,
             },
         ];
-
-        return head;
     }
 
     getDistinctList(

@@ -68,7 +68,7 @@ class DatabaseTopology extends Component {
 
     componentDidMount() {
         axios
-            .get(API_URL + "/backend/datasets")
+            .get(`${API_URL}/backend/datasets`)
             .then((response) => {
                 this.setState({ datasets: response.data.datasets });
             })
@@ -79,12 +79,12 @@ class DatabaseTopology extends Component {
 
     index() {
         this.setState({ startedWork: true });
-        axios.post(API_URL + "/index", {});
+        axios.post(`${API_URL}/index`, {});
     }
 
     compact() {
         this.setState({ startedWork: true });
-        axios.post(API_URL + "/compact", {});
+        axios.post(`${API_URL}/compact`, {});
     }
 
     render() {

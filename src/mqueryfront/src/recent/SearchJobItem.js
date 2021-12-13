@@ -26,7 +26,7 @@ export const SearchJobItemEmpty = () => {
 
 const SearchJobItem = (props) => {
     const { job, onRemove, onCancel } = props;
-    const { id, status, submitted, rule_name, priority, files_matched } = job;
+    const { id, status, submitted, rule_name, priority } = job;
     const rule_author = props.job.rule_author
         ? props.job.rule_author
         : "(no author)";

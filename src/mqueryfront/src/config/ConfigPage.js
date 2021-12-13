@@ -16,7 +16,7 @@ class ConfigPage extends Component {
 
     componentDidMount() {
         axios
-            .get(API_URL + "/config")
+            .get(`${API_URL}/config`)
             .then((response) => {
                 this.setState({ config: response.data });
             })

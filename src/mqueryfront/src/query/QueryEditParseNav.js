@@ -1,7 +1,6 @@
 import React from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClone, faCode } from "@fortawesome/free-solid-svg-icons";
-import PropTypes from "prop-types";
 
 const QueryEditParseNav = (props) => {
     const { onEditQuery, onParseQuery, isEditActive } = props;
@@ -28,12 +27,6 @@ const QueryEditParseNav = (props) => {
             <FontAwesomeIcon icon={icon} /> {label}
         </button>
     );
-};
-
-QueryEditParseNav.propTypes = {
-    isEditActive: PropTypes.bool.isRequired,
-    onEditQuery: PropTypes.func.isRequired,
-    onParseQuery: PropTypes.func.isRequired,
 };
 
 export default QueryEditParseNav;
