@@ -207,7 +207,7 @@ def config_list() -> List[ConfigSchema]:
 
     This endpoint is not stable and may be subject to change in the future.
     """
-    return db.get_plugins_config()
+    return db.get_config()
 
 
 @app.post("/api/index", response_model=StatusSchema, tags=["internal"])
@@ -253,7 +253,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 
     This endpoint is not stable and may be subject to change in the future.
     """
-    db.set_plugin_configuration_key(data.plugin, data.key, data.value)
+    db.set_config_key(data.plugin, data.key, data.value)
     return StatusSchema(status="ok")
 
 
