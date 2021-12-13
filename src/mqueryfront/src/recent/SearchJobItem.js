@@ -33,9 +33,9 @@ const SearchJobItem = (props) => {
     const isFinished = isStatusFinished(status);
     const submittedDate = new Date(submitted * 1000).toISOString();
     const actionBtn = isFinished ? (
-        <ActionRemove onClick={onRemove} size="lx" />
+        <ActionRemove onClick={onRemove} size="lg" />
     ) : (
-        <ActionCancel onClick={onCancel} size="lx" />
+        <ActionCancel onClick={onCancel} size="lg" />
     );
 
     return (

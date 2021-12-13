@@ -74,7 +74,7 @@ const QueryProgressBar = (props) => {
                 )}
             </div>
             <div className={compact ? "small" : ""}>
-                <div class="float-left">
+                <div className="float-left">
                     {statusInfo && (
                         <FontAwesomeIcon
                             icon={faSpinner}
@@ -85,7 +85,7 @@ const QueryProgressBar = (props) => {
                     )}
                     {statusInfo || matches}
                 </div>
-                <div class="float-right">
+                <div className="float-right">
                     <QueryTimer
                         job={job}
                         isFinished={isFinished}
@@ -100,7 +100,7 @@ const QueryProgressBar = (props) => {
                         />
                     )}
                 </div>
-                <div class="clearfix"></div>
+                <div className="clearfix"></div>
             </div>
         </div>
     );

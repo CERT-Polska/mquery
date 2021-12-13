@@ -6,10 +6,10 @@ const FilteringTitle = (props) => {
 
     const filter = filterValue && <FilterIcon tooltipMessage="filtered by:" />;
     return (
-        <div class="d-flex justify-content-between">
-            <div class="col"></div>
+        <div className="d-flex justify-content-between">
+            <div className="col"></div>
             <h1 className="">{title}</h1>
-            <div class="col text-right">
+            <div className="col text-right">
                 {filter}
                 {filterValue}
             </div>
