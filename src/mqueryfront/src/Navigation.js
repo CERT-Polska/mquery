@@ -2,7 +2,28 @@ import React from "react";
 import { Link } from "react-router-dom";
 import logo from "./logo.svg";
 
-function Navigation() {
+function Navigation(props) {
+    let loginElm = null;
+    if (!props.config || !props.config["openid_login_url"]) {
+        loginElm = null;
+    } else if (props.session != null) {
+        loginElm = (
+            <li className="nav-item nav-right">
+                <a className="nav-link" href="/" onClick={props.logout}>
+                    Logout ({props.session.preferred_username})
+                </a>
+            </li>
+        );
+    } else {
+        loginElm = (
+            <li className="nav-item nav-right">
+                <a className="nav-link" href={props.config["openid_login_url"]}>
+                    Login
+                </a>
+            </li>
+        );
+    }
+
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
             <Link className="navbar-brand" to={"/"}>
@@ -52,6 +73,7 @@ function Navigation() {
                             API Docs
                         </a>
                     </li>
+                    {loginElm}
                 </ul>
             </div>
         </nav>

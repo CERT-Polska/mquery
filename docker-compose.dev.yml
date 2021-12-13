@@ -50,5 +50,12 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - "${INDEX_DIR}:/var/lib/ursadb"
+  keycloak:
+    image: quay.io/keycloak/keycloak:15.1.0
+    ports:
+    - 8080:8080
+    environment:
+    - KEYCLOAK_USER=admin
+    - KEYCLOAK_PASSWORD=admin
   redis:
     image: redis
