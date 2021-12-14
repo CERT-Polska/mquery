@@ -31,6 +31,7 @@ from schema import (
     BackendStatusSchema,
     BackendStatusDatasetsSchema,
     AgentSchema,
+    ServerSchema,
 )
 
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
@@ -314,6 +315,11 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
             pass
 
     return BackendStatusDatasetsSchema(datasets=datasets)
+
+
+@app.get("/api/server", response_model=ServerSchema, tags=["stable"])
+def server() -> ServerSchema:
+    return ServerSchema(version=mquery_version())
 
 
 @app.get("/query/{path}", include_in_schema=False)

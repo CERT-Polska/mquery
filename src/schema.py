@@ -123,3 +123,7 @@ class BackendStatusSchema(BaseModel):
 
 class BackendStatusDatasetsSchema(BaseModel):
     datasets: Dict
+
+
+class ServerSchema(BaseModel):
+    version: str
