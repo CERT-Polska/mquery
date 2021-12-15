@@ -23,7 +23,7 @@ class StatusPage extends Component {
 
     componentDidMount() {
         axios
-            .get(API_URL + "/backend")
+            .get(`${API_URL}/backend`)
             .then((response) => {
                 this.setState({ backend: response.data });
             })

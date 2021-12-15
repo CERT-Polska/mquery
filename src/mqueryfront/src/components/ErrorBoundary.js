@@ -4,12 +4,7 @@ class ErrorBoundary extends Component {
     constructor(props) {
         super(props);
 
-        let error = props.error;
-
-        if (!error) {
-            error = null;
-        }
-
+        let error = props.error ? props.error : null;
         this.state = { error: error };
     }
 

@@ -5,9 +5,6 @@ import { isStatusFinished, getProgressBarClass } from "../queryUtils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-const getPercentage = (partial, total) =>
-    total ? Math.round((partial * 100) / total) : 0;
-
 const QueryProgressBar = (props) => {
     const { job, compact, onCancel } = props;
     const {
@@ -25,23 +22,17 @@ const QueryProgressBar = (props) => {
     const datasetFrac = total_datasets > 0 ? datasetsDone / total_datasets : 0;
     const datasetPct = Math.round(datasetFrac * 100);
 
+    const getPercentage = (files) =>
+        total_files ? Math.round((files * datasetFrac * 100) / total_files) : 0;
+
     const isFinished = isStatusFinished(status);
-    const inProgeressPct = getPercentage(
-        files_in_progress * datasetFrac,
-        total_files
-    );
-    const erroredPct = getPercentage(files_errored * datasetFrac, total_files);
+    const inProgeressPct = getPercentage(files_in_progress);
+    const erroredPct = getPercentage(files_errored);
     const processedPct =
-        total_files === 0 && isFinished
-            ? 100
-            : getPercentage(files_processed * datasetFrac, total_files);
+        total_files === 0 && isFinished ? 100 : getPercentage(files_processed);
 
     const errorString = files_errored === 1 ? "error" : "errors";
     const errorTooltip = `${files_errored} ${errorString} during processing`;
-
-    const cancelButton = isFinished ? null : (
-        <ActionCancel onClick={onCancel} size="sm" />
-    );
 
     const matches = `${files_matched} matches`;
     let statusInfo = null;
@@ -82,37 +73,35 @@ const QueryProgressBar = (props) => {
                     />
                 )}
             </div>
-            {
-                <div className={compact ? "small" : ""}>
-                    <div class="float-left">
-                        {statusInfo && (
-                            <FontAwesomeIcon
-                                icon={faSpinner}
-                                spin
-                                size={props.size}
-                                className="mr-1"
-                            />
-                        )}
-                        {statusInfo || matches}
-                    </div>
-                    <div class="float-right">
-                        <QueryTimer
-                            job={job}
-                            isFinished={isFinished}
-                            duration={true}
-                            countDown={true}
+            <div className={compact ? "small" : ""}>
+                <div className="float-left">
+                    {statusInfo && (
+                        <FontAwesomeIcon
+                            icon={faSpinner}
+                            spin
+                            size={props.size}
+                            className="mr-1"
                         />
-                        {compact || isFinished ? null : (
-                            <ActionCancel
-                                onClick={onCancel}
-                                size="sm"
-                                className="ml2"
-                            />
-                        )}
-                    </div>
-                    <div class="clearfix"></div>
+                    )}
+                    {statusInfo || matches}
                 </div>
-            }
+                <div className="float-right">
+                    <QueryTimer
+                        job={job}
+                        isFinished={isFinished}
+                        duration={true}
+                        countDown={true}
+                    />
+                    {compact || isFinished ? null : (
+                        <ActionCancel
+                            onClick={onCancel}
+                            size="sm"
+                            className="ml2"
+                        />
+                    )}
+                </div>
+                <div className="clearfix"></div>
+            </div>
         </div>
     );
 };
