@@ -9,6 +9,10 @@ from redis import StrictRedis
 from enum import Enum
 
 
+# "Magic" plugin name, used for configuration of mquery itself
+MQUERY_PLUGIN_NAME = "Mquery"
+
+
 class TaskType(Enum):
     SEARCH = "search"
     YARA = "yara"
@@ -316,13 +320,20 @@ class Database:
             for name, spec in self.redis.hgetall("agents").items()
         }
 
-    def get_plugins_config(self) -> List[ConfigSchema]:
+    def get_core_config(self) -> Dict[str, str]:
+        """Gets a list of configuration fields for the mquery core.
+        Will be extended in future PRs. For now nothing is configurable.
+        """
+        return {}
+
+    def get_config(self) -> List[ConfigSchema]:
         # { plugin_name: { field: description } }
         config_fields: Dict[str, Dict[str, str]] = defaultdict(dict)
+        config_fields[MQUERY_PLUGIN_NAME] = self.get_core_config()
         # Merge all config fields
         for agent_spec in self.get_active_agents().values():
-            for name, fields in agent_spec.plugins_spec.items():
-                config_fields[name].update(fields)
+            for plugin, fields in agent_spec.plugins_spec.items():
+                config_fields[plugin].update(fields)
         # Transform fields into ConfigSchema
         # { plugin_name: { field: ConfigSchema } }
         plugin_configs = {
@@ -336,7 +347,7 @@ class Database:
         }
         # Get configuration values for each plugin
         for plugin, spec in plugin_configs.items():
-            config = self.get_plugin_configuration(plugin)
+            config = self.get_config_key(plugin)
             for key, value in config.items():
                 if key in plugin_configs[plugin]:
                     plugin_configs[plugin][key].value = value
@@ -347,15 +358,13 @@ class Database:
             for key in sorted(plugin_configs[plugin].keys())
         ]
 
-    def get_plugin_config_version(self) -> int:
+    def get_config_version(self) -> int:
         return int(self.redis.get("plugin-version") or 0)
 
-    def get_plugin_configuration(self, plugin_name: str) -> Dict[str, str]:
+    def get_config_key(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
 
-    def set_plugin_configuration_key(
-        self, plugin_name: str, key: str, value: str
-    ) -> None:
+    def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
         prev_version = self.redis.incrby("plugin-version", 1) - 1
         self.reload_configuration(prev_version)

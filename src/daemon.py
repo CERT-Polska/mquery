@@ -120,11 +120,11 @@ class Agent:
         self.db.dataset_query_done(job_id)
 
     def __load_plugins(self) -> None:
-        self.plugin_config_version: int = self.db.get_plugin_config_version()
+        self.plugin_config_version: int = self.db.get_config_version()
         active_plugins = []
         for plugin_class in METADATA_PLUGINS:
             plugin_name = plugin_class.get_name()
-            plugin_config = self.db.get_plugin_configuration(plugin_name)
+            plugin_config = self.db.get_config_key(plugin_name)
             try:
                 active_plugins.append(plugin_class(self.db, plugin_config))
                 logging.info("Loaded %s plugin", plugin_name)
@@ -294,10 +294,7 @@ class Agent:
         :raises RuntimeError: Task with unsupported type given.
         """
         if task.type == TaskType.RELOAD:
-            if (
-                self.plugin_config_version
-                == self.db.get_plugin_config_version()
-            ):
+            if self.plugin_config_version == self.db.get_config_version():
                 # This should never happen and suggests that there is bug somewhere
                 # and version was not updated properly.
                 logging.error(
