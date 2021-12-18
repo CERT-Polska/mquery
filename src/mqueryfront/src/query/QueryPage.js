@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_URL } from "../config";
 import { isStatusFinished } from "../queryUtils";
 import QueryLayoutManager from "./QueryLayoutManager";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 
 const INITIAL_STATE = {
     isCollapsed: false,
@@ -18,7 +19,7 @@ const INITIAL_STATE = {
 
 const PAGE_SIZE = 20;
 
-class QueryPage extends Component {
+class QueryPageInner extends Component {
     constructor(props) {
         super(props);
 
@@ -50,7 +51,7 @@ class QueryPage extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        const prevQueryHash = prevProps.match.params.hash;
+        const prevQueryHash = prevProps.params.hash;
         if (this.queryHash) {
             if (prevQueryHash !== this.queryHash) {
                 // Went to the job mode or switched to another job
@@ -81,7 +82,7 @@ class QueryPage extends Component {
 
     handleEditQuery() {
         // Goes to the query mode keeping the original query
-        this.props.history.push("/", { editQuery: this.queryHash });
+        this.props.navigate("/", { editQuery: this.queryHash });
     }
 
     handleTaintsSelection = (selectedTaintsParam) => {
@@ -163,7 +164,7 @@ class QueryPage extends Component {
                 taints: taints,
             });
             if (method === "query") {
-                this.props.history.push(`/query/${response.data.query_hash}`);
+                this.props.navigate(`/query/${response.data.query_hash}`);
             } else if (method === "parse") {
                 this.setState({
                     queryPlan: response.data,
@@ -196,7 +197,7 @@ class QueryPage extends Component {
     }
 
     get queryHash() {
-        return this.props.match.params.hash;
+        return this.props.params.hash;
     }
 
     get parsedError() {
@@ -245,6 +246,16 @@ class QueryPage extends Component {
             />
         );
     }
+}
+
+function QueryPage() {
+    return (
+        <QueryPageInner
+            params={useParams()}
+            location={useLocation}
+            navigate={useNavigate()}
+        />
+    );
 }
 
 export default QueryPage;
