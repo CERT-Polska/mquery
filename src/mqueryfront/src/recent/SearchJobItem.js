@@ -26,16 +26,16 @@ export const SearchJobItemEmpty = () => {
 
 const SearchJobItem = (props) => {
     const { job, onRemove, onCancel } = props;
-    const { id, status, submitted, rule_name, priority, files_matched } = job;
+    const { id, status, submitted, rule_name, priority } = job;
     const rule_author = props.job.rule_author
         ? props.job.rule_author
         : "(no author)";
     const isFinished = isStatusFinished(status);
     const submittedDate = new Date(submitted * 1000).toISOString();
     const actionBtn = isFinished ? (
-        <ActionRemove onClick={onRemove} size="lx" />
+        <ActionRemove onClick={onRemove} size="lg" />
     ) : (
-        <ActionCancel onClick={onCancel} size="lx" />
+        <ActionCancel onClick={onCancel} size="lg" />
     );
 
     return (

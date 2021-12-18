@@ -20,10 +20,7 @@ const FilteringThead = (props) => {
     let thContent;
     if (props.filterData && props.filterData.valueList) {
         const list = props.filterData.valueList.map((el, index) => {
-            let activeItem = false;
-            if (activeColumn && props.currentFilter.value === el)
-                activeItem = true;
-
+            let activeItem = activeColumn && props.currentFilter.value === el;
             const itemStyle = "font-weight-" + (activeItem ? "bold" : "normal");
 
             return (

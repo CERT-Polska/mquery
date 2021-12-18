@@ -39,6 +39,8 @@ services:
     depends_on:
       - "redis"
       - "ursadb"
+    environment:
+      - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
   ursadb:
     build:
       context: ursadb/

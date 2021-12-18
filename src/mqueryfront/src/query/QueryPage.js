@@ -40,7 +40,7 @@ class QueryPageInner extends Component {
         if (this.queryHash) {
             this.fetchJob();
         }
-        const response = await axios.get(API_URL + "/backend/datasets");
+        const response = await axios.get(`${API_URL}/backend/datasets`);
         const datasets = response.data.datasets;
 
         this.setState({ datasets: datasets });
@@ -94,7 +94,7 @@ class QueryPageInner extends Component {
     }
 
     async handleCancelJob() {
-        await axios.delete(API_URL + "/job/" + this.queryHash);
+        await axios.delete(`${API_URL}/job/${this.queryHash}`);
     }
 
     handlePageChange(pageNumber) {
@@ -112,7 +112,7 @@ class QueryPageInner extends Component {
     async fetchJob() {
         // Go to the job mode
         // Load initial job information and start tracking results
-        const response = await axios.get(API_URL + "/job/" + this.queryHash);
+        const response = await axios.get(`${API_URL}/job/${this.queryHash}`);
         this.setState(
             {
                 ...INITIAL_STATE,
@@ -147,13 +147,7 @@ class QueryPageInner extends Component {
         // Loads matches from the current page
         const OFFSET = (this.state.activePage - 1) * PAGE_SIZE;
         const response = await axios.get(
-            API_URL +
-                "/matches/" +
-                this.queryHash +
-                "?offset=" +
-                OFFSET +
-                "&limit=" +
-                PAGE_SIZE
+            `${API_URL}/matches/${this.queryHash}?offset=${OFFSET}&limit=${PAGE_SIZE}`
         );
         return response ? response.data : {};
     }
@@ -163,14 +157,14 @@ class QueryPageInner extends Component {
             const taints =
                 this.state.selectedTaints.map((obj) => obj.value) || [];
 
-            const response = await axios.post(API_URL + "/query", {
+            const response = await axios.post(`${API_URL}/query`, {
                 raw_yara: this.state.rawYara,
                 method: method,
                 priority: priority,
                 taints: taints,
             });
             if (method === "query") {
-                this.props.navigate("/query/" + response.data.query_hash);
+                this.props.navigate(`/query/${response.data.query_hash}`);
             } else if (method === "parse") {
                 this.setState({
                     queryPlan: response.data,

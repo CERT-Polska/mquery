@@ -82,14 +82,10 @@ const QueryMatches = (props) => {
             return null;
         })
         .map((match, index) => {
-            const downloadUrl =
-                API_URL +
-                "/download?job_id=" +
-                encodeURIComponent(qhash) +
-                "&ordinal=" +
-                encodeURIComponent(index) +
-                "&file_path=" +
-                encodeURIComponent(match.file);
+            const qhashElm = encodeURIComponent(qhash);
+            const indexElm = encodeURIComponent(index);
+            const fileElm = encodeURIComponent(match.file);
+            const downloadUrl = `${API_URL}/download?job_id=${qhashElm}&ordinal=${indexElm}&file_path=${fileElm}`;
 
             return (
                 <QueryMatchesItem
@@ -106,7 +102,7 @@ const QueryMatches = (props) => {
     const filtersHead = filters.map((v) => (
         <span
             key={v}
-            className="badge badge-pill badge-secondary ml-1 mt-1  cursor-pointer"
+            className="badge badge-pill badge-secondary ml-1 mt-1 cursor-pointer"
             onClick={() => updateFilter(v)}
         >
             {v}
