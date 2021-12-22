@@ -12,6 +12,7 @@
         "bootstrap": "^4.2.1",
         "filesize": "^4.0.0",
         "font-awesome": "^4.7.0",
+        "http-proxy-middleware": "^2.0.1",
         "jquery": "^3.3.1",
         "merge": "^1.2.1",
         "popper.js": "^1.14.6",
@@ -31,17 +32,6 @@
         "build": "react-scripts build",
         "test": "react-scripts test --env=jsdom",
         "eject": "react-scripts eject"
-    },
-    "proxy": {
-        "/api": {
-            "target": "http://dev-web:5000"
-        },
-        "/docs": {
-            "target": "http://dev-web:5000"
-        },
-        "/openapi.json": {
-            "target": "http://dev-web:5000"
-        }
     },
     "prettier": {
         "tabWidth": 4
