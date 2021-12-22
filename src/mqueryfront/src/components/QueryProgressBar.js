@@ -1,7 +1,7 @@
 import React from "react";
 import ActionCancel from "./ActionCancel";
 import QueryTimer from "./QueryTimer";
-import { isStatusFinished, getProgressBarClass } from "../queryUtils";
+import { isStatusFinished, getProgressBarClass } from "../utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 

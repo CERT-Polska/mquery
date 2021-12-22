@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 const YARA = {
     TOKEN_PROVIDER: {
         defaultToken: "invalid",

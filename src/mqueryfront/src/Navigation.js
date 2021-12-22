@@ -1,10 +1,12 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import logo from "./logo.svg";
+import { isAuthEnabled } from "./utils";
 
 function Navigation(props) {
     let loginElm = null;
-    if (!props.config || !props.config["openid_login_url"]) {
+    let authEnabled = isAuthEnabled(props.config);
+    if (!authEnabled) {
         loginElm = null;
     } else if (props.session != null) {
         loginElm = (
@@ -17,7 +19,7 @@ function Navigation(props) {
     } else {
         loginElm = (
             <li className="nav-item nav-right">
-                <a className="nav-link" href={props.config["openid_login_url"]}>
+                <a className="nav-link" href="/auth">
                     Login
                 </a>
             </li>

@@ -12,10 +12,13 @@ from zmq import Again
 from lib.yaraparse import parse_yara
 
 from util import mquery_version
-from db import Database, JobId, MQUERY_PLUGIN_NAME
+from db import Database, JobId
 from typing import Any, Callable, List, Union, Dict, Iterable, Optional
 import tempfile
 import zipfile
+import jwt
+import base64
+from cryptography.hazmat.primitives import serialization
 
 from schema import (
     JobsSchema,
@@ -40,7 +43,7 @@ app = FastAPI()
 
 
 class User:
-    def __init__(self, token: Optional[str]) -> None:
+    def __init__(self, token: Optional[Dict]) -> None:
         self.__token = token
 
     @property
@@ -49,18 +52,15 @@ class User:
 
     @property
     def name(self) -> str:
-        if self.is_anonymous:
+        if self.__token is None:
             return "anonymous"
-        # This feature is still WIP. TODO - token parsing and validating
-        return "username"
+        return self.__token.get("preferred_username", "unknown")
 
-    @property
-    def roles(self) -> List[str]:
-        if self.is_anonymous:
-            # Temporarily enable everything to everyone
-            return ["loggedin", "admin"]
-        # This feature is still WIP. TODO - user roles and configuration
-        return ["loggedin", "admin"]
+    def roles(self, client_id: Optional[str]) -> List[str]:
+        if self.__token is None:
+            return []
+        access = self.__token.get("resource_access", {})
+        return access.get(client_id, {}).get("roles", [])
 
 
 async def current_user(authorization: Optional[str] = Header(None)) -> User:
@@ -71,7 +71,20 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
     if bearer != "Bearer":
         return User(None)
 
-    return User(token)
+    secret = db.get_mquery_config_key("openid_secret")
+    if secret is None:
+        return User(None)
+
+    public_key = serialization.load_der_public_key(base64.b64decode(secret))
+    try:
+        token_json = jwt.decode(
+            token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
+        )
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=401, detail="The signature has expired",
+        )
+    return User(token_json)
 
 
 @app.middleware("http")
@@ -93,19 +106,33 @@ class RoleChecker:
         self.allowed_roles = allowed_roles
 
     def __call__(self, user: User = Depends(current_user)):
-        if not any(role in self.allowed_roles for role in user.roles):
+        auth_enabled = db.get_mquery_config_key("auth_enabled")
+        if not auth_enabled or auth_enabled == "false":
+            return
+
+        client_id = db.get_mquery_config_key("openid_client_id")
+        user_roles = user.roles(client_id)
+        auth_default_roles = db.get_mquery_config_key("auth_default_roles")
+        default_roles = [
+            role.strip() for role in auth_default_roles.split(",")
+        ]
+        all_user_roles = list(set(user_roles + default_roles))
+
+        if not any(role in self.allowed_roles for role in all_user_roles):
             message = (
                 f"Operation not allowed for user {user.name} "
-                f"(user roles: {user.roles}) "
+                f"(user roles: {user_roles}) "
+                f"(default roles: {default_roles}) "
                 f"(required roles: any of {self.allowed_roles})"
             )
+            error_code = 401 if user.is_anonymous else 403
             raise HTTPException(
-                status_code=403, detail=message,
+                status_code=error_code, detail=message,
             )
 
 
 is_admin = RoleChecker(["admin"])
-logged_in = RoleChecker(["loggedin"])
+is_user = RoleChecker(["user"])
 
 
 # Admin-only routes (when user permissions are configured).
@@ -170,7 +197,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 # Accessible for every logged in user (permission: "reader")
 
 
-@app.get("/api/download", tags=["stable"], dependencies=[Depends(logged_in)])
+@app.get("/api/download", tags=["stable"], dependencies=[Depends(is_user)])
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
@@ -187,7 +214,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     return FileResponse(file_path, filename=attach_name + ext + "_")
 
 
-@app.get("/api/download/hashes/{hash}", dependencies=[Depends(logged_in)])
+@app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
 def download_hashes(hash: str) -> Response:
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
@@ -208,7 +235,7 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
             yield reader.read()
 
 
-@app.get("/api/download/files/{hash}", dependencies=[Depends(logged_in)])
+@app.get("/api/download/files/{hash}", dependencies=[Depends(is_user)])
 async def download_files(hash: str) -> StreamingResponse:
     matches = db.get_job_matches(JobId(hash)).matches
     return StreamingResponse(zip_files(matches))
@@ -218,7 +245,7 @@ async def download_files(hash: str) -> StreamingResponse:
     "/api/query",
     response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
     tags=["stable"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def query(
     data: QueryRequestSchema = Body(...),
@@ -282,7 +309,7 @@ def query(
     "/api/matches/{hash}",
     response_model=MatchesSchema,
     tags=["stable"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def matches(
     hash: str, offset: int = Query(...), limit: int = Query(...)
@@ -299,7 +326,7 @@ def matches(
     "/api/job/{job_id}",
     response_model=JobSchema,
     tags=["stable"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def job_info(job_id: str) -> JobSchema:
     """
@@ -313,7 +340,7 @@ def job_info(job_id: str) -> JobSchema:
     "/api/job/{job_id}",
     response_model=StatusSchema,
     tags=["stable"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def job_cancel(job_id: str) -> StatusSchema:
     """
@@ -327,7 +354,7 @@ def job_cancel(job_id: str) -> StatusSchema:
     "/api/job",
     response_model=JobsSchema,
     tags=["stable"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def job_statuses() -> JobsSchema:
     """
@@ -344,7 +371,7 @@ def job_statuses() -> JobsSchema:
     "/api/index",
     response_model=StatusSchema,
     tags=["internal"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def reindex_files() -> StatusSchema:
     """
@@ -405,7 +432,7 @@ def backend_status() -> BackendStatusSchema:
     "/api/backend/datasets",
     response_model=BackendStatusDatasetsSchema,
     tags=["internal"],
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
     """
@@ -431,7 +458,7 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
 @app.delete(
     "/api/query/{job_id}",
     response_model=StatusSchema,
-    dependencies=[Depends(logged_in)],
+    dependencies=[Depends(is_user)],
 )
 def query_remove(job_id: str) -> StatusSchema:
     db.remove_query(JobId(job_id))
@@ -447,15 +474,10 @@ def query_remove(job_id: str) -> StatusSchema:
 def server() -> ServerSchema:
     return ServerSchema(
         version=mquery_version(),
-        openid_auth_url=db.get_config_key(
-            MQUERY_PLUGIN_NAME, "openid_auth_url"
-        ),
-        openid_login_url=db.get_config_key(
-            MQUERY_PLUGIN_NAME, "openid_login_url"
-        ),
-        openid_client_id=db.get_config_key(
-            MQUERY_PLUGIN_NAME, "openid_client_id"
-        ),
+        auth_enabled=db.get_mquery_config_key("auth_enabled"),
+        openid_auth_url=db.get_mquery_config_key("openid_auth_url"),
+        openid_login_url=db.get_mquery_config_key("openid_login_url"),
+        openid_client_id=db.get_mquery_config_key("openid_client_id"),
     )
 
 

@@ -323,9 +323,14 @@ class Database:
     def get_core_config(self) -> Dict[str, str]:
         """Gets a list of configuration fields for the mquery core."""
         return {
+            # Autentication-related config
+            "auth_enabled": "Enable and force authentication for all users",
+            "auth_default_roles": "Comma separated list of roles available to everyone",
+            # OpenID Authentication config
             "openid_auth_url": "OpenID Connect auth url",
             "openid_login_url": "OpenID Connect login url",
             "openid_client_id": "OpenID client ID",
+            "openid_secret": "Secret used for JWT token verification",
         }
 
     def get_config(self) -> List[ConfigSchema]:
@@ -368,6 +373,9 @@ class Database:
 
     def get_config_key(self, plugin_name: str, key: str) -> Optional[str]:
         return self.redis.hget(f"plugin:{plugin_name}", key)
+
+    def get_mquery_config_key(self, key: str) -> Optional[str]:
+        return self.redis.hget(f"plugin:{MQUERY_PLUGIN_NAME}", key)
 
     def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
