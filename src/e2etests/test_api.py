@@ -179,6 +179,15 @@ def test_query_with_taints(add_files_to_index):
         assert len(m) == 1
 
 
+@pytest.mark.timeout(30)
+def test_api_server_runs():
+    log = logging.getLogger()
+    res = requests.get("http://web:5000/api/server")
+    log.info("API response: %s", res.json())
+    res.raise_for_status()
+    assert "version" in res.json()
+
+
 @pytest.fixture(scope="session", autouse=True)
 def add_files_to_index(check_operational):
     num_files = 100

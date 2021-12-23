@@ -124,7 +124,7 @@ class Agent:
         active_plugins = []
         for plugin_class in METADATA_PLUGINS:
             plugin_name = plugin_class.get_name()
-            plugin_config = self.db.get_config_key(plugin_name)
+            plugin_config = self.db.get_plugin_config(plugin_name)
             try:
                 active_plugins.append(plugin_class(self.db, plugin_config))
                 logging.info("Loaded %s plugin", plugin_name)

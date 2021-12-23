@@ -12,7 +12,7 @@ from zmq import Again
 from lib.yaraparse import parse_yara
 
 from util import mquery_version
-from db import Database, JobId
+from db import Database, JobId, MQUERY_PLUGIN_NAME
 from typing import Any, Callable, List, Union, Dict, Iterable
 import tempfile
 import zipfile
@@ -33,6 +33,7 @@ from schema import (
     AgentSchema,
     ServerSchema,
 )
+
 
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
 app = FastAPI()
@@ -319,7 +320,15 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
 
 @app.get("/api/server", response_model=ServerSchema, tags=["stable"])
 def server() -> ServerSchema:
-    return ServerSchema(version=mquery_version())
+    return ServerSchema(
+        version=mquery_version(),
+        openid_auth_url=db.get_config_key(
+            MQUERY_PLUGIN_NAME, "openid_auth_url"
+        ),
+        openid_login_url=db.get_config_key(
+            MQUERY_PLUGIN_NAME, "openid_login_url"
+        ),
+    )
 
 
 @app.get("/query/{path}", include_in_schema=False)

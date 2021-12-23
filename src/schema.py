@@ -127,3 +127,5 @@ class BackendStatusDatasetsSchema(BaseModel):
 
 class ServerSchema(BaseModel):
     version: str
+    openid_auth_url: Optional[str]
+    openid_login_url: Optional[str]

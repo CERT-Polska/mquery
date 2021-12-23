@@ -321,10 +321,11 @@ class Database:
         }
 
     def get_core_config(self) -> Dict[str, str]:
-        """Gets a list of configuration fields for the mquery core.
-        Will be extended in future PRs. For now nothing is configurable.
-        """
-        return {}
+        """Gets a list of configuration fields for the mquery core."""
+        return {
+            "openid_auth_url": "OpenID Connect auth url",
+            "openid_login_url": "OpenID Connect login url",
+        }
 
     def get_config(self) -> List[ConfigSchema]:
         # { plugin_name: { field: description } }
@@ -347,7 +348,7 @@ class Database:
         }
         # Get configuration values for each plugin
         for plugin, spec in plugin_configs.items():
-            config = self.get_config_key(plugin)
+            config = self.get_plugin_config(plugin)
             for key, value in config.items():
                 if key in plugin_configs[plugin]:
                     plugin_configs[plugin][key].value = value
@@ -361,8 +362,11 @@ class Database:
     def get_config_version(self) -> int:
         return int(self.redis.get("plugin-version") or 0)
 
-    def get_config_key(self, plugin_name: str) -> Dict[str, str]:
+    def get_plugin_config(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
+
+    def get_config_key(self, plugin_name: str, key: str) -> Optional[str]:
+        return self.redis.hget(f"plugin:{plugin_name}", key)
 
     def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
