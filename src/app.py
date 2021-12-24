@@ -142,7 +142,7 @@ def compact_files() -> StatusSchema:
     users - see documentation and `compactall.py` script to learn more.
 
     This still won't merge datasets of different types or with different tags,
-    and will silently do nothing in such case.
+    and will silently do nothing in such cases.
 
     This endpoint is not stable and may be subject to change in the future.
     """
