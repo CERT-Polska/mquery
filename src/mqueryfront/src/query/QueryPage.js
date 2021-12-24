@@ -40,7 +40,7 @@ class QueryPageInner extends Component {
         if (this.queryHash) {
             this.fetchJob();
         }
-        api.get(`/backend/datasets`)
+        api.get("/backend/datasets")
             .then((response) => {
                 const datasets = response.data.datasets;
                 this.setState({ datasets: datasets });
