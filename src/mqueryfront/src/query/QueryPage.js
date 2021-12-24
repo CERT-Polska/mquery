@@ -150,9 +150,10 @@ class QueryPageInner extends Component {
     async loadMatches() {
         // Loads matches from the current page
         const OFFSET = (this.state.activePage - 1) * PAGE_SIZE;
-        const response = await api.get(
-            `/matches/${this.queryHash}?offset=${OFFSET}&limit=${PAGE_SIZE}`
-        );
+        const response = await api.get(`/matches/${this.queryHash}`, {
+            offset: OFFSET,
+            limit: PAGE_SIZE,
+        });
         return response ? response.data : {};
     }
 

@@ -8,12 +8,13 @@ export function parseJWT(token) {
     return JSON.parse(Buffer.from(base64, "base64").toString("binary"));
 }
 
-function request(method, path, payload) {
+function request(method, path, payload, params) {
     const rawToken = localStorage.getItem("token");
     const headers = rawToken ? { Authorization: `Bearer ${rawToken}` } : {};
     return axios.request(path, {
         method: method,
         data: payload,
+        params: params,
         headers: headers,
     });
 }
@@ -22,8 +23,8 @@ function post(path, payload) {
     return request("post", `${api_url}${path}`, payload);
 }
 
-function get(path) {
-    return request("get", `${api_url}${path}`, {});
+function get(path, params) {
+    return request("get", `${api_url}${path}`, {}, params);
 }
 
 function delete_(path) {
