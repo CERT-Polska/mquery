@@ -15,7 +15,7 @@ function App() {
     const token = rawToken ? parseJWT(rawToken) : null;
 
     useEffect(() => {
-        api.get(`/server`).then((response) => {
+        api.get("/server").then((response) => {
             setConfig(response.data);
         });
     }, []);
