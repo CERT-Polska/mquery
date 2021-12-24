@@ -135,7 +135,7 @@ def config_list() -> List[ConfigSchema]:
 )
 def compact_files() -> StatusSchema:
     """
-    Broadcasts compcat command to all ursadb instances. This uses `compact all;`
+    Broadcasts compact command to all ursadb instances. This uses `compact all;`
     subcommand (which is more intuitive because it ways compacts), except the
     recommended `compact smart;` which ignores useless merges. Because of this,
     and also because of lack of control, this it's not recommended for advanced
