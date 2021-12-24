@@ -21,7 +21,7 @@ class StatusPage extends Component {
     }
 
     componentDidMount() {
-        api.get(`/backend`)
+        api.get("/backend")
             .then((response) => {
                 this.setState({ backend: response.data });
             })
