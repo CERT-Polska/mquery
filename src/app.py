@@ -113,9 +113,12 @@ class RoleChecker:
         client_id = db.get_mquery_config_key("openid_client_id")
         user_roles = user.roles(client_id)
         auth_default_roles = db.get_mquery_config_key("auth_default_roles")
-        default_roles = [
-            role.strip() for role in auth_default_roles.split(",")
-        ]
+        if auth_default_roles is None:
+            default_roles = []
+        else:
+            default_roles = [
+                role.strip() for role in auth_default_roles.split(",")
+            ]
         all_user_roles = list(set(user_roles + default_roles))
 
         if not any(role in self.allowed_roles for role in all_user_roles):
