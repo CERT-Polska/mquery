@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import ErrorBoundary from "../components/ErrorBoundary";
-import axios from "axios";
-import { API_URL } from "../config";
+import api from "../api";
 
 class ConfigRow extends Component {
     constructor(props) {
@@ -22,7 +21,7 @@ class ConfigRow extends Component {
         this.setState({
             edit: false,
         });
-        axios.post(API_URL + "/config/edit", {
+        api.post("/config/edit", {
             plugin: this.props.plugin,
             key: this.props.keyName,
             value: this.state.value,

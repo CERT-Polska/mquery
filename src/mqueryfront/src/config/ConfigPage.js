@@ -1,8 +1,7 @@
 import React, { Component } from "react";
 import ErrorBoundary from "../components/ErrorBoundary";
 import ConfigEntryList from "./ConfigEntries";
-import axios from "axios";
-import { API_URL } from "../config";
+import api from "../api";
 
 class ConfigPage extends Component {
     constructor(props) {
@@ -15,8 +14,7 @@ class ConfigPage extends Component {
     }
 
     componentDidMount() {
-        axios
-            .get(`${API_URL}/config`)
+        api.get("/config")
             .then((response) => {
                 this.setState({ config: response.data });
             })
