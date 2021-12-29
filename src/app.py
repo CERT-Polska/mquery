@@ -59,8 +59,10 @@ class User:
     def roles(self, client_id: Optional[str]) -> List[str]:
         if self.__token is None:
             return []
-        access = self.__token.get("resource_access", {})
-        return access.get(client_id, {}).get("roles", [])
+        try:
+            return self.__token["resource_access"][client_id]["roles"]
+        except KeyError:
+            return []
 
 
 async def current_user(authorization: Optional[str] = Header(None)) -> User:
