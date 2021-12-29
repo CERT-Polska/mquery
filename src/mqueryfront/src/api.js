@@ -9,14 +9,21 @@ export function parseJWT(token) {
 }
 
 function request(method, path, payload, params) {
-    const rawToken = localStorage.getItem("token");
+    const rawToken = localStorage.getItem("rawToken");
     const headers = rawToken ? { Authorization: `Bearer ${rawToken}` } : {};
-    return axios.request(path, {
-        method: method,
-        data: payload,
-        params: params,
-        headers: headers,
-    });
+    return axios
+        .request(path, {
+            method: method,
+            data: payload,
+            params: params,
+            headers: headers,
+        })
+        .catch((error) => {
+            if (error.response.status === 401) {
+                window.location = "/auth";
+            }
+            return error;
+        });
 }
 
 function post(path, payload) {

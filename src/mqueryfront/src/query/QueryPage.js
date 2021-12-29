@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import api from "../api";
-import { isStatusFinished } from "../queryUtils";
+import { isStatusFinished } from "../utils";
 import QueryLayoutManager from "./QueryLayoutManager";
 import ErrorBoundary from "../components/ErrorBoundary";
 import { useParams, useLocation, useNavigate } from "react-router-dom";

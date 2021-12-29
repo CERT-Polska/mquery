@@ -15,3 +15,6 @@ export const getProgressBarClass = (status) => {
     const classSufix = statusClassMap[status];
     return "progress-bar" + (classSufix ? " bg-" + classSufix : "");
 };
+
+export const isAuthEnabled = (config) =>
+    config && config["auth_enabled"] && config["auth_enabled"] !== "false";

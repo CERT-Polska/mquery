@@ -4,7 +4,7 @@ import PriorityIcon from "../components/PriorityIcon";
 import ActionRemove from "../components/ActionRemove";
 import ActionCancel from "../components/ActionCancel";
 import QueryProgressBar from "../components/QueryProgressBar";
-import { isStatusFinished } from "../queryUtils";
+import { isStatusFinished } from "../utils";
 
 export const SearchJobItemEmpty = () => {
     return (
