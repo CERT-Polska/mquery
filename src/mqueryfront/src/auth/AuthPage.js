@@ -28,7 +28,7 @@ class AuthPage extends Component {
         if (code === null) {
             const login_url = this.props.config["openid_login_url"];
             if (!login_url) {
-                this.setState({ error: "OUDC login URL not configured" });
+                this.setState({ error: "OIDC login URL not configured" });
             } else {
                 window.location = this.props.config["openid_login_url"];
             }

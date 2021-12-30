@@ -114,7 +114,7 @@ class ConfigRow extends Component {
                 </td>
                 <td className="w-25">
                     <div className="d-flex">
-                        <div className="flex-grow-1">{valueControl}</div>
+                        <div className="flex-grow-1" style={{"word-wrap": "break-word", "max-width": "800px"}}>{valueControl}</div>
                         <div className="flex-shrink-1">{editToggle}</div>
                     </div>
                 </td>
