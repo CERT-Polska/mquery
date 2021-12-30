@@ -29,7 +29,7 @@ function Navigation(props) {
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
             <Link className="navbar-brand" to={"/"}>
-                <Logo width="150" height="100%"/>
+                <Logo width="150" height="100%" />
             </Link>
             <button
                 className="navbar-toggler"
