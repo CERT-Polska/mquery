@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import logo from "./logo.svg";
+import { ReactComponent as Logo } from "./logo.svg";
 import { isAuthEnabled } from "./utils";
 
 function Navigation(props) {
@@ -29,7 +29,7 @@ function Navigation(props) {
     return (
         <nav className="navbar navbar-expand-lg navbar-dark bg-dark mb-3">
             <Link className="navbar-brand" to={"/"}>
-                <img src={logo} width="150" alt="" />
+                <img src={Logo} width="150" alt="" />
             </Link>
             <button
                 className="navbar-toggler"
