@@ -1,4 +1,4 @@
-FROM node:10 AS build
+FROM node:16 AS build
 
 RUN npm install -g serve
 COPY src/mqueryfront /app
