@@ -6,7 +6,7 @@ const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
     const { matches, meta, file } = match;
 
-    const path = require("path");
+    const path = require("path-browserify");
     const fileBasename = path.basename(file);
 
     const metadataBadges = Object.values(meta)
