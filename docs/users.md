@@ -78,7 +78,7 @@ In this section we will go over configuration using Keycloak - open
 source identity management solution. In principle, it should work
 with any other OIDC-capable system.
 
-I assume that mquery is hosted at `http://localhost`,
+We assume that mquery is hosted at `http://localhost`,
 and Keycloak is hosted at `http://localhost:8080`. Change the URLs
 as necessary for your deployment. 
 
