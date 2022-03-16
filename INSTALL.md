@@ -48,7 +48,7 @@ docker-compose -f docker-compose.dev.yml up  # this will take a while
 You can also compile and run everything manually.
 
 ```
-sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server
+sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server python3-dev
 
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 
