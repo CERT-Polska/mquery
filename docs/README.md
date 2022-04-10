@@ -13,7 +13,7 @@
     Here you can find documentation for them.
 - [For future contributors](../CONTRIBUTING.md): How to contribute.
 
-## Relevant [ursadb's documentation](https://cert-polska.github.io/ursadb/docs)
+## Relevant [ursadb's documentation](https://cert-polska.github.io/ursadb)
 
 Ursadb is the backend doing the heavy lifting for mquery. If you need to work with large
 datasets, it's a very useful read. It is also a prerequisite for understanding
@@ -36,4 +36,5 @@ many things in mquery.
 - [On-disk format](./ondiskformat.md): Read if you want to understand ursadb's on
     disk format (spoiler: many files are just JSON and can be inspected with vim).
 - [Plugin system](./plugins.md): For filtering, processing and tagging files.
+- [User management](./users.md): Control and manage access to your mquery instance.
 - [API](./api.md): Mquery exposes a simple API that you may use for your automation.
