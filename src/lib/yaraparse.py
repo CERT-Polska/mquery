@@ -492,7 +492,6 @@ class RuleParseEngine:
             if condition.right_operand.value > 0:
                 return self.traverse(condition.left_operand)
 
-
     def le_expr(self, condition: LeExpression) -> Optional[UrsaExpression]:
         """ From `y <= #a` we can deduce, that #a must occur at least once if y>0 """
         if isinstance(condition.left_operand, IntLiteralExpression):
