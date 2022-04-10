@@ -9,6 +9,9 @@ from yaramod import (  # type: ignore
     AnyExpression,
     EqExpression,
     GtExpression,
+    GeExpression,
+    LtExpression,
+    LeExpression,
     IdExpression,
     IntLiteralExpression,
     OfExpression,
@@ -476,11 +479,38 @@ class RuleParseEngine:
             return None
 
     def gt_expr(self, condition: GtExpression) -> Optional[UrsaExpression]:
-        left = self.traverse(condition.left_operand)
-        right = self.traverse(condition.right_operand)
-        return left or right
+        """ From `#a > 3` we can deduce, that #a must occur at least once """
+        return self.traverse(condition.left_operand)
+
+    def lt_expr(self, condition: LtExpression) -> Optional[UrsaExpression]:
+        """ From `3 < #a` we can deduce, that #a must occur at least once """
+        return self.traverse(condition.right_operand)
+
+    def ge_expr(self, condition: GeExpression) -> Optional[UrsaExpression]:
+        """ From `#a >= y` we can deduce, that #a must occur at least once if y>0 """
+        if isinstance(condition.right_operand, IntLiteralExpression):
+            if condition.right_operand.value > 0:
+                return self.traverse(condition.left_operand)
+
+
+    def le_expr(self, condition: LeExpression) -> Optional[UrsaExpression]:
+        """ From `y <= #a` we can deduce, that #a must occur at least once if y>0 """
+        if isinstance(condition.left_operand, IntLiteralExpression):
+            if condition.left_operand.value > 0:
+                return self.traverse(condition.right_operand)
 
     def eq_expr(self, condition: EqExpression) -> Optional[UrsaExpression]:
+        """ From `x = y` we can deduce, that x and y must both occur - unless:
+            - x = 0, or y = 0
+            - both x and y are count expressions (both can be zero)
+        """
+        if isinstance(condition.left_operand, IntLiteralExpression):
+            if isinstance(condition.right_operand, IntLiteralExpression):
+                if condition.left_operand == condition.right_operand == 0:
+                    return None
+        if isinstance(condition.left_operand, StringCountExpression):
+            if isinstance(condition.right_operand, StringCountExpression):
+                return None
         left = self.traverse(condition.left_operand)
         right = self.traverse(condition.right_operand)
         return left or right
@@ -494,7 +524,7 @@ class RuleParseEngine:
     def int_lit_expr(
         self, condition: IntLiteralExpression
     ) -> Optional[UrsaExpression]:
-        # nothing to be done here
+        # nothing to do here
         return None
 
     def str_at_expr(
@@ -517,6 +547,9 @@ class RuleParseEngine:
         StringExpression: str_expr,
         OfExpression: of_expr,
         GtExpression: gt_expr,
+        GeExpression: ge_expr,
+        LtExpression: lt_expr,
+        LeExpression: le_expr,
         EqExpression: eq_expr,
         StringCountExpression: str_count_expr,
         IntLiteralExpression: int_lit_expr,
