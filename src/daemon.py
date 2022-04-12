@@ -278,7 +278,7 @@ class Agent:
             and j.datasets_left == 0
         ):
             # The job is over, work of this agent as done.
-            self.db.agent_finish_job(job)
+            self.db.finish_job(job)
 
     def __process_task(self, task: AgentTask) -> None:
         """Dispatches and executes the next incoming task.

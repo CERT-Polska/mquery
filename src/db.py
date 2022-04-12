@@ -294,6 +294,11 @@ class Database:
                 job.key, {"status": "done", "finished": int(time())}
             )
 
+    def finish_job(self, job: JobId) -> None:
+        self.redis.hmset(
+            job.key, {"status": "done", "finished": int(time())}
+        )
+
     def has_pending_search_tasks(self, agent_id: str, job: JobId) -> bool:
         return self.redis.llen(f"job-ds:{agent_id}:{job.hash}") == 0
 
