@@ -120,7 +120,7 @@ def test_condition_eq0():
             #x == 0
     }"""
     )
-    assert query == "{74657374}"
+    assert query == "{}"
 
 
 def test_condition_eq_syms():
