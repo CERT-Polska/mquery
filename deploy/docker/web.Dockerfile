@@ -3,7 +3,7 @@ FROM node:16 AS build
 RUN npm install -g serve
 COPY src/mqueryfront /app
 WORKDIR /app
-RUN npm install && npm run build
+RUN npm install --legacy-peer-deps && npm run build
 
 FROM python:3.7
 
