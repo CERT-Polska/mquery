@@ -107,7 +107,7 @@ executing `HMSET plugin:Mquery auth_enabled ""`.
 
 - Edit the client, and set `Valid Redirect URIs` to `http://localhost/auth` (or `http://[mquery_url]/auth`).
 
-- Go to the `roles` subpage **in the client**, and add "admin" and "user" roles.
+- Go to the `roles` subpage **in the client**, and add `admin` and `user` roles.
 
 ![](./new-roles.png)
 
