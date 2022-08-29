@@ -105,7 +105,7 @@ executing `HMSET plugin:Mquery auth_enabled ""`.
 
 ![](./new-client.png)
 
-- Edit the client, and set `Valid Redirect URIs` to `http://localhost/auth` (or `http://[mquery_url]/auth`).
+- Edit the client, and set `Valid Redirect URIs` to `http://localhost/*` (or `http://[mquery_url]/*`).
 
 - Go to the `roles` subpage **in the client**, and add `admin` and `user` roles.
 
@@ -124,9 +124,8 @@ and grant appropriate roles to the user (remember to grant yourself an admin rol
 
 Go back to the config page again (http://localhost/config).
 
-- Set `opeind_auth_url` to `http://localhost:8080/auth/realms/myrealm/protocol/openid-connect/token`
-- Set `opeind_client_id` to `mquery` (`client id` from the step 1)
-- Set `opeind_login_url` to `http://localhost:8080/auth/realms/myrealm/protocol/openid-connect/auth?client_id=mquery&response_type=code` (change client_id if needed)
+- Set `openid_url` to `http://localhost:8080/auth/realms/myrealm/protocol/openid-connect`
+- Set `openid_client_id` to `mquery` (`client id` from the step 1)
 - Set `openid_secret` to the `RS256` public key of your realm.
 Get it from `http://localhost:8080/auth/admin/master/console/#/realms/myrealm/keys`
 (configure -> realm settings -> public key)

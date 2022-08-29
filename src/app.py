@@ -83,9 +83,10 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=401, detail="The signature has expired",
-        )
+        # The signature has expired. Maybe we should raise 401 here, but on the
+        # other hand we don't want to raise 401 if auth_enabled is not enabled.
+        return User(None)
+
     return User(token_json)
 
 
@@ -480,8 +481,7 @@ def server() -> ServerSchema:
     return ServerSchema(
         version=mquery_version(),
         auth_enabled=db.get_mquery_config_key("auth_enabled"),
-        openid_auth_url=db.get_mquery_config_key("openid_auth_url"),
-        openid_login_url=db.get_mquery_config_key("openid_login_url"),
+        openid_url=db.get_mquery_config_key("openid_url"),
         openid_client_id=db.get_mquery_config_key("openid_client_id"),
     )
 
