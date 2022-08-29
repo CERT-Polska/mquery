@@ -143,5 +143,5 @@ Final result:
 
 **Step 4: reload and done**
 
-Reload the page. You should be redirected to your login page. Enter password you've
+Reload the page. You should be redirected to your login page. Enter the password you've
 configured, and if everything was set-up correctly, you should be back as a logged in user.
