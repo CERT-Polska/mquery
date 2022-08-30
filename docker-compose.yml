@@ -31,14 +31,13 @@ services:
       - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
   ursadb:
     restart: always
-    build:
-      context: ursadb/
-      dockerfile: Dockerfile
+    image: mqueryci/ursadb:v1.5.0
     ports:
     - "127.0.0.1:9281:9281"
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - "${INDEX_DIR}:/var/lib/ursadb"
+    user: "0:0"
   redis:
     restart: always
     image: redis

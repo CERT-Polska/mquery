@@ -47,6 +47,7 @@ services:
     volumes:
       - "./e2e-state/samples:/mnt/samples"
       - "./e2e-state/index:/var/lib/ursadb"
+    user: "0:0"
   redis:
     restart: always
     image: redis
