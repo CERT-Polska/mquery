@@ -26,11 +26,23 @@ class AuthPage extends Component {
         const code = urlParams.get("code");
 
         if (code === null) {
-            const login_url = this.props.config["openid_login_url"];
+            const login_url = new URL(
+                this.props.config["openid_url"] + "/auth"
+            );
+            login_url.searchParams.append(
+                "client_id",
+                this.props.config["openid_client_id"]
+            );
+            login_url.searchParams.append("response_type", "code");
+            login_url.searchParams.append(
+                "redirect_uri",
+                window.location.origin + "/auth"
+            );
+
             if (!login_url) {
                 this.setState({ error: "OIDC login URL not configured" });
             } else {
-                window.location = this.props.config["openid_login_url"];
+                window.location = login_url;
             }
             return;
         }
@@ -39,8 +51,9 @@ class AuthPage extends Component {
         params.append("grant_type", "authorization_code");
         params.append("code", code);
         params.append("client_id", this.props.config["openid_client_id"]);
+        params.append("redirect_uri", window.location.origin + "/auth");
         axios
-            .post(this.props.config["openid_auth_url"], params)
+            .post(this.props.config["openid_url"] + "/token", params)
             .then((response) => {
                 this.props.login(response.data["access_token"]);
             })

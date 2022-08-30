@@ -327,8 +327,7 @@ class Database:
             "auth_enabled": "Enable and force authentication for all users",
             "auth_default_roles": "Comma separated list of roles available to everyone",
             # OpenID Authentication config
-            "openid_auth_url": "OpenID Connect auth url",
-            "openid_login_url": "OpenID Connect login url",
+            "openid_url": "OpenID Connect base url",
             "openid_client_id": "OpenID client ID",
             "openid_secret": "Secret used for JWT token verification",
         }

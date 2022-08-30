@@ -27,7 +27,17 @@ function App() {
 
     const logout = () => {
         localStorage.removeItem("rawToken");
-        window.location.href = "/";
+        if (config !== null) {
+            const logout_url = new URL(config["openid_url"] + "/logout");
+            logout_url.searchParams.append(
+                "redirect_uri",
+                window.location.origin
+            );
+            window.location.href = logout_url;
+        } else {
+            // Shouldn't happen, but reload just in case.
+            window.location.href = "/";
+        }
     };
 
     return (

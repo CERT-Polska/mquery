@@ -15,7 +15,7 @@ function Navigation(props) {
         isAdmin = userRoles.includes("admin");
         loginElm = (
             <li className="nav-item nav-right">
-                <a className="nav-link" href="/" onClick={props.logout}>
+                <a className="nav-link" href="#" onClick={props.logout}>
                     Logout ({props.session.preferred_username})
                 </a>
             </li>
