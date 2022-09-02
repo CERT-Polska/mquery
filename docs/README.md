@@ -31,6 +31,9 @@ many things in mquery.
 
 ## Advanced topics 
 
+Relevant for people who want to run mquery in production or on a a bigger scale.
+
+- [Security](./security.md): Security considerations for hardening your mquery instance.
 - [Distributed mquery](./distributed.md): For users that want to run mquery on
     more than one machine.
 - [On-disk format](./ondiskformat.md): Read if you want to understand ursadb's on

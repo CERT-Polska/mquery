@@ -39,14 +39,13 @@ services:
       - "redis"
       - "ursadb"
   ursadb:
-    build:
-      context: ursadb/
-      dockerfile: Dockerfile
+    image: mqueryci/ursadb:v1.5.0
     ports:
       - "9281:9281"
     volumes:
       - "./e2e-state/samples:/mnt/samples"
       - "./e2e-state/index:/var/lib/ursadb"
+    user: "0:0"
   redis:
     restart: always
     image: redis
