@@ -17,16 +17,19 @@ const copyHashesToClipboard = async (qhash) => {
     });
 };
 
-const DownloadDropdown = (props) => (
-    <div className="dropdown">
+const DownloadDropdown = (props) => {
+    const [show, setShow] = useState(false);
+
+    return <div className="dropdown">
         <button
             type="button"
             className="btn shadow-none text-secondary dropdown-toggle"
             data-toggle="dropdown"
+            onClick={() => setShow(!show)}
         >
             <FontAwesomeIcon icon={faDownload} size="sm" />
         </button>
-        <div className="dropdown-menu">
+        <div className={"dropdown-menu " + (show ? "show" : "")}>
             <a
                 className="dropdown-item"
                 download={`${props.qhash}.zip`}
@@ -54,7 +57,7 @@ const DownloadDropdown = (props) => (
             </button>
         </div>
     </div>
-);
+};
 
 const QueryMatches = (props) => {
     const { matches, qhash, pagination } = props;

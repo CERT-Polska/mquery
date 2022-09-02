@@ -11,9 +11,7 @@ from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache  # type: ignore
 from metadata import MetadataPlugin, Metadata
-from plugins import load_plugins
-
-METADATA_PLUGINS = load_plugins(config.PLUGINS)
+from plugins import PluginManager
 
 
 @cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)  # type: ignore
@@ -58,7 +56,6 @@ class Agent:
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
-        self.active_plugins: List[MetadataPlugin] = []
 
     def __search_task(self, job_id: JobId) -> None:
         """Do ursadb query for yara belonging to the provided job.
@@ -119,24 +116,14 @@ class Agent:
         self.db.agent_continue_search(self.group_id, job_id)
         self.db.dataset_query_done(job_id)
 
-    def __load_plugins(self) -> None:
-        self.plugin_config_version: int = self.db.get_config_version()
-        active_plugins = []
-        for plugin_class in METADATA_PLUGINS:
-            plugin_name = plugin_class.get_name()
-            plugin_config = self.db.get_plugin_config(plugin_name)
-            try:
-                active_plugins.append(plugin_class(self.db, plugin_config))
-                logging.info("Loaded %s plugin", plugin_name)
-            except Exception:
-                logging.exception("Failed to load %s plugin", plugin_name)
-        self.active_plugins = active_plugins
-
     def __initialize_agent(self) -> None:
-        self.__load_plugins()
+        self.plugin_config_version: int = self.db.get_config_version()
+
+        self.plugins = PluginManager(config.PLUGINS, self.db)
+
         plugins_spec = {
             plugin_class.get_name(): plugin_class.config_fields
-            for plugin_class in METADATA_PLUGINS
+            for plugin_class in self.plugins.plugin_classes
         }
         self.db.register_active_agent(
             self.group_id,
@@ -144,7 +131,7 @@ class Agent:
             plugins_spec,
             [
                 active_plugin.get_name()
-                for active_plugin in self.active_plugins
+                for active_plugin in self.plugins.active_plugins
             ],
         )
 
@@ -169,7 +156,7 @@ class Agent:
             "sha256": make_sha256_tag(path),
         }
         # Run all the plugins in configured order.
-        for plugin in self.active_plugins:
+        for plugin in self.plugins.active_plugins:
             if not plugin.is_extractor:
                 continue
             try:
@@ -196,19 +183,8 @@ class Agent:
         num_files = len(files)
         self.db.job_start_work(job, num_files)
 
-        # filenames returned from ursadb are usually paths, but may be
-        # rewritten by plugins. Create a map {original_name: file_path}
-        filemap = {f: f for f in files}
-
-        for plugin in self.active_plugins:
-            if not plugin.is_filter:
-                continue
-            new_filemap = {}
-            for orig_name, current_path in filemap.items():
-                new_path = plugin.filter(orig_name, current_path)
-                if new_path:
-                    new_filemap[orig_name] = new_path
-            filemap = new_filemap
+        filemap = {name: self.plugins.filter(name) for name in files}
+        filemap = {k: v for k, v in filemap.items() if v}
 
         for orig_name, path in filemap.items():
             try:
@@ -227,8 +203,7 @@ class Agent:
                 )
                 num_errors += 1
 
-        for plugin in self.active_plugins:
-            plugin.cleanup()
+        self.plugins.cleanup()
 
         if num_errors > 0:
             self.db.job_update_error(job, num_errors)

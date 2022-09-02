@@ -19,6 +19,7 @@ import zipfile
 import jwt
 import base64
 from cryptography.hazmat.primitives import serialization
+from plugins import PluginManager
 
 from schema import (
     JobsSchema,
@@ -40,6 +41,7 @@ from schema import (
 
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
 app = FastAPI()
+plugins = PluginManager(config.PLUGINS, db)
 
 
 class User:
@@ -218,7 +220,11 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
         return Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
-    return FileResponse(file_path, filename=attach_name + ext + "_")
+    file_path = plugins.filter(file_path)
+    return FileResponse(
+        file_path,
+        filename=attach_name + ext + "_",
+    )
 
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
@@ -238,7 +244,8 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
             with zipfile.ZipFile(writer, mode="w") as zipwriter:
                 for match in matches:
                     sha256 = match["meta"]["sha256"]["display_text"]
-                    zipwriter.write(match["file"], sha256)
+                    file_path = plugins.filter(match["file"])
+                    zipwriter.write(file_path, sha256)
                     yield reader.read()
             writer.flush()
             yield reader.read()
