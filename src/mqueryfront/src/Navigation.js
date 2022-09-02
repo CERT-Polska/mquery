@@ -8,6 +8,7 @@ function Navigation(props) {
     let authEnabled = isAuthEnabled(props.config);
     let isAdmin = false;
     if (!authEnabled) {
+        isAdmin = true; // Auth is disabled - everyone is an admin.
         loginElm = null;
     } else if (props.session != null) {
         const clientId = props.config["openid_client_id"];
