@@ -183,8 +183,8 @@ class Agent:
         num_files = len(files)
         self.db.job_start_work(job, num_files)
 
-        filemap = {name: self.plugins.filter(name) for name in files}
-        filemap = {k: v for k, v in filemap.items() if v}
+        filemap_raw = {name: self.plugins.filter(name) for name in files}
+        filemap = {k: v for k, v in filemap_raw.items() if v}
 
         for orig_name, path in filemap.items():
             try:

@@ -55,7 +55,7 @@ class PluginManager:
     def filter(self, orig_name: str) -> Optional[str]:
         """ Runs all available filter plugins on the provided file.
         Returns new file path, or None. User should call cleanup() later. """
-        current_path = orig_name
+        current_path: Optional[str] = orig_name
         for plugin in self.active_plugins:
             if not plugin.is_filter:
                 continue

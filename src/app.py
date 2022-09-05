@@ -220,8 +220,13 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
         return Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
-    file_path = plugins.filter(file_path)
-    return FileResponse(file_path, filename=attach_name + ext + "_",)
+    final_path = plugins.filter(file_path)
+    if final_path is None:
+        raise RuntimeError(
+            "Unexpected: trying to download file excluded by filters"
+        )
+
+    return FileResponse(final_path, filename=attach_name + ext + "_",)
 
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
@@ -242,6 +247,8 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
                 for match in matches:
                     sha256 = match["meta"]["sha256"]["display_text"]
                     file_path = plugins.filter(match["file"])
+                    if file_path is None:
+                        raise RuntimeError("Zipped file excluded by filters")
                     zipwriter.write(file_path, sha256)
                     yield reader.read()
             writer.flush()
