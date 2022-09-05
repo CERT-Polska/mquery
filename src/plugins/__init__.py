@@ -37,7 +37,7 @@ def load_plugins(specs: List[str]) -> List[Type[MetadataPlugin]]:
     return result
 
 
-class PluginManager():
+class PluginManager:
     def __init__(self, specs: List[str], db: Database) -> None:
         self.plugin_classes = load_plugins(specs)
 

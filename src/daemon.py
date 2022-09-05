@@ -10,7 +10,7 @@ from typing import Any, List
 from lib.yaraparse import parse_yara, combine_rules
 from db import AgentTask, JobId, Database, MatchInfo, TaskType
 from cachetools import cached, LRUCache  # type: ignore
-from metadata import MetadataPlugin, Metadata
+from metadata import Metadata
 from plugins import PluginManager
 
 

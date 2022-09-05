@@ -221,10 +221,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     file_path = plugins.filter(file_path)
-    return FileResponse(
-        file_path,
-        filename=attach_name + ext + "_",
-    )
+    return FileResponse(file_path, filename=attach_name + ext + "_",)
 
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])

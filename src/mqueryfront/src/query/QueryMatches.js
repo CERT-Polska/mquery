@@ -20,43 +20,47 @@ const copyHashesToClipboard = async (qhash) => {
 const DownloadDropdown = (props) => {
     const [show, setShow] = useState(false);
 
-    return <div className="dropdown">
-        <button
-            type="button"
-            className="btn shadow-none text-secondary dropdown-toggle"
-            data-toggle="dropdown"
-            onClick={() => setShow(!show)}
-        >
-            <FontAwesomeIcon icon={faDownload} size="sm" />
-        </button>
-        <div className={"dropdown-menu " + (show ? "show" : "")}>
-            <a
-                className="dropdown-item"
-                download={`${props.qhash}.zip`}
-                href={`${api_url}/download/files/${props.qhash}`}
-            >
-                <FontAwesomeIcon icon={faFileDownload} />
-                <span className="ml-3">Download files (.zip)</span>
-            </a>
-            <a
-                className="dropdown-item"
-                download={`${props.qhash}_sha256.txt`}
-                href={`${api_url}/download/hashes/${props.qhash}`}
-            >
-                <FontAwesomeIcon icon={faFileArchive} />
-                <span className="ml-3">Download sha256 hashes (.txt)</span>
-            </a>
+    return (
+        <div className="dropdown">
             <button
-                className="dropdown-item btn"
-                onClick={() => {
-                    copyHashesToClipboard(props.qhash);
-                }}
+                type="button"
+                className="btn shadow-none text-secondary dropdown-toggle"
+                data-toggle="dropdown"
+                onClick={() => setShow(!show)}
             >
-                <FontAwesomeIcon icon={faCopy} />
-                <span className="ml-3">Copy sha256 hashes to clipboard</span>
+                <FontAwesomeIcon icon={faDownload} size="sm" />
             </button>
+            <div className={"dropdown-menu " + (show ? "show" : "")}>
+                <a
+                    className="dropdown-item"
+                    download={`${props.qhash}.zip`}
+                    href={`${api_url}/download/files/${props.qhash}`}
+                >
+                    <FontAwesomeIcon icon={faFileDownload} />
+                    <span className="ml-3">Download files (.zip)</span>
+                </a>
+                <a
+                    className="dropdown-item"
+                    download={`${props.qhash}_sha256.txt`}
+                    href={`${api_url}/download/hashes/${props.qhash}`}
+                >
+                    <FontAwesomeIcon icon={faFileArchive} />
+                    <span className="ml-3">Download sha256 hashes (.txt)</span>
+                </a>
+                <button
+                    className="dropdown-item btn"
+                    onClick={() => {
+                        copyHashesToClipboard(props.qhash);
+                    }}
+                >
+                    <FontAwesomeIcon icon={faCopy} />
+                    <span className="ml-3">
+                        Copy sha256 hashes to clipboard
+                    </span>
+                </button>
+            </div>
         </div>
-    </div>
+    );
 };
 
 const QueryMatches = (props) => {
