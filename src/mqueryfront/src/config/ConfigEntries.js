@@ -6,13 +6,11 @@ const R_BOOL = /^(|true|false)$/;
 const R_URL = /^(https?:\/\/.*)$/;
 const R_ROLES = /^((admin|user)(,(admin|user))*)?$/;
 
-
 const KNOWN_RULES = {
-    "openid_url": R_URL,
-    "auth_enabled": R_BOOL,
-    "auth_default_roles": R_ROLES
-}
-
+    openid_url: R_URL,
+    auth_enabled: R_BOOL,
+    auth_default_roles: R_ROLES,
+};
 
 class ConfigRow extends Component {
     constructor(props) {
@@ -139,8 +137,8 @@ class ConfigRow extends Component {
                         <div
                             className="flex-grow-1"
                             style={{
-                                "wordWrap": "break-word",
-                                "maxWidth": "800px",
+                                wordWrap: "break-word",
+                                maxWidth: "800px",
                             }}
                         >
                             {valueControl}
