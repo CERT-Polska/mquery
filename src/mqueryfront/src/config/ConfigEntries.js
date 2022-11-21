@@ -2,6 +2,18 @@ import React, { Component } from "react";
 import ErrorBoundary from "../components/ErrorBoundary";
 import api from "../api";
 
+const R_BOOL = /^(|true|false)$/;
+const R_URL = /^(https?:\/\/.*)$/;
+const R_ROLES = /^((admin|user)(,(admin|user))*)?$/;
+
+
+const KNOWN_RULES = {
+    "openid_url": R_URL,
+    "auth_enabled": R_BOOL,
+    "auth_default_roles": R_ROLES
+}
+
+
 class ConfigRow extends Component {
     constructor(props) {
         super(props);
@@ -47,10 +59,19 @@ class ConfigRow extends Component {
         });
     }
 
+    validate() {
+        if (this.props.keyName in KNOWN_RULES) {
+            const rule = KNOWN_RULES[this.props.keyName];
+            return rule.test(this.state.value);
+        }
+        return true;
+    }
+
     render() {
         let valueControl;
         let editToggle;
         if (this.state.edit) {
+            const isValid = this.validate();
             valueControl = (
                 <input
                     type="text"
@@ -68,6 +89,7 @@ class ConfigRow extends Component {
                         data-toggle="tooltip"
                         title="Save your changes"
                         onClick={this.save}
+                        disabled={!isValid}
                     >
                         save
                     </button>
@@ -117,8 +139,8 @@ class ConfigRow extends Component {
                         <div
                             className="flex-grow-1"
                             style={{
-                                "word-wrap": "break-word",
-                                "max-width": "800px",
+                                "wordWrap": "break-word",
+                                "maxWidth": "800px",
                             }}
                         >
                             {valueControl}
