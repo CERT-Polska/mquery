@@ -89,6 +89,13 @@ class GzipPlugin(MetadataPlugin):
 The same method can be used to, for example, automatically download and extract
 files from s3 automatically.
 
+One caveat worth calling out:
+Filter plugins are first executed in the context of daemon (when matching files),
+and later in the context of the web application (when downloading files from the UI).
+It's important that the set of filter plugins is the same in both cases.
+For example this means that all daemons must have the same plugins active.
+In most deployments this difference is not significant.
+
 ## Metadata plugins
 
 Metadata plugins are used to enrich results with additional metadata.

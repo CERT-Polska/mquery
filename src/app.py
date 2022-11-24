@@ -1,9 +1,10 @@
 from lib.ursadb import UrsaDb
 import os
+from threading import Lock
 
 import uvicorn  # type: ignore
 import config
-from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header  # type: ignore
+from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header, BackgroundTasks  # type: ignore
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
 from starlette.staticfiles import StaticFiles  # type: ignore
@@ -42,6 +43,26 @@ from schema import (
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
 app = FastAPI()
 plugins = PluginManager(config.PLUGINS, db)
+plugin_lock = Lock()
+
+
+def use_plugins(background: BackgroundTasks) -> None:
+    """ Acquires a plugin_lock, and releases it after cleanup and returning a response.
+    This function should be called by every API endpoint that uses plugins.
+
+    This lock is necessary, because nothing in the plugins API makes it obvious that
+    they should be thread-safe - so we assume that they're not.
+    """
+    def release_and_cleanup():
+        try:
+            # Hopefully this won't crash...
+            plugins.cleanup()
+        finally:
+            # ...but just in case it does, we absolutely have to release the lock.
+            plugin_lock.release()
+
+    plugin_lock.acquire()
+    background.add_task(release_and_cleanup)
 
 
 class User:
@@ -206,7 +227,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 # Accessible for every logged in user (permission: "reader")
 
 
-@app.get("/api/download", tags=["stable"], dependencies=[Depends(is_user)])
+@app.get("/api/download", tags=["stable"], dependencies=[Depends(is_user), Depends(use_plugins)])
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
@@ -223,7 +244,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     final_path = plugins.filter(file_path)
     if final_path is None:
         raise RuntimeError(
-            "Unexpected: trying to download file excluded by filters"
+            "Unexpected: trying to download a file excluded by filters"
         )
 
     return FileResponse(final_path, filename=attach_name + ext + "_",)
@@ -255,7 +276,7 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
             yield reader.read()
 
 
-@app.get("/api/download/files/{hash}", dependencies=[Depends(is_user)])
+@app.get("/api/download/files/{hash}", dependencies=[Depends(is_user), Depends(use_plugins)])
 async def download_files(hash: str) -> StreamingResponse:
     matches = db.get_job_matches(JobId(hash)).matches
     return StreamingResponse(zip_files(matches))
