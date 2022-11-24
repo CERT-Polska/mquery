@@ -4,7 +4,15 @@ from threading import Lock
 
 import uvicorn  # type: ignore
 import config
-from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header, BackgroundTasks  # type: ignore
+from fastapi import (
+    FastAPI,
+    Body,
+    Query,
+    HTTPException,
+    Depends,
+    Header,
+    BackgroundTasks,
+)  # type: ignore
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
 from starlette.staticfiles import StaticFiles  # type: ignore
@@ -53,6 +61,7 @@ def use_plugins(background: BackgroundTasks) -> None:
     This lock is necessary, because nothing in the plugins API makes it obvious that
     they should be thread-safe - so we assume that they're not.
     """
+
     def release_and_cleanup():
         try:
             # Hopefully this won't crash...
@@ -227,7 +236,11 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 # Accessible for every logged in user (permission: "reader")
 
 
-@app.get("/api/download", tags=["stable"], dependencies=[Depends(is_user), Depends(use_plugins)])
+@app.get(
+    "/api/download",
+    tags=["stable"],
+    dependencies=[Depends(is_user), Depends(use_plugins)],
+)
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
@@ -276,7 +289,10 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
             yield reader.read()
 
 
-@app.get("/api/download/files/{hash}", dependencies=[Depends(is_user), Depends(use_plugins)])
+@app.get(
+    "/api/download/files/{hash}",
+    dependencies=[Depends(is_user), Depends(use_plugins)],
+)
 async def download_files(hash: str) -> StreamingResponse:
     matches = db.get_job_matches(JobId(hash)).matches
     return StreamingResponse(zip_files(matches))
