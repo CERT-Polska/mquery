@@ -30,7 +30,7 @@ plugin, but to load your own plugin you need to create your own image.
 ## Filter plugins
 
 Filter plugins can be used to discard files quickly (before even running
-yara rules), or to process raw paths returned from Ursadb.
+yara rules), or to process paths returned from Ursadb.
 
 The very simple example of a filter plugin is
 [RegexBlacklistPlugin](https://github.com/CERT-Polska/mquery/tree/master/src/plugins/blacklist.py)
@@ -89,12 +89,18 @@ class GzipPlugin(MetadataPlugin):
 The same method can be used to, for example, automatically download and extract
 files from s3 automatically.
 
-One caveat worth calling out:
-Filter plugins are first executed in the context of daemon (when matching files),
-and later in the context of the web application (when downloading files from the UI).
-It's important that the set of filter plugins is the same in both cases.
-For example this means that all daemons must have the same plugins active.
-In most deployments this difference is not significant.
+Filter plugins are ran before yara matching, and before file downloads. To avoid
+unexpected behaviour, the same set of plugins should be active in the web UI and
+in the daemon.
+
+**Warning:** if you have multiple backends either ensure that all backends and the web
+frontend use the same set of plugins, or be very careful about how they interact.
+
+For example, imagine that of the backends does gzip decompression and the other doesn't.
+Without any filter plugins installed on the frontend, download results will contain a
+mix of compressed and uncompressed files. Right now the answer to this is to write a
+plugin that does conditional decompression depending on which backend a file came from.
+It's not handled automatically.
 
 ## Metadata plugins
 
