@@ -169,7 +169,7 @@ def config_list() -> List[ConfigSchema]:
 def compact_files() -> StatusSchema:
     """
     Broadcasts compact command to all ursadb instances. This uses `compact all;`
-    subcommand (which is more intuitive because it ways compacts), except the
+    subcommand (which is more intuitive because it always compacts), instead of the
     recommended `compact smart;` which ignores useless merges. Because of this,
     and also because of lack of control, this it's not recommended for advanced
     users - see documentation and `compactall.py` script to learn more.
@@ -222,6 +222,8 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
 def download_hashes(hash: str) -> Response:
+    """ Returns a list of job matches as a sha256 strings joined with newlines """
+
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
         for d in db.get_job_matches(JobId(hash)).matches
