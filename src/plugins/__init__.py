@@ -55,14 +55,22 @@ class PluginManager:
     def filter(self, orig_name: str) -> Optional[str]:
         """ Runs all available filter plugins on the provided file.
         Returns new file path, or None. User should call cleanup() later. """
-        current_path: Optional[str] = orig_name
+        current_path = orig_name
         for plugin in self.active_plugins:
             if not plugin.is_filter:
                 continue
-            if current_path:
-                current_path = plugin.filter(orig_name, current_path)
+
+            new_path = plugin.filter(orig_name, current_path)
+            if not new_path:
+                return None
+
+            current_path = new_path
+
         return current_path
 
     def cleanup(self) -> None:
+        """ Clean up all plugin state. Worth stressing that plugins are *not* thread
+        safe, and running filter() and cleanup() from different threads will cause
+        problems. Running a plugin multiple times before the cleanup should be ok. """
         for plugin in self.active_plugins:
             plugin.cleanup()
