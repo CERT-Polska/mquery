@@ -252,7 +252,7 @@ async def download_files(hash: str) -> StreamingResponse:
 
 @app.post(
     "/api/query",
-    response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
+    response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],  # type: ignore
     tags=["stable"],
     dependencies=[Depends(is_user)],
 )
