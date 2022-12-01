@@ -14,7 +14,7 @@
 
 - A bit better support for Yara rules:
     - Improve parsing of string count expressions [(#269)](https://github.com/CERT-Polska/mquery/pull/269)
-    - Discard partial or expressions [(#190)](https://github.com/CERT-Polska/mquery/pull/190)
+    - Discard partial "or" expressions [(#190)](https://github.com/CERT-Polska/mquery/pull/190)
     - Fixed the regex parsing [(#229)](https://github.com/CERT-Polska/mquery/pull/229)
 
 ### Bugfixes
