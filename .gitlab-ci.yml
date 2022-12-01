@@ -87,7 +87,7 @@ test_mquery:
 
 test_types:
   stage: pretest
-  image: python:3.6
+  image: python:3.10
   script:
   - cp src/config.example.py src/config.py
   - pip3 install mypy==0.770
@@ -95,7 +95,7 @@ test_types:
 
 test_style:
   stage: pretest
-  image: python:3.6
+  image: python:3.10
   script:
   - cp src/config.example.py src/config.py
   - pip3 install flake8==3.7.9
@@ -103,7 +103,7 @@ test_style:
 
 test_black:
   stage: pretest
-  image: python:3.6
+  image: python:3.10
   script:
   - cp src/config.example.py src/config.py
   - pip3 install black==2.0.2
