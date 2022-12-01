@@ -59,7 +59,7 @@ jobs:
       - name: copy config
         run: cp src/config.example.py src/config.py
       - name: install black
-        run: pip3 install black==19.10b0
+        run: pip3 install black==22.3.0
       - name: run black
         run: black --check "src"
   test_js_style:
