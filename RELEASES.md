@@ -8,7 +8,7 @@
 
 - Multiselect for sample tags [(#164)](https://github.com/CERT-Polska/mquery/pull/164)
 - Ctrl+enter now submits a job in the query window [(#217)](https://github.com/CERT-Polska/mquery/pull/217)
-- Added a button to copy all the hashes [(#239)](https://github.com/CERT-Polska/mquery/pull/239)
+- Added a button to copy all matched hashes [(#239)](https://github.com/CERT-Polska/mquery/pull/239)
 
 ### Improvements
 
