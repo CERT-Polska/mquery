@@ -27,10 +27,10 @@ class AgentTask:
 
 
 class JobId:
-    """ Represents a unique job ID in redis. Looks like this: `job:IU32AD3` """
+    """Represents a unique job ID in redis. Looks like this: `job:IU32AD3`"""
 
     def __init__(self, key: str) -> None:
-        """ Creates a new JobId object. Can take both key and raw hash. """
+        """Creates a new JobId object. Can take both key and raw hash."""
         if not key.startswith("job:"):
             key = f"job:{key}"
         self.key = key
@@ -38,7 +38,7 @@ class JobId:
 
     @property
     def meta_key(self) -> str:
-        """ Every job has exactly one related meta key"""
+        """Every job has exactly one related meta key"""
         return f"meta:{self.hash}"
 
     def __repr__(self) -> str:
@@ -46,7 +46,7 @@ class JobId:
 
 
 class MatchInfo:
-    """ Represents information about a single match """
+    """Represents information about a single match"""
 
     def __init__(
         self, file: str, meta: Dict[str, Any], matches: List[str]
@@ -56,7 +56,7 @@ class MatchInfo:
         self.matches = matches
 
     def to_json(self) -> str:
-        """ Converts match info to json """
+        """Converts match info to json"""
         return json.dumps(
             {"file": self.file, "meta": self.meta, "matches": self.matches}
         )
@@ -69,25 +69,25 @@ class Database:
         )
 
     def get_yara_by_job(self, job: JobId) -> str:
-        """ Gets yara rule associated with job """
+        """Gets yara rule associated with job"""
         return self.redis.hget(job.key, "raw_yara")
 
     def get_job_status(self, job: JobId) -> str:
-        """ Gets status of the specified job """
+        """Gets status of the specified job"""
         return self.redis.hget(job.key, "status")
 
     def get_job_ids(self) -> List[JobId]:
-        """ Gets IDs of all jobs in the database """
+        """Gets IDs of all jobs in the database"""
         return [JobId(key) for key in self.redis.keys("job:*")]
 
     def cancel_job(self, job: JobId) -> None:
-        """ Sets the job status to cancelled """
+        """Sets the job status to cancelled"""
         self.redis.hmset(
             job.key, {"status": "cancelled", "finished": int(time())}
         )
 
     def fail_job(self, job: JobId, message: str) -> None:
-        """ Sets the job status to failed. """
+        """Sets the job status to failed."""
         self.redis.hmset(
             job.key,
             {"status": "failed", "error": message, "finished": int(time())},
@@ -119,7 +119,7 @@ class Database:
         )
 
     def remove_query(self, job: JobId) -> None:
-        """ Sets the job status to removed """
+        """Sets the job status to removed"""
         self.redis.hmset(job.key, {"status": "removed"})
 
     def add_match(self, job: JobId, match: MatchInfo) -> None:
@@ -130,7 +130,7 @@ class Database:
         return file_list and file_path == json.loads(file_list[0])["file"]
 
     def job_start_work(self, job: JobId, files_in_progress: int) -> None:
-        """ Updates the number of files being processed right now.
+        """Updates the number of files being processed right now.
         :param job: ID of the job being updated.
         :type job: JobId
         :param files_in_progress: Number of files in the current work unit.
@@ -141,7 +141,7 @@ class Database:
     def job_update_work(
         self, job: JobId, files_processed: int, files_matched: int
     ) -> None:
-        """ Update progress for the job. This will increment number of files processed
+        """Update progress for the job. This will increment number of files processed
         and matched, and if as a result all files are processed, will change the job
         status to `done`
         """
@@ -150,7 +150,7 @@ class Database:
         self.redis.hincrby(job.key, "files_matched", files_matched)
 
     def job_update_error(self, job: JobId, files_errored: int) -> None:
-        """ Update error for the job if it appears during agents' work.
+        """Update error for the job if it appears during agents' work.
         This will increment number of files errored and write them to the variable.
         """
         self.redis.hincrby(job.key, "files_errored", files_errored)

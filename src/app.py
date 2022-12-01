@@ -133,7 +133,8 @@ class RoleChecker:
             )
             error_code = 401 if user.is_anonymous else 403
             raise HTTPException(
-                status_code=error_code, detail=message,
+                status_code=error_code,
+                detail=message,
             )
 
 
@@ -222,7 +223,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
 def download_hashes(hash: str) -> Response:
-    """ Returns a list of job matches as a sha256 strings joined with newlines """
+    """Returns a list of job matches as a sha256 strings joined with newlines"""
 
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
@@ -433,7 +434,10 @@ def backend_status() -> BackendStatusSchema:
             )
             components[f"ursadb ({name})"] = "unknown"
 
-    return BackendStatusSchema(agents=agents, components=components,)
+    return BackendStatusSchema(
+        agents=agents,
+        components=components,
+    )
 
 
 @app.get(

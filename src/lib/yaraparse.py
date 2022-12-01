@@ -44,7 +44,7 @@ class YaraParseError(Exception):
 
 
 class UrsaExpression:
-    """ Represents a single Ursadb SELECT expression body. In the future
+    """Represents a single Ursadb SELECT expression body. In the future
     this may be represented as an expression tree, for example.
 
     Examples of valid expressions are:
@@ -193,7 +193,10 @@ def unescape_regex_text(raw_text: bytes) -> bytes:
 
 
 def ursify_regex_text(
-    text: bytes, is_ascii: bool, is_wide: bool, is_nocase: bool,
+    text: bytes,
+    is_ascii: bool,
+    is_wide: bool,
+    is_nocase: bool,
 ) -> Optional[UrsaExpression]:
     ursa_strings: List[UrsaExpression] = []
     for s in re.split(rb"(?<!\\)\\[wWsSdD]", text):
@@ -239,7 +242,10 @@ def flatten_regex_or_tree(unit: Any) -> Optional[List[bytes]]:
 
 
 def urisfy_regex_or_tree(
-    unit: Any, is_ascii: bool, is_wide: bool, is_nocase: bool,
+    unit: Any,
+    is_ascii: bool,
+    is_wide: bool,
+    is_nocase: bool,
 ) -> Optional[UrsaExpression]:
     or_strings = flatten_regex_or_tree(unit)
     if or_strings and all(or_strings):
@@ -479,29 +485,29 @@ class RuleParseEngine:
             return None
 
     def gt_expr(self, condition: GtExpression) -> Optional[UrsaExpression]:
-        """ From `#a > 3` we can deduce, that #a must occur at least once """
+        """From `#a > 3` we can deduce, that #a must occur at least once"""
         return self.traverse(condition.left_operand)
 
     def lt_expr(self, condition: LtExpression) -> Optional[UrsaExpression]:
-        """ From `3 < #a` we can deduce, that #a must occur at least once """
+        """From `3 < #a` we can deduce, that #a must occur at least once"""
         return self.traverse(condition.right_operand)
 
     def ge_expr(self, condition: GeExpression) -> Optional[UrsaExpression]:
-        """ From `#a >= y` we can deduce, that #a must occur at least once if y>0 """
+        """From `#a >= y` we can deduce, that #a must occur at least once if y>0"""
         if isinstance(condition.right_operand, IntLiteralExpression):
             if condition.right_operand.value > 0:
                 return self.traverse(condition.left_operand)
         return None
 
     def le_expr(self, condition: LeExpression) -> Optional[UrsaExpression]:
-        """ From `y <= #a` we can deduce, that #a must occur at least once if y>0 """
+        """From `y <= #a` we can deduce, that #a must occur at least once if y>0"""
         if isinstance(condition.left_operand, IntLiteralExpression):
             if condition.left_operand.value > 0:
                 return self.traverse(condition.right_operand)
         return None
 
     def eq_expr(self, condition: EqExpression) -> Optional[UrsaExpression]:
-        """ From `x == literal` and literal > 0 we can deduce that x must occur """
+        """From `x == literal` and literal > 0 we can deduce that x must occur"""
         if isinstance(condition.left_operand, IntLiteralExpression):
             if condition.left_operand.value > 0:
                 return self.traverse(condition.right_operand)
