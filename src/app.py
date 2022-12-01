@@ -3,10 +3,10 @@ import os
 
 import uvicorn  # type: ignore
 import config
-from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header
-from starlette.requests import Request
-from starlette.responses import Response, FileResponse, StreamingResponse
-from starlette.staticfiles import StaticFiles
+from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header  # type: ignore
+from starlette.requests import Request  # type: ignore
+from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
+from starlette.staticfiles import StaticFiles  # type: ignore
 from zmq import Again
 
 from lib.yaraparse import parse_yara
@@ -77,7 +77,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
     if secret is None:
         return User(None)
 
-    public_key = serialization.load_der_public_key(base64.b64decode(secret))
+    public_key = serialization.load_der_public_key(base64.b64decode(secret))  # type: ignore
     try:
         token_json = jwt.decode(
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
