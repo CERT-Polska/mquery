@@ -23,7 +23,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.10'
       - name: install mypy==0.770
         run: pip3 install mypy==0.770
       - name: install requirements
@@ -40,7 +40,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.10'
       - name: copy config
         run: cp src/config.example.py src/config.py
       - name: install flake8==3.7.9
@@ -55,7 +55,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
-          python-version: '3.6'
+          python-version: '3.10'
       - name: copy config
         run: cp src/config.example.py src/config.py
       - name: install black
