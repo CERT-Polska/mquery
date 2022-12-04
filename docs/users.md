@@ -91,7 +91,7 @@ executing `HMSET plugin:Mquery auth_enabled ""`.
 **Step 0 (optional): enable auth in non-enforcing mode**
 
 - Go to the `config` page in mquery (http://localhost/config). Set `auth_default_roles` to `admin`
-- Set `auth_enabled` to `yes`
+- Set `auth_enabled` to `true`
 
 **Step 1: configure keycloak**
 
@@ -136,7 +136,7 @@ Get it from `http://localhost:8080/auth/admin/master/console/#/realms/myrealm/ke
 
 - Go to the `config` page in mquery. Ensure `auth_default_roles` is
 an empty string.
-- Set `auth_enabled` to `yes`
+- Set `auth_enabled` to `true`
 
 Final result:
 
