@@ -55,7 +55,7 @@ plugin_lock = Lock()
 
 
 def use_plugins(background: BackgroundTasks) -> None:
-    """ Acquires a plugin_lock, and releases it after cleanup and returning a response.
+    """Acquires a plugin_lock, and releases it after cleanup and returning a response.
     This function should be called by every API endpoint that uses plugins.
 
     This lock is necessary, because nothing in the plugins API makes it obvious that
@@ -260,7 +260,10 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
             "Unexpected: trying to download a file excluded by filters"
         )
 
-    return FileResponse(final_path, filename=attach_name + ext + "_",)
+    return FileResponse(
+        final_path,
+        filename=attach_name + ext + "_",
+    )
 
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
