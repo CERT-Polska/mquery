@@ -36,7 +36,7 @@ def benchmark(socket, query):
 
 
 def nano(socket):
-    """ Simple queries. They should work on any database """
+    """Simple queries. They should work on any database"""
     benchmark(socket, 'select "abc";')
     benchmark(socket, 'select "abcdefgh";')
     benchmark(socket, 'select "abc" & "qwe" & "zxc";')
@@ -50,8 +50,8 @@ def nano(socket):
 
 
 def mini(socket):
-    """ Reasonable queries. They may take some time, but should return results
-    in a reasonable time. """
+    """Reasonable queries. They may take some time, but should return results
+    in a reasonable time."""
     benchmark(socket, "select {60 61 62 ??};")
     benchmark(socket, "select {60 61 62 ?? 63};")
     benchmark(socket, "select {60 61 62 ?? 63 64};")
@@ -64,8 +64,8 @@ def mini(socket):
 
 
 def heavyduty(socket):
-    """ Heavy queries. Used to benchmark querygraphs. Most of them will take
-    forever on a large real-world database. """
+    """Heavy queries. Used to benchmark querygraphs. Most of them will take
+    forever on a large real-world database."""
     benchmark(socket, "select {?1 ?2 ?3};")
     benchmark(socket, "select {?1 ?2 ?3 ?4};")
     benchmark(socket, "select {?1 ?2 ?3 ?4 ?5};")

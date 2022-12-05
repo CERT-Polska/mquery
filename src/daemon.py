@@ -16,7 +16,7 @@ from plugins import load_plugins
 METADATA_PLUGINS = load_plugins(config.PLUGINS)
 
 
-@cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)
+@cached(cache=LRUCache(maxsize=32), key=lambda db, job: job.key)  # type: ignore
 def compile_yara(db: Database, job: JobId) -> Any:
     """Gets a compiled yara rule belinging to the provided job. Uses cache
     to speed up compilation.

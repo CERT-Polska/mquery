@@ -5,7 +5,7 @@ COPY src/mqueryfront /app
 WORKDIR /app
 RUN npm install --legacy-peer-deps && npm run build
 
-FROM python:3.7
+FROM python:3.10
 
 WORKDIR /usr/src/app/src
 

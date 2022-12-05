@@ -3,10 +3,10 @@ import os
 
 import uvicorn  # type: ignore
 import config
-from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header
-from starlette.requests import Request
-from starlette.responses import Response, FileResponse, StreamingResponse
-from starlette.staticfiles import StaticFiles
+from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header  # type: ignore
+from starlette.requests import Request  # type: ignore
+from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
+from starlette.staticfiles import StaticFiles  # type: ignore
 from zmq import Again
 
 from lib.yaraparse import parse_yara
@@ -77,7 +77,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
     if secret is None:
         return User(None)
 
-    public_key = serialization.load_der_public_key(base64.b64decode(secret))
+    public_key = serialization.load_der_public_key(base64.b64decode(secret))  # type: ignore
     try:
         token_json = jwt.decode(
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
@@ -133,7 +133,8 @@ class RoleChecker:
             )
             error_code = 401 if user.is_anonymous else 403
             raise HTTPException(
-                status_code=error_code, detail=message,
+                status_code=error_code,
+                detail=message,
             )
 
 
@@ -222,7 +223,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
 def download_hashes(hash: str) -> Response:
-    """ Returns a list of job matches as a sha256 strings joined with newlines """
+    """Returns a list of job matches as a sha256 strings joined with newlines"""
 
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
@@ -251,7 +252,7 @@ async def download_files(hash: str) -> StreamingResponse:
 
 @app.post(
     "/api/query",
-    response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],
+    response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],  # type: ignore
     tags=["stable"],
     dependencies=[Depends(is_user)],
 )
@@ -433,7 +434,10 @@ def backend_status() -> BackendStatusSchema:
             )
             components[f"ursadb ({name})"] = "unknown"
 
-    return BackendStatusSchema(agents=agents, components=components,)
+    return BackendStatusSchema(
+        agents=agents,
+        components=components,
+    )
 
 
 @app.get(
