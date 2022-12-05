@@ -1,9 +1,18 @@
 from lib.ursadb import UrsaDb
 import os
+from threading import Lock
 
 import uvicorn  # type: ignore
 import config
-from fastapi import FastAPI, Body, Query, HTTPException, Depends, Header  # type: ignore
+from fastapi import (
+    FastAPI,
+    Body,
+    Query,
+    HTTPException,
+    Depends,
+    Header,
+    BackgroundTasks,
+)  # type: ignore
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
 from starlette.staticfiles import StaticFiles  # type: ignore
@@ -19,6 +28,7 @@ import zipfile
 import jwt
 import base64
 from cryptography.hazmat.primitives import serialization
+from plugins import PluginManager
 
 from schema import (
     JobsSchema,
@@ -40,6 +50,28 @@ from schema import (
 
 db = Database(config.REDIS_HOST, config.REDIS_PORT)
 app = FastAPI()
+plugins = PluginManager(config.PLUGINS, db)
+plugin_lock = Lock()
+
+
+def use_plugins(background: BackgroundTasks) -> None:
+    """Acquires a plugin_lock, and releases it after cleanup and returning a response.
+    This function should be called by every API endpoint that uses plugins.
+
+    This lock is necessary, because nothing in the plugins API makes it obvious that
+    they should be thread-safe - so we assume that they're not.
+    """
+
+    def release_and_cleanup():
+        try:
+            # Hopefully this won't crash...
+            plugins.cleanup()
+        finally:
+            # ...but just in case it does, we absolutely have to release the lock.
+            plugin_lock.release()
+
+    plugin_lock.acquire()
+    background.add_task(release_and_cleanup)
 
 
 class User:
@@ -208,7 +240,11 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 # Accessible for every logged in user (permission: "reader")
 
 
-@app.get("/api/download", tags=["stable"], dependencies=[Depends(is_user)])
+@app.get(
+    "/api/download",
+    tags=["stable"],
+    dependencies=[Depends(is_user), Depends(use_plugins)],
+)
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
@@ -222,7 +258,16 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
         return Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
-    return FileResponse(file_path, filename=attach_name + ext + "_")
+    final_path = plugins.filter(file_path)
+    if final_path is None:
+        raise RuntimeError(
+            "Unexpected: trying to download a file excluded by filters"
+        )
+
+    return FileResponse(
+        final_path,
+        filename=attach_name + ext + "_",
+    )
 
 
 @app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
@@ -242,13 +287,19 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
             with zipfile.ZipFile(writer, mode="w") as zipwriter:
                 for match in matches:
                     sha256 = match["meta"]["sha256"]["display_text"]
-                    zipwriter.write(match["file"], sha256)
+                    file_path = plugins.filter(match["file"])
+                    if file_path is None:
+                        raise RuntimeError("Zipped file excluded by filters")
+                    zipwriter.write(file_path, sha256)
                     yield reader.read()
             writer.flush()
             yield reader.read()
 
 
-@app.get("/api/download/files/{hash}", dependencies=[Depends(is_user)])
+@app.get(
+    "/api/download/files/{hash}",
+    dependencies=[Depends(is_user), Depends(use_plugins)],
+)
 async def download_files(hash: str) -> StreamingResponse:
     matches = db.get_job_matches(JobId(hash)).matches
     return StreamingResponse(zip_files(matches))
