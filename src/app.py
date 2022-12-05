@@ -66,6 +66,10 @@ class User:
 
 
 async def current_user(authorization: Optional[str] = Header(None)) -> User:
+    auth_enabled = db.get_mquery_config_key("auth_enabled")
+    if not auth_enabled or auth_enabled == "false":
+        return User(None)
+
     if not authorization:
         return User(None)
 
@@ -82,8 +86,8 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
         token_json = jwt.decode(
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
-    except jwt.ExpiredSignatureError:
-        # The signature has expired. Maybe we should raise 401 here, but on the
+    except jwt.InvalidTokenError:
+        # A generic signature error. Maybe we should raise 401 here, but on the
         # other hand we don't want to raise 401 if auth_enabled is not enabled.
         return User(None)
 
