@@ -11,7 +11,7 @@ const FilteringThead = (props) => {
     ) {
         activeColumn = true;
         icon = (
-            <span className="mr-1">
+            <span className="me-1">
                 <FilterIcon tooltipMessage="active filter" />
             </span>
         );

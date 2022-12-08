@@ -19,7 +19,7 @@ const QueryParseStatus = (props) => {
             <div key={rule_name} className="mt-3">
                 <div className="form-group">
                     <label>
-                        <span className="mr-2 font-weight-bold">
+                        <span className="me-2 font-weight-bold">
                             {rule_name}
                         </span>
                         {badge}

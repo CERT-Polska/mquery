@@ -71,6 +71,7 @@ class BackendStatus extends Component {
                 alive={agent.alive}
                 tasks={agent.tasks}
                 url={agent.url}
+                key={agent.name}
             />
         ));
 

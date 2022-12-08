@@ -13,7 +13,7 @@ const QueryMatchesItem = (props) => {
         .filter((v) => !v.hidden)
         .map((v) => (
             <a href={v.url} key={v}>
-                <span className="badge badge-pill badge-warning ml-1 mt-1">
+                <span className="badge rounded-pill bg-warning ms-1 mt-1">
                     {v.display_text}
                 </span>
             </a>
@@ -22,7 +22,7 @@ const QueryMatchesItem = (props) => {
     const matchBadges = Object.values(matches).map((v) => (
         <span
             key={v}
-            className="badge badge-pill badge-primary ml-1 mt-1 cursor-pointer"
+            className="badge rounded-pill bg-primary ms-1 mt-1 cursor-pointer"
             onClick={() => props.changeFilter(v)}
         >
             {v}
@@ -58,7 +58,7 @@ const QueryMatchesItem = (props) => {
                             {fileBasename}
                         </small>
                     </div>
-                    <small className="text-secondary ml-2 mr-1 mt-1">
+                    <small className="text-secondary ms-2 me-1 mt-1">
                         <ActionCopyToClipboard
                             text={fileBasename}
                             tooltipMessage="Copy file name to clipboard"

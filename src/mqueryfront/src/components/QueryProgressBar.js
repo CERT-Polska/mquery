@@ -80,7 +80,7 @@ const QueryProgressBar = (props) => {
                             icon={faSpinner}
                             spin
                             size={props.size}
-                            className="mr-1"
+                            className="me-1"
                         />
                     )}
                     {statusInfo || matches}
