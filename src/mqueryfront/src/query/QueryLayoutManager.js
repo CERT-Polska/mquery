@@ -39,7 +39,7 @@ const QueryLayoutManager = (props) => {
         <div>
             <button
                 type="button"
-                className="btn btn-primary btn-sm pull-left mr-4"
+                className="btn btn-primary btn-sm pull-left me-4"
                 onClick={onCollapsePane}
             >
                 <FontAwesomeIcon icon={faAlignLeft} />

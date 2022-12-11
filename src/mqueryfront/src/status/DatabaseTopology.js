@@ -8,18 +8,17 @@ class DatasetRow extends Component {
     render() {
         return [
             <tr
-                data-toggle="collapse"
-                data-target={"#collapsed_" + this.props.id}
+                data-bs-toggle="collapse"
+                data-bs-target={"#collapsed_" + this.props.id}
                 className="accordion-toggle"
+                key={`hdr_${this.props.id}`}
             >
                 <td>
                     <code>{this.props.id}</code>
                     {this.props.taints.map((taint) => (
-                        <span>
+                        <span key={taint}>
                             {" "}
-                            <span className="badge badge-secondary">
-                                {taint}
-                            </span>
+                            <span className="badge bg-secondary">{taint}</span>
                         </span>
                     ))}
                 </td>
@@ -28,8 +27,8 @@ class DatasetRow extends Component {
                     {filesize(this.props.size, { standard: "iec" })})
                 </td>
             </tr>,
-            <tr>
-                <td colspan="2" className="hiddentablerow p-0">
+            <tr key={`child_${this.props.id}`}>
+                <td colSpan="2" className="hiddentablerow p-0">
                     <div
                         className="accordian-body collapse"
                         id={"collapsed_" + this.props.id}

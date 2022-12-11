@@ -53,7 +53,7 @@ const SearchJobItem = (props) => {
                             {rule_name}
                         </Link>
                     </div>
-                    <span className="ml-2">
+                    <span className="ms-2">
                         <PriorityIcon priority={priority} size="1x" />
                     </span>
                 </div>

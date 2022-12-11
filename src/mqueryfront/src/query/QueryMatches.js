@@ -37,7 +37,7 @@ const DownloadDropdown = (props) => {
                     href={`${api_url}/download/files/${props.qhash}`}
                 >
                     <FontAwesomeIcon icon={faFileDownload} />
-                    <span className="ml-3">Download files (.zip)</span>
+                    <span className="ms-3">Download files (.zip)</span>
                 </a>
                 <a
                     className="dropdown-item"
@@ -45,7 +45,7 @@ const DownloadDropdown = (props) => {
                     href={`${api_url}/download/hashes/${props.qhash}`}
                 >
                     <FontAwesomeIcon icon={faFileArchive} />
-                    <span className="ml-3">Download sha256 hashes (.txt)</span>
+                    <span className="ms-3">Download sha256 hashes (.txt)</span>
                 </a>
                 <button
                     className="dropdown-item btn"
@@ -54,7 +54,7 @@ const DownloadDropdown = (props) => {
                     }}
                 >
                     <FontAwesomeIcon icon={faCopy} />
-                    <span className="ml-3">
+                    <span className="ms-3">
                         Copy sha256 hashes to clipboard
                     </span>
                 </button>
@@ -113,7 +113,7 @@ const QueryMatches = (props) => {
     const filtersHead = filters.map((v) => (
         <span
             key={v}
-            className="badge badge-pill badge-secondary ml-1 mt-1 cursor-pointer"
+            className="badge rounded-pill bg-secondary ms-1 mt-1 cursor-pointer"
             onClick={() => updateFilter(v)}
         >
             {v}
@@ -130,7 +130,7 @@ const QueryMatches = (props) => {
                     <tr>
                         <th className="col-md-8">
                             Matches
-                            <span className="d-inline-block ml-4">
+                            <span className="d-inline-block ms-4">
                                 <DownloadDropdown qhash={qhash} />
                             </span>
                             {filters.length > 0 && (
