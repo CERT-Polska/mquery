@@ -331,7 +331,9 @@ def run_mquery(args, process_index):
     setup_logging()
 
     agent_group_id = args.group_id
-    logging.info("Agent [%s] running (process %s)...", agent_group_id, process_index)
+    logging.info(
+        "Agent [%s] running (process %s)...", agent_group_id, process_index
+    )
 
     db = Database(config.REDIS_HOST, config.REDIS_PORT)
     agent = Agent(agent_group_id, config.BACKEND, db)
@@ -348,7 +350,7 @@ def main() -> None:
     parser.add_argument(
         "group_id",
         help="Name of the agent group to join to",
-        nargs='?',
+        nargs="?",
         default="default",
     )
     parser.add_argument(
@@ -361,7 +363,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.scale > 1:
         children = [
-            Process(target=run_mquery, args=(args, i)) for i in range(args.scale)
+            Process(target=run_mquery, args=(args, i))
+            for i in range(args.scale)
         ]
         for child in children:
             child.start()
