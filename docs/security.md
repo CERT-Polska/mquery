@@ -2,7 +2,7 @@
 
 ## Secure Deployment
 
-There are multiple components necessary to have a working Mquery instance.
+There are multiple components necessary to have a working mquery instance.
 Some of them require special care from a security standpoint.
 
 ### Mquery
@@ -14,23 +14,25 @@ and disallow anonymous users or at least don't give them admin rights.
 
 ### Mquery daemon (agent)
 
-No special considerations.
+No special considerations. Every daemon process must have network
+access to Redis and Ursadb.
 
 ### Redis
 
-Mquery web and daemon should have network access to Redis. No other access to
-the Redis database is necessary. There is no support for securing Redis with a password in the current version, so network isolation is the only way to
-prevent attacks. Most importantly, Redis must not be available from the
-public network.
+Mquery web and daemon must have network access to Redis. No other access to
+the Redis database is necessary. There is no support for securing Redis
+with a password in the current version, so network isolation is
+the only way to prevent attacks. Most importantly, Redis must not
+be available from the public network.
 
 ### Ursadb
 
 Mquery daemons must have network access to their respective ursadb instances.
-Similarly to Redis, it's best to restrict network access to the ursadb instance. Ursadb protocol does not take malicious actors into account, and
+Similarly to Redis, it's best to restrict network access to the Ursadb instance. Ursadb protocol does not take malicious actors into account, and
 unauthenticated users can, for example, remove indexed data from the database,
 or cause a denial of service.
 
-In the provided docker-compose files, the ursadb user is overridden to root by
+In the provided docker-compose files, the Ursadb user is overridden to root by
 default. This is for
 backwards compatibility, and to simplify deployment. For production instances
 consider running ursadb with the default user (`ursa`, UID 1000). This means
