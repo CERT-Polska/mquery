@@ -327,7 +327,7 @@ class Agent:
             self.__process_task(task)
 
 
-def run_mquery(args, process_index):
+def run_mquery(args: argparse.Namespace, process_index: int) -> None:
     setup_logging()
 
     agent_group_id = args.group_id
