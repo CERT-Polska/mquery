@@ -3,7 +3,8 @@ import logging
 import yara  # type: ignore
 import config
 import json
-import sys
+import argparse
+from multiprocessing import Process
 from lib.ursadb import UrsaDb
 from util import setup_logging, make_sha256_tag
 from typing import Any, List
@@ -326,22 +327,51 @@ class Agent:
             self.__process_task(task)
 
 
-def main() -> None:
-    """Spawns a new agent process. Use argv if you want to use a different
-    group_id (it's `default` by default)
-    """
+def run_mquery(args: argparse.Namespace, process_index: int) -> None:
     setup_logging()
-    if len(sys.argv) > 1:
-        agent_group_id = sys.argv[1]
-    else:
-        agent_group_id = "default"
 
-    logging.info("Agent [%s] running...", agent_group_id)
+    agent_group_id = args.group_id
+    logging.info(
+        "Agent [%s] running (process %s)...", agent_group_id, process_index
+    )
 
     db = Database(config.REDIS_HOST, config.REDIS_PORT)
     agent = Agent(agent_group_id, config.BACKEND, db)
 
     agent.main_loop()
+
+
+def main() -> None:
+    """Spawns a new agent process. Use argv if you want to use a different
+    group_id (it's `default` by default)
+    """
+
+    parser = argparse.ArgumentParser(description="Start mquery daemon.")
+    parser.add_argument(
+        "group_id",
+        help="Name of the agent group to join to",
+        nargs="?",
+        default="default",
+    )
+    parser.add_argument(
+        "--scale",
+        type=int,
+        help="Specifies the number of concurrent processes to use.",
+        default=1,
+    )
+
+    args = parser.parse_args()
+    if args.scale > 1:
+        children = [
+            Process(target=run_mquery, args=(args, i))
+            for i in range(args.scale)
+        ]
+        for child in children:
+            child.start()
+        for child in children:
+            child.join()
+    else:
+        run_mquery(args, 0)
 
 
 if __name__ == "__main__":
