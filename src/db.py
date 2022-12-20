@@ -224,6 +224,14 @@ class Database:
     def job_datasets_left(self, agent_id: str, job: JobId) -> int:
         return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")
 
+    def job_yara_left(self, agent_id: str, job: JobId) -> int:
+        """Gets the number of yara jobs per agent for a given job.
+        We have to get the whole queue for this, and check all entries"""
+        agent_prefix = f"agent:{agent_id}"
+        raw_yara = self.redis.lrange(f"{agent_prefix}:queue-yara", 0, -1)
+        all_yara = [json.loads(job) for job in raw_yara]
+        return len([j for j in all_yara if j["job"] == job.key])
+
     def agent_continue_search(self, agent_id: str, job: JobId) -> None:
         self.redis.rpush(f"agent:{agent_id}:queue-search", job.hash)
 

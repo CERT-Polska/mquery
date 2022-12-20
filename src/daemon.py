@@ -70,7 +70,9 @@ class Agent:
             logging.info("Job was cancelled, returning...")
             return
 
-        if job.status == "new":
+        logging.info("Get next dataset to query...")
+        dataset = self.db.get_next_search_dataset(self.group_id, job_id)
+        if dataset is None:
             # First search request - find datasets to query
             logging.info("New job, generate subtasks...")
             result = self.ursa.topology()
@@ -82,22 +84,19 @@ class Agent:
 
             if "error" in result:
                 raise RuntimeError(result["error"])
+
             self.db.init_job_datasets(
                 self.group_id,
                 job_id,
                 list(result["result"]["datasets"].keys()),
             )
-
-        logging.info("Get next dataset to query...")
-        dataset = self.db.get_next_search_dataset(self.group_id, job_id)
-        if dataset is None:
-            logging.info("Nothing to query, returning...")
+            self.db.agent_continue_search(self.group_id, job_id)
             return
 
         rules = parse_yara(job.raw_yara)
         parsed = combine_rules(rules)
 
-        logging.info("Querying backend...")
+        logging.info("Querying backend for %s...", dataset)
         result = self.ursa.query(parsed.query, job.taints, dataset)
         if "error" in result:
             raise RuntimeError(result["error"])
@@ -114,7 +113,8 @@ class Agent:
             )
 
         self.db.agent_start_job(self.group_id, job_id, iterator)
-        self.db.agent_continue_search(self.group_id, job_id)
+        if self.db.job_datasets_left(self.group_id, job_id):
+            self.db.agent_continue_search(self.group_id, job_id)
         self.db.dataset_query_done(job_id)
 
     def __initialize_agent(self) -> None:
@@ -240,14 +240,17 @@ class Agent:
         batch_size = max(batch_size, MIN_BATCH_SIZE)
 
         pop_result = self.ursa.pop(iterator, batch_size)
+        logging.info("job %s: Ursadb pop successful: %s", job.hash, pop_result)
         if not pop_result.iterator_empty:
             # The job still have some files, put it back on the queue.
             self.db.agent_start_job(self.group_id, job, iterator)
         if pop_result.files:
             # If there are any files popped iterator, work on them
             self.__execute_yara(job, pop_result.files)
-        if pop_result.iterator_empty:
-            # No more files in this agent group.
+
+        if self.db.job_yara_left(self.group_id, job) == 0:
+            # The job is over, work of this agent as done.
+            logging.info("job %s: No more files, agent finished.", job.hash)
             self.db.agent_finish_job(job)
 
     def __process_task(self, task: AgentTask) -> None:
