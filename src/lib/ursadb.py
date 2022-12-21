@@ -27,6 +27,12 @@ class PopResult:
             return False
         return self.iterator_pos >= self.total_files
 
+    def __str__(self) -> str:
+        """Pretty-print iterator showing all important information"""
+        tag = "[locked] " if self.was_locked else ""
+        pos = f"{self.iterator_pos}/{self.total_files}"
+        return f"iterator {tag}with {len(self.files)} files ({pos})"
+
 
 class UrsaDb:
     def __init__(self, backend: str) -> None:
