@@ -70,7 +70,7 @@ class Agent:
             logging.info("Job was cancelled, returning...")
             return
 
-        logging.info("Get next dataset to query...")
+        logging.info("Getting next dataset to query...")
         dataset = self.db.get_next_search_dataset(self.group_id, job_id)
         if dataset is None:
             # First search request - find datasets to query
