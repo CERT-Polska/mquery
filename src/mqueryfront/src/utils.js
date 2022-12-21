@@ -18,3 +18,13 @@ export const getProgressBarClass = (status) => {
 
 export const isAuthEnabled = (config) =>
     config && config["auth_enabled"] && config["auth_enabled"] !== "false";
+
+export const withTimeout = (callback, param, timeout_callback, time) => {
+    var success = false;
+    return (() => {
+        setTimeout(() => {
+            if (!success) timeout_callback()
+        }, time);
+        return callback(param).then((res) => { success = true; return res });
+    })();
+};

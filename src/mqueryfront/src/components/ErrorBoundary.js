@@ -19,17 +19,18 @@ class ErrorBoundary extends Component {
     }
 
     render() {
-        if (this.state.error) {
-            return (
+        return (
+            <>
+            {this.state.error && (
                 <div className="container-fluid">
                     <div className="alert alert-danger">
                         {this.state.error.toString()}
                     </div>
                 </div>
-            );
-        }
-
-        return this.props.children;
+            )}
+            {this.props.children}
+            </>
+        );
     }
 }
 

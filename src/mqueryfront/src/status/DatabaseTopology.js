@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import filesize from "filesize";
 
 import ErrorBoundary from "../components/ErrorBoundary";
+import { withTimeout } from "../utils";
 import api from "../api";
 
 class DatasetRow extends Component {
@@ -65,13 +66,18 @@ class DatabaseTopology extends Component {
     }
 
     componentDidMount() {
-        api.get("/backend/datasets")
-            .then((response) => {
-                this.setState({ datasets: response.data.datasets });
-            })
-            .catch((error) => {
-                this.setState({ error: error });
-            });
+        withTimeout(
+            api.get,
+            "/backend/datasets",
+            () => this.setState({ error: "Loading topology is taking too long. Consider compaction." }),
+            5000
+        )
+        .then((response) => {
+            this.setState({ datasets: response.data.datasets });
+        })
+        .catch((error) => {
+            this.setState({ error: error });
+        });
     }
 
     index() {
