@@ -87,8 +87,5 @@ The web interface should be available at `http://localhost:5000`.
 
 ## Kubernetes
 
-Not strictly supported, but we use it internally so it's battle-tested.
-Take a look at the `./deploy/k8s` directory for hints.
-
-- Good for production - it's webscale!
-- Terrible for development.
+Not strictly supported, but production ready - it's used internally in a
+few places, including CERT.PL.
