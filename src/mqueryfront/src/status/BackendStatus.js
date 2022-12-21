@@ -1,5 +1,8 @@
 import React, { Component } from "react";
 
+import ErrorBoundary from "../components/ErrorBoundary";
+
+
 class BackendJobRow extends Component {
     render() {
         let shortRequest = this.props.request;
@@ -75,7 +78,11 @@ class BackendStatus extends Component {
             />
         ));
 
-        return <div>{agentRows}</div>;
+        return (
+            <ErrorBoundary error={!agentRows.length && "No agents found."}>
+                <div>{agentRows}</div>
+            </ErrorBoundary>
+        );
     }
 }
 
