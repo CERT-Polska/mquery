@@ -22,7 +22,7 @@ function request(method, path, payload, params) {
             if (error.response.status === 401) {
                 window.location = "/auth";
             }
-            return error;
+            throw error;
         });
 }
 
