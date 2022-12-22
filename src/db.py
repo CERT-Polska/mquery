@@ -217,6 +217,9 @@ class Database:
     def dataset_query_done(self, job: JobId):
         self.redis.hincrby(job.key, "datasets_left", -1)
 
+    def job_datasets_left(self, agent_id: str, job: JobId) -> int:
+        return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")
+
     def job_yara_left(self, agent_id: str, job: JobId) -> int:
         """Gets the number of yara jobs per agent for a given job.
         We have to get the whole queue for this, and check all entries"""
