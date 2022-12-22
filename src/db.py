@@ -72,10 +72,6 @@ class Database:
         """Gets yara rule associated with job"""
         return self.redis.hget(job.key, "raw_yara")
 
-    def get_job_status(self, job: JobId) -> str:
-        """Gets status of the specified job"""
-        return self.redis.hget(job.key, "status")
-
     def get_job_ids(self) -> List[JobId]:
         """Gets IDs of all jobs in the database"""
         return [JobId(key) for key in self.redis.keys("job:*")]
@@ -302,9 +298,6 @@ class Database:
                 job.key, {"status": "done", "finished": int(time())}
             )
 
-    def has_pending_search_tasks(self, agent_id: str, job: JobId) -> bool:
-        return self.redis.llen(f"job-ds:{agent_id}:{job.hash}") == 0
-
     def register_active_agent(
         self,
         agent_id: str,
@@ -377,9 +370,6 @@ class Database:
 
     def get_plugin_config(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
-
-    def get_config_key(self, plugin_name: str, key: str) -> Optional[str]:
-        return self.redis.hget(f"plugin:{plugin_name}", key)
 
     def get_mquery_config_key(self, key: str) -> Optional[str]:
         return self.redis.hget(f"plugin:{MQUERY_PLUGIN_NAME}", key)
