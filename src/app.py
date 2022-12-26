@@ -184,15 +184,15 @@ can_download_files = RoleChecker(["can_download_files"])
 
 
 def expand_role(role):
-    """ Some roles imply other roles or permissions. For example, admin role
-    also gives permissions for all user permissions. """
+    """Some roles imply other roles or permissions. For example, admin role
+    also gives permissions for all user permissions."""
     role_implications = {
         "admin": ["user"],
         "user": [
             "can_view_queries",
             "can_manage_queries",
             "can_list_queries",
-            "can_download_files"
+            "can_download_files",
         ],
     }
     implied_roles = [role]
@@ -361,7 +361,9 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     )
 
 
-@app.get("/api/download/hashes/{hash}", dependencies=[Depends(can_view_queries)])
+@app.get(
+    "/api/download/hashes/{hash}", dependencies=[Depends(can_view_queries)]
+)
 def download_hashes(hash: str) -> Response:
     """Returns a list of job matches as a sha256 strings joined with newlines"""
 

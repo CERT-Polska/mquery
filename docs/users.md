@@ -22,6 +22,7 @@ There are two predefined permission sets that can be assigned to users:
 This role names are considered stable, and will continue to work in the future.
 
 User permissions are then split in more fine-grained permissions:
+
  - `can_view_queries`: Can view a query with a given ID, and matched files.
  - `can_manage_queries`: Can create, stop, and delete queries.
  - `can_list_queries`: Can list queries (for "recent jobs" tab).
