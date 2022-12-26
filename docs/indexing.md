@@ -4,25 +4,10 @@ Indexing is one of the two most important things you can do with mquery
 (the other one is searching). So it's pretty useful to understand how it works.
 There are many ways to do it, unfortunately not all are equally good.
 
-## Method 1: the magic button
+## Method 1: ursacli
 
-Just click the button and it works:
-
-![](index-button.png)
-
-This will scan and index the preconfigured folder with samples, and will work
-out of the box with the docker configuration.
-
-This method is the simplest one and should be enough for small to medium collections.
-Unfortunately, it's not very flexible or doesn't scale well. The biggest problem
-is failure-resistance - in case of database/server crash, the indexing progress
-won't be saved and you'll have to restart it from the beginning. This matters when you
-index many millions of files.
-If you need something more powerful or robust, continue reading.
-
-## Method 2: ursacli
-
-Go to the mquery directory and run:
+Run the `ursacli` executable. For docker-compose deployment, go to the mquery
+directory and run `sudo docker-compose exec ursadb ursacli`:
 
 ```
 sudo docker-compose exec ursadb ursacli
@@ -38,7 +23,7 @@ ursadb> index "/mnt/samples";
 ```
 
 To index `"/mnt/samples"` directory. By default, this will only use `gram3` index.
-It's a good idea to use all of them for better results:
+It's usually a good idea to use more index types for better results:
 
 
 ```
@@ -55,17 +40,19 @@ There are more variations of this command. For example, you can:
 For more ideas and reference, see
 [ursadb documentation](https://github.com/CERT-Polska/ursadb).
 
-This method suffers from the same problem as the button - it's all a part
-of a single transaction, so database/server crash will delete all progress.
+This method does all operations as a part of a single transaction.
+This means that partial results won't be visible before the indexing ends, and
+a server reboot or database termination will delete all progress made so far
+(there's no way to pause and resume work). For this reasons, when indexing
+a lot of files, it's useful to use auxillary script described below.
 
-
-## Method 3: utils.index script
+## Method 2: utils.index script
 
 More advanced indexing workflows are supported with a separate script. To use
-it, open a terminal in `mquery/src` directory. This method is slower
+it, open a terminal in `mquery/src` directory. This method is a bit slower
 than the previous ones but can be parallelised easily.
 
-There are two stages: `prepare` and `index`.
+The script splits work into two stages: `prepare` and `index`.
 
 ### 1. Prepare files to be indexed
 
@@ -76,8 +63,8 @@ For bare metal deployments:
 python3 -m utils.index --mode prepare --workdir ~/workdir --path ../samples
 ```
 
-For docker you also need `--path-mount` argument (`./samples` are visible as
-`/mnt/samples` in the container):
+For docker you may use `--path-mount` argument (`./samples` are visible as
+`/mnt/samples` in the container) to map file paths from host to container:
 ```
 python3 -m utils.index --mode prepare --workdir ~/workdir --path ../samples --path-mount /mnt/samples
 ```
@@ -133,7 +120,8 @@ using the same command, with the same working directory.
 
 ### 3. Advanced options
 
-1. If you want to save some keystrokes, you can combine these two stages:
+1. If you want to save some keystrokes, you can combine these two stages by
+just running:
 
 ```
 python3 -m utils.index --workdir ~/workdir --path ../samples
@@ -141,13 +129,15 @@ python3 -m utils.index --workdir ~/workdir --path ../samples
 
 2. Mquery works best with small files. You can pre-filter indexed files by size
 with `--max-file-size-mb` switch (for example, `--max-file-size-mb 5` to index only
-files smaller than 5MB).
+files smaller than 5MB). You can later follow that up with `--min-file-size-mb 5`
+to index all the other files.
 
 3. You can change the default batch size with `--batch` switch
 
 4. By default all index types are used. You can control this with `--type` switch,
-for example if you want to save some disk space, use
-`--type gram3 --type text4 --type wide8` ([Read this](./indextypes.md) for
+for example if you want to save some disk space and disable hash4 index type, use
+`--type gram3 --type text4 --type wide8`
+([Read this](https://github.com/CERT-Polska/ursadb/blob/master/docs/indextypes.md) for
 more details).
 
 5. You can tag indexed samples with metadata tags. Tags can be used for limiting
