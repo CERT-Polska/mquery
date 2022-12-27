@@ -76,6 +76,7 @@ class ParseResponseSchema(BaseModel):
     rule_author: str
     is_global: bool
     is_private: bool
+    is_degenerate: bool
     parsed: str
 
 

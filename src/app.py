@@ -326,7 +326,7 @@ def query(
         )
 
     if not rules:
-        raise HTTPException(status_code=400, detail=f"No rule was specified.")
+        raise HTTPException(status_code=400, detail="No rule was specified.")
 
     if data.method == RequestQueryMethod.parse:
         return [
@@ -335,10 +335,23 @@ def query(
                 rule_author=rule.author,
                 is_global=rule.is_global,
                 is_private=rule.is_private,
+                is_degenerate=rule.parse().is_degenerate,
                 parsed=rule.parse().query,
             )
             for rule in rules
         ]
+
+    degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
+    if degenerate_rules:
+        degenerate_rule_names = ", ".join(degenerate_rules)
+        doc_url = "https://cert-polska.github.io/mquery/docs/yara.html"
+        raise HTTPException(status_code=400, detail=(
+            "Invalid query. "
+            "Some of the rules would require a Yara scan of every indexed "
+            "file, and this is not allowed by this instance. "
+            f"Problematic rules: {degenerate_rule_names}. "
+            f"Read {doc_url} for more details."
+        ))
 
     active_agents = db.get_active_agents()
 
