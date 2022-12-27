@@ -59,9 +59,6 @@ class DatabaseTopology extends Component {
             error: null,
             startedWork: false,
         };
-
-        this.index = this.index.bind(this);
-        this.compact = this.compact.bind(this);
     }
 
     componentDidMount() {
@@ -72,16 +69,6 @@ class DatabaseTopology extends Component {
             .catch((error) => {
                 this.setState({ error: error });
             });
-    }
-
-    index() {
-        this.setState({ startedWork: true });
-        api.post("/index", {});
-    }
-
-    compact() {
-        this.setState({ startedWork: true });
-        api.post("/compact", {});
     }
 
     render() {
@@ -106,48 +93,9 @@ class DatabaseTopology extends Component {
         const totalSize = filesize(totalBytes, { standard: "iec" });
         const filesTooltip = `Total files: ${totalCount} (${totalSize})`;
 
-        const isLocked = this.props.working || this.state.startedWork;
-        const workingMsg = "Another operation is in progress";
-        const compactMsg = isLocked
-            ? workingMsg
-            : "Merge datasets with each other (if there are any candidates)";
-        const compactButton = (
-            <button
-                type="button"
-                className="btn btn-success"
-                data-toggle="tooltip"
-                title={compactMsg}
-                onClick={this.compact}
-                disabled={isLocked}
-            >
-                compact
-            </button>
-        );
-        const reindexMsg = isLocked
-            ? workingMsg
-            : "Scan samples directory for new files and index them";
-        const reindexButton = (
-            <button
-                type="button"
-                className="btn btn-success"
-                data-toggle="tooltip"
-                title={reindexMsg}
-                onClick={this.index}
-                disabled={isLocked}
-            >
-                reindex
-            </button>
-        );
-
         return (
             <ErrorBoundary error={this.state.error}>
-                <h2 className="text-center mq-bottom">
-                    Topology
-                    <div className="btn-group pull-right">
-                        {compactButton}
-                        {reindexButton}
-                    </div>
-                </h2>
+                <h2 className="text-center mq-bottom">Topology</h2>
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>
