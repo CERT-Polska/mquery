@@ -183,7 +183,7 @@ can_list_queries = RoleChecker(["can_list_queries"])
 can_download_files = RoleChecker(["can_download_files"])
 
 
-def expand_role(role):
+def expand_role(role: str) -> List[str]:
     """Some roles imply other roles or permissions. For example, admin role
     also gives permissions for all user permissions."""
     role_implications = {
