@@ -28,7 +28,7 @@ User permissions are then split in more fine-grained permissions:
  - `can_list_queries`: Can list queries (for "recent jobs" tab).
  - `can_download_files`: Can download matched file contents.
 
-It's possible to assign some of this roles directly (instead of giving the
+It's possible to assign some of these roles directly (instead of giving the
 `user` role), but they're currently not considered stable and
 may change in some future new version.
 
