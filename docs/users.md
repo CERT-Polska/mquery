@@ -16,7 +16,7 @@ There are two predefined permission sets that can be assigned to users:
  Users with `admin` role can do everything `user`s can.
  - `user`: has access to the analyst features. Can
  create new search jobs, see and cancel every job, and download
- matched files. In the current version, users can see and browse
+ matched files. In current version, users can see and browse
  all jobs in the system.
 
 This role names are considered stable, and will continue to work in the future.
