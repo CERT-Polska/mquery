@@ -52,26 +52,38 @@ class UrsaExpression:
     "xyz"
     "xyz" & "www"
     ({112233} | "xxx") & "hmm"
+
+    Some UrsaExpressions are "degenerate" expressions - this means that
+    they have no useful checks and UrsaDb can't do anything with them.
+    Some examples are "", ("" | "abc") or min 2 of ("", "", "abc").
     """
 
-    def __init__(self, query: str) -> None:
+    def __init__(self, query: str, is_degenerate: bool) -> None:
         self.query = query
+        self.is_degenerate = is_degenerate
 
     @classmethod
     def literal(cls, some_string: bytes) -> "UrsaExpression":
-        return cls(f"{{{some_string.hex()}}}")
+        is_degenerate = len(some_string) < 3
+        return cls(f"{{{some_string.hex()}}}", is_degenerate)
 
     @classmethod
     def and_(cls, *args: "UrsaExpression") -> "UrsaExpression":
-        return cls(f"({' & '.join(x.query for x in args)})")
+        is_degenerate = all(x.is_degenerate for x in args)
+        return cls(f"({' & '.join(x.query for x in args)})", is_degenerate)
 
     @classmethod
     def or_(cls, *args: "UrsaExpression") -> "UrsaExpression":
-        return cls(f"({' | '.join(x.query for x in args)})")
+        is_degenerate = any(x.is_degenerate for x in args)
+        return cls(f"({' | '.join(x.query for x in args)})", is_degenerate)
 
     @classmethod
     def min_of(cls, howmany: int, *of: "UrsaExpression") -> "UrsaExpression":
-        return cls(f"(min {howmany} of ({', '.join(x.query for x in of)}))")
+        is_degenerate = sum(x.is_degenerate for x in of) >= howmany
+        return cls(
+            f"(min {howmany} of ({', '.join(x.query for x in of)}))",
+            is_degenerate,
+        )
 
 
 class YaraRuleData:
@@ -95,7 +107,7 @@ class YaraRuleData:
         result = parser.traverse(self.rule.condition)
         if result is not None:
             return result
-        return UrsaExpression("{}")
+        return UrsaExpression.literal(b"")
 
     def parse(self) -> UrsaExpression:
         if self.__parsed is None:
@@ -161,7 +173,7 @@ def ursify_nocase_bytes(raw: bytes) -> UrsaExpression:
             out.append(bytes([c]).hex())
         else:
             out.append(f"({lower.encode().hex()}|{upper.encode().hex()})")
-    return UrsaExpression(f"{{{ ' '.join(out) }}}")
+    return UrsaExpression(f"{{{ ' '.join(out) }}}", True)
 
 
 def encode_wide_bytes(raw: bytes) -> bytes:
