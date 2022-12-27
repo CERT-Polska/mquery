@@ -19,7 +19,7 @@ There are two predefined permission sets that can be assigned to users:
  matched files. In current version, users can see and browse
  all jobs in the system.
 
-This role names are considered stable, and will continue to work in the future.
+Role names are considered stable, and will continue to work in the future.
 
 User permissions are then split in more fine-grained permissions:
 
