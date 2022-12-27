@@ -23,7 +23,7 @@ Role names are considered stable, and will continue to work in the future.
 
 User permissions are then split into more fine-grained permissions:
 
- - `can_view_queries`: Can view a query with a given ID, and matched files.
+ - `can_view_queries`: Can view the query and matched files with a given query ID.
  - `can_manage_queries`: Can create, stop, and delete queries.
  - `can_list_queries`: Can list queries (for "recent jobs" tab).
  - `can_download_files`: Can download matched file contents.
