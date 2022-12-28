@@ -267,7 +267,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 )
 def backend_status() -> BackendStatusSchema:
     """
-    Returns the current status of backend services, and returns it. Intended to
+    Gets the current status of backend services, and returns it. Intended to
     be used by the webpage.
 
     This endpoint is not stable and may be subject to change in the future.
