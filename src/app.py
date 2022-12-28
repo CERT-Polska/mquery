@@ -141,8 +141,8 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
 
 
 class RoleChecker:
-    def __init__(self, allowed_roles: List[str]) -> None:
-        self.allowed_roles = allowed_roles
+    def __init__(self, need_permissions: List[str]) -> None:
+        self.need_permissions = need_permissions
 
     def __call__(self, user: User = Depends(current_user)):
         auth_enabled = db.get_mquery_config_key("auth_enabled")
@@ -158,14 +158,14 @@ class RoleChecker:
             default_roles = [
                 role.strip() for role in auth_default_roles.split(",")
             ]
-        all_user_roles = list(set(user_roles + default_roles))
+        all_roles = list(set(user_roles + default_roles))
+        all_roles = sum((expand_role(role) for role in all_roles), [])
 
-        if not any(role in self.allowed_roles for role in all_user_roles):
+        if not any(role in self.need_permissions for role in all_roles):
             message = (
                 f"Operation not allowed for user {user.name} "
-                f"(user roles: {user_roles}) "
-                f"(default roles: {default_roles}) "
-                f"(required roles: any of {self.allowed_roles})"
+                f"(user effective roles: {user_roles}) "
+                f"(required roles: any of {self.need_permissions})"
             )
             error_code = 401 if user.is_anonymous else 403
             raise HTTPException(
@@ -174,8 +174,31 @@ class RoleChecker:
             )
 
 
+# See docs/users.md for documentation on the permission model.
 is_admin = RoleChecker(["admin"])
 is_user = RoleChecker(["user"])
+can_view_queries = RoleChecker(["can_view_queries"])
+can_manage_queries = RoleChecker(["can_manage_queries"])
+can_list_queries = RoleChecker(["can_list_queries"])
+can_download_files = RoleChecker(["can_download_files"])
+
+
+def expand_role(role: str) -> List[str]:
+    """Some roles imply other roles or permissions. For example, admin role
+    also gives permissions for all user permissions."""
+    role_implications = {
+        "admin": ["user"],
+        "user": [
+            "can_view_queries",
+            "can_manage_queries",
+            "can_list_queries",
+            "can_download_files",
+        ],
+    }
+    implied_roles = [role]
+    for subrole in role_implications.get(role, []):
+        implied_roles += expand_role(subrole)
+    return implied_roles
 
 
 # Admin-only routes (when user permissions are configured).
@@ -236,6 +259,74 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
     return StatusSchema(status="ok")
 
 
+@app.get(
+    "/api/backend",
+    response_model=BackendStatusSchema,
+    tags=["internal"],
+    dependencies=[Depends(is_admin)],
+)
+def backend_status() -> BackendStatusSchema:
+    """
+    Gets the current status of backend services, and returns it. Intended to
+    be used by the webpage.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    agents = []
+    components = {
+        "mquery": mquery_version(),
+    }
+    for name, agent_spec in db.get_active_agents().items():
+        try:
+            ursa = UrsaDb(agent_spec.ursadb_url)
+            status = ursa.status()
+            tasks = status["result"]["tasks"]
+            ursadb_version = status["result"]["ursadb_version"]
+            agents.append(
+                AgentSchema(
+                    name=name, alive=True, tasks=tasks, spec=agent_spec
+                )
+            )
+            components[f"ursadb ({name})"] = ursadb_version
+        except Again:
+            agents.append(
+                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)
+            )
+            components[f"ursadb ({name})"] = "unknown"
+
+    return BackendStatusSchema(
+        agents=agents,
+        components=components,
+    )
+
+
+@app.get(
+    "/api/backend/datasets",
+    response_model=BackendStatusDatasetsSchema,
+    tags=["internal"],
+    dependencies=[Depends(is_admin)],
+)
+def backend_status_datasets() -> BackendStatusDatasetsSchema:
+    """
+    Returns a combined list of datasets from all agents.
+
+    Caveat: In case of collision of dataset ids when there are multiple agents,
+    this API will only return one dataset per colliding ID. Collision is
+    extremally unlikely though and it shouldn't be a problem in the real world.
+
+    This endpoint is not stable and may be subject to change in the future.
+    """
+    datasets: Dict[str, int] = {}
+    for agent_spec in db.get_active_agents().values():
+        try:
+            ursa = UrsaDb(agent_spec.ursadb_url)
+            datasets.update(ursa.topology()["result"]["datasets"])
+        except Again:
+            pass
+
+    return BackendStatusDatasetsSchema(datasets=datasets)
+
+
 # Standard authenticated routes (when user permissions are configured).
 # Accessible for every logged in user (permission: "reader")
 
@@ -243,7 +334,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
 @app.get(
     "/api/download",
     tags=["stable"],
-    dependencies=[Depends(is_user), Depends(use_plugins)],
+    dependencies=[Depends(can_download_files), Depends(use_plugins)],
 )
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
@@ -270,7 +361,9 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     )
 
 
-@app.get("/api/download/hashes/{hash}", dependencies=[Depends(is_user)])
+@app.get(
+    "/api/download/hashes/{hash}", dependencies=[Depends(can_view_queries)]
+)
 def download_hashes(hash: str) -> Response:
     """Returns a list of job matches as a sha256 strings joined with newlines"""
 
@@ -298,7 +391,7 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
 
 @app.get(
     "/api/download/files/{hash}",
-    dependencies=[Depends(is_user), Depends(use_plugins)],
+    dependencies=[Depends(is_user), Depends(can_download_files)],
 )
 async def download_files(hash: str) -> StreamingResponse:
     matches = db.get_job_matches(JobId(hash)).matches
@@ -309,7 +402,7 @@ async def download_files(hash: str) -> StreamingResponse:
     "/api/query",
     response_model=Union[QueryResponseSchema, List[ParseResponseSchema]],  # type: ignore
     tags=["stable"],
-    dependencies=[Depends(is_user)],
+    dependencies=[Depends(can_manage_queries)],
 )
 def query(
     data: QueryRequestSchema = Body(...),
@@ -373,7 +466,7 @@ def query(
     "/api/matches/{hash}",
     response_model=MatchesSchema,
     tags=["stable"],
-    dependencies=[Depends(is_user)],
+    dependencies=[Depends(can_view_queries)],
 )
 def matches(
     hash: str, offset: int = Query(...), limit: int = Query(...)
@@ -390,7 +483,7 @@ def matches(
     "/api/job/{job_id}",
     response_model=JobSchema,
     tags=["stable"],
-    dependencies=[Depends(is_user)],
+    dependencies=[Depends(can_view_queries)],
 )
 def job_info(job_id: str) -> JobSchema:
     """
@@ -404,7 +497,7 @@ def job_info(job_id: str) -> JobSchema:
     "/api/job/{job_id}",
     response_model=StatusSchema,
     tags=["stable"],
-    dependencies=[Depends(is_user)],
+    dependencies=[Depends(can_manage_queries)],
 )
 def job_cancel(job_id: str) -> StatusSchema:
     """
@@ -418,7 +511,7 @@ def job_cancel(job_id: str) -> StatusSchema:
     "/api/job",
     response_model=JobsSchema,
     tags=["stable"],
-    dependencies=[Depends(is_user)],
+    dependencies=[Depends(can_list_queries)],
 )
 def job_statuses() -> JobsSchema:
     """
@@ -431,101 +524,10 @@ def job_statuses() -> JobsSchema:
     return JobsSchema(jobs=jobs)
 
 
-@app.post(
-    "/api/index",
-    response_model=StatusSchema,
-    tags=["internal"],
-    dependencies=[Depends(is_user)],
-)
-def reindex_files() -> StatusSchema:
-    """
-    Reindex files in the configured default directory.
-
-    There are no server-side checks to avoid indexing multiple times at the
-    same time, care should be taken when using it from user scripts.
-    This is also not very efficient for large datasets - take a look at
-    the documentation for indexing and `index.py` script to learn more.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    if config.INDEX_DIR is not None:
-        types = "[gram3, text4, wide8, hash4]"
-        db.broadcast_command(f'index "{config.INDEX_DIR}" with {types};')
-    return StatusSchema(status="ok")
-
-
-@app.get(
-    "/api/backend",
-    response_model=BackendStatusSchema,
-    tags=["internal"],
-    dependencies=[Depends(is_admin)],
-)
-def backend_status() -> BackendStatusSchema:
-    """
-    Returns the current status of backend services, and returns it. Intended to
-    be used by the webpage.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    agents = []
-    components = {
-        "mquery": mquery_version(),
-    }
-    for name, agent_spec in db.get_active_agents().items():
-        try:
-            ursa = UrsaDb(agent_spec.ursadb_url)
-            status = ursa.status()
-            tasks = status["result"]["tasks"]
-            ursadb_version = status["result"]["ursadb_version"]
-            agents.append(
-                AgentSchema(
-                    name=name, alive=True, tasks=tasks, spec=agent_spec
-                )
-            )
-            components[f"ursadb ({name})"] = ursadb_version
-        except Again:
-            agents.append(
-                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)
-            )
-            components[f"ursadb ({name})"] = "unknown"
-
-    return BackendStatusSchema(
-        agents=agents,
-        components=components,
-    )
-
-
-@app.get(
-    "/api/backend/datasets",
-    response_model=BackendStatusDatasetsSchema,
-    tags=["internal"],
-    dependencies=[Depends(is_user)],
-)
-def backend_status_datasets() -> BackendStatusDatasetsSchema:
-    """
-    Returns a combined list of datasets from all agents.
-
-    Caveat: In case of collision of dataset ids when there are multiple agents,
-    this API will only return one dataset per colliding ID. Collision is
-    extremally unlikely though and it shouldn't be a problem in the real world.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    datasets: Dict[str, int] = {}
-    for agent_spec in db.get_active_agents().values():
-        try:
-            ursa = UrsaDb(agent_spec.ursadb_url)
-            datasets.update(ursa.topology()["result"]["datasets"])
-        except Again:
-            pass
-
-    return BackendStatusDatasetsSchema(datasets=datasets)
-
-
 @app.delete(
     "/api/query/{job_id}",
     response_model=StatusSchema,
-    dependencies=[Depends(is_user)],
+    dependencies=[Depends(can_manage_queries)],
 )
 def query_remove(job_id: str) -> StatusSchema:
     db.remove_query(JobId(job_id))
