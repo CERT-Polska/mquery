@@ -10,6 +10,7 @@ const KNOWN_RULES = {
     openid_url: R_URL,
     auth_enabled: R_BOOL,
     auth_default_roles: R_ROLES,
+    query_disallow_degenerate: R_BOOL,
 };
 
 class ConfigRow extends Component {

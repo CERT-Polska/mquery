@@ -342,16 +342,20 @@ def query(
         ]
 
     degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
-    if degenerate_rules:
+    disallow_degenerate = db.get_mquery_config_key("query_disallow_degenerate")
+    if degenerate_rules and (disallow_degenerate == "true"):
         degenerate_rule_names = ", ".join(degenerate_rules)
         doc_url = "https://cert-polska.github.io/mquery/docs/yara.html"
-        raise HTTPException(status_code=400, detail=(
-            "Invalid query. "
-            "Some of the rules would require a Yara scan of every indexed "
-            "file, and this is not allowed by this instance. "
-            f"Problematic rules: {degenerate_rule_names}. "
-            f"Read {doc_url} for more details."
-        ))
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid query. "
+                "Some of the rules would require a Yara scan of every indexed "
+                "file, and this is not allowed by this instance. "
+                f"Problematic rules: {degenerate_rule_names}. "
+                f"Read {doc_url} for more details."
+            ),
+        )
 
     active_agents = db.get_active_agents()
 
