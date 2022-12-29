@@ -343,7 +343,7 @@ def query(
 
     degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
     disallow_degenerate = db.get_mquery_config_key("query_disallow_degenerate")
-    if degenerate_rules and (disallow_degenerate == "true"):
+    if degenerate_rules and disallow_degenerate == "true":
         degenerate_rule_names = ", ".join(degenerate_rules)
         doc_url = "https://cert-polska.github.io/mquery/docs/yara.html"
         raise HTTPException(
