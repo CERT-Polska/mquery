@@ -18,7 +18,7 @@ from starlette.responses import Response, FileResponse, StreamingResponse  # typ
 from starlette.staticfiles import StaticFiles  # type: ignore
 from zmq import Again
 
-from lib.yaraparse import YaraRuleData, parse_yara
+from lib.yaraparse import parse_yara
 
 from util import mquery_version
 from db import Database, JobId
