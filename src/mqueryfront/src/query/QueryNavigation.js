@@ -12,11 +12,15 @@ const QueryNavigation = (props) => {
         isEditActive,
         availableTaints,
         selectedTaints,
+        forceSlowQueries,
     } = props;
 
     return (
         <div className="btn-group" role="group">
-            <QuerySubmitNav onClick={onSubmitQuery} />
+            <QuerySubmitNav
+                onClick={onSubmitQuery}
+                forceMode={forceSlowQueries}
+            />
             <QueryEditParseNav
                 isEditActive={isEditActive}
                 onEditQuery={onEditQuery}

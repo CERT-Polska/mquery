@@ -18,7 +18,7 @@ from starlette.responses import Response, FileResponse, StreamingResponse  # typ
 from starlette.staticfiles import StaticFiles  # type: ignore
 from zmq import Again
 
-from lib.yaraparse import parse_yara
+from lib.yaraparse import YaraRuleData, parse_yara
 
 from util import mquery_version
 from db import Database, JobId
@@ -342,17 +342,25 @@ def query(
         ]
 
     degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
-    disallow_degenerate = db.get_mquery_config_key("query_disallow_degenerate")
-    if degenerate_rules and disallow_degenerate == "true":
+    if degenerate_rules and not data.force_slow_queries:
+        allow_degenerate = (
+            db.get_mquery_config_key("query_disallow_degenerate") != "true"
+        )
+        if allow_degenerate:
+            # Warning: "You can force a slow query" literal is used to
+            # pattern match on the error message in the frontend.
+            help_message = "You can force a slow query if you want."
+        else:
+            help_message = "This is not allowed by this server."
         degenerate_rule_names = ", ".join(degenerate_rules)
         doc_url = "https://cert-polska.github.io/mquery/docs/yara.html"
         raise HTTPException(
             status_code=400,
             detail=(
-                "Invalid query. "
-                "Some of the rules would require a Yara scan of every indexed "
-                "file, and this is not allowed by this instance. "
-                f"Problematic rules: {degenerate_rule_names}. "
+                "Invalid query. Some of the rules require a full Yara scan of"
+                "every indexed file. "
+                f"{help_message} "
+                f"Slow rules: {degenerate_rule_names}. "
                 f"Read {doc_url} for more details."
             ),
         )

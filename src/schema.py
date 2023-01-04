@@ -65,6 +65,7 @@ class QueryRequestSchema(BaseModel):
     files_limit: Optional[int]
     reference: Optional[str]  # arbitrary data specified by the user
     required_plugins: List[str] = Field([])
+    force_slow_queries: bool = False
 
 
 class QueryResponseSchema(BaseModel):

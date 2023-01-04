@@ -1,23 +1,25 @@
 import React from "react";
 
 const QuerySubmitNav = (props) => {
-    const { onClick } = props;
+    const { onClick, forceMode } = props;
+
+    const label = forceMode ? "Force query (may be very slow!)" : "Query";
+    const style = forceMode ? "btn-danger" : "btn-success";
 
     return (
         <React.Fragment>
             <button
                 type="button"
-                className="btn btn-success btn-sm"
+                className={"btn btn-sm " + style}
                 onClick={() => onClick("medium")}
             >
-                Query
+                {label}
             </button>
-            <div className="btn-group" role="group">
+            <div className="btn-group">
                 <button
                     type="button"
-                    className="btn btn-success dropdown-toggle"
-                    data-toggle="dropdown"
-                    aria-haspopup="true"
+                    className={"btn dropdown-toggle " + style}
+                    data-bs-toggle="dropdown"
                     aria-expanded="false"
                 />
                 <div className="dropdown-menu">
