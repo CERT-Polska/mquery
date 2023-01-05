@@ -342,11 +342,9 @@ def query(
         ]
 
     degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
-    if degenerate_rules and not data.force_slow_queries:
-        allow_slow_queries = (
-            db.get_mquery_config_key("query_allow_slow") == "true"
-        )
-        if allow_slow_queries:
+    allow_slow = db.get_mquery_config_key("query_allow_slow") == "true"
+    if degenerate_rules and not (allow_slow and data.force_slow_queries):
+        if allow_slow:
             # Warning: "You can force a slow query" literal is used to
             # pattern match on the error message in the frontend.
             help_message = "You can force a slow query if you want."
@@ -357,7 +355,7 @@ def query(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Invalid query. Some of the rules require a full Yara scan of "
+                "Invalid query. Some of the rules require a full Yara scan of"
                 "every indexed file. "
                 f"{help_message} "
                 f"Slow rules: {degenerate_rule_names}. "
