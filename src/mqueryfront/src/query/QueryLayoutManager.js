@@ -60,8 +60,6 @@ const QueryLayoutManager = (props) => {
         queryResults
     ) : null;
 
-    // const queryResultOrParse = qhash ? queryResults : queryParse;
-
     const queryFieldPane = isCollapsed ? null : (
         <div className={resultsTab ? "col-md-6" : "col-md-12"}>
             <QueryField
