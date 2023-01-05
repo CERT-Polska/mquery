@@ -332,7 +332,7 @@ class Database:
             "openid_client_id": "OpenID client ID",
             "openid_secret": "Secret used for JWT token verification",
             # Query and performance config
-            "query_disallow_degenerate": "Reject any queries that will end up scanning the whole malware collection",
+            "query_allow_slow": "Allow users to run queries that will end up scanning the whole malware collection",
         }
 
     def get_config(self) -> List[ConfigSchema]:
