@@ -20,7 +20,6 @@ class JobSchema(BaseModel):
     files_in_progress: int
     total_files: int
     files_errored: int
-    iterator: Optional[str]
     taints: List[str]
     datasets_left: int
     total_datasets: int

@@ -108,7 +108,6 @@ class Database:
             total_files=int(data.get("total_files", 0)),
             files_errored=int(data.get("files_errored", 0)),
             reference=data.get("reference", ""),
-            iterator=data.get("iterator", None),
             taints=json.loads(data.get("taints", "[]")),
             total_datasets=data.get("total_datasets", 0),
             datasets_left=data.get("datasets_left", 0),
@@ -151,6 +150,51 @@ class Database:
         """
         self.redis.hincrby(job.key, "files_errored", files_errored)
 
+
+    # TODO temporary
+    def create_search_object(
+        self,
+        rule_name: str,
+        rule_author: str,
+        raw_yara: str,
+        priority: Optional[str],
+        files_limit: int,
+        reference: str,
+        taints: List[str],
+        agents: List[str],
+    ) -> JobId:
+        job = JobId(
+            "".join(
+                random.SystemRandom().choice(
+                    string.ascii_uppercase + string.digits
+                )
+                for _ in range(12)
+            )
+        )
+        job_obj = {
+            "status": "new",
+            "rule_name": rule_name,
+            "rule_author": rule_author,
+            "raw_yara": raw_yara,
+            "submitted": int(time()),
+            "priority": priority or "medium",
+            "files_limit": files_limit,
+            "reference": reference,
+            "files_in_progress": 0,
+            "files_processed": 0,
+            "files_matched": 0,
+            "total_files": 0,
+            "files_errored": 0,
+            "agents_left": len(agents),
+            "datasets_left": 0,
+            "total_datasets": 0,
+            "taints": json.dumps(taints)
+        }
+
+        self.redis.hmset(job.key, job_obj)
+        return job
+
+
     def create_search_task(
         self,
         rule_name: str,
@@ -187,9 +231,8 @@ class Database:
             "agents_left": len(agents),
             "datasets_left": 0,
             "total_datasets": 0,
+            "taints": json.dumps(taints)
         }
-
-        job_obj["taints"] = json.dumps(taints)
 
         self.redis.hmset(job.key, job_obj)
         for agent in agents:
@@ -300,14 +343,14 @@ class Database:
 
     def register_active_agent(
         self,
-        agent_id: str,
+        group_id: str,
         ursadb_url: str,
         plugins_spec: Dict[str, Dict[str, str]],
         active_plugins: List[str],
     ) -> None:
         self.redis.hset(
             "agents",
-            agent_id,
+            group_id,
             AgentSpecSchema(
                 ursadb_url=ursadb_url,
                 plugins_spec=plugins_spec,
