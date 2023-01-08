@@ -55,6 +55,7 @@ class Database:
         )
 
     def __schedule(self, agent: str, task: Any, *args: Any) -> None:
+        """Schedules the task to agent group `agent` using rq."""
         Queue(agent, connection=self.redis).enqueue(task, *args)
 
     def get_job_ids(self) -> List[JobId]:
@@ -76,6 +77,7 @@ class Database:
         )
 
     def get_job(self, job: JobId) -> JobSchema:
+        """Retrieves a job from the database. Tries to fix corrupted objects"""
         data = self.redis.hgetall(f"job:{job}")
         return JobSchema(
             id=job,
@@ -144,19 +146,20 @@ class Database:
     ) -> None:
         """Update progress for the job. This will increment number of files processed
         and matched, and if as a result all files are processed, will change the job
-        status to `done`
-        """
+        status to `done`"""
         self.redis.hincrby(f"job:{job}", "files_processed", processed)
         self.redis.hincrby(f"job:{job}", "files_in_progress", -processed)
         self.redis.hincrby(f"job:{job}", "files_matched", matched)
         self.redis.hincrby(f"job:{job}", "files_errored", errored)
 
     def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
+        """Sets total_datasets and datasets_left, and status to processing"""
         self.redis.hincrby(f"job:{job}", "total_datasets", num_datasets)
         self.redis.hincrby(f"job:{job}", "datasets_left", num_datasets)
         self.redis.hset(f"job:{job}", "status", "processing")
 
     def dataset_query_done(self, job: JobId):
+        """Decrements the number of datasets left by one."""
         self.redis.hincrby(f"job:{job}", "datasets_left", -1)
 
     def create_search_task(
@@ -170,6 +173,7 @@ class Database:
         taints: List[str],
         agents: List[str],
     ) -> JobId:
+        """Creates a new job object in the db, and schedules daemon tasks."""
         job = "".join(
             random.choice(string.ascii_uppercase + string.digits)
             for _ in range(12)

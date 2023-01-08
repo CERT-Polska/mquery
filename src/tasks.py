@@ -117,6 +117,7 @@ class Agent:
 
 @contextmanager
 def job_context(job_id: JobId):
+    """Small error-handling context manager. Fails the job on exception."""
     agent = make_agent()
     try:
         yield agent
@@ -137,12 +138,15 @@ def make_agent(group_override: Optional[str] = None):
 
 
 def ursadb_command(command: str) -> Json:
+    """Executes a raw ursadb command using this backend."""
     agent = make_agent()
     json = agent.ursa.execute_command(command)
     return json
 
 
 def start_search(job_id: JobId) -> None:
+    """Initialises a search task - checks available datasets and schedules smaller
+    units of work."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":
