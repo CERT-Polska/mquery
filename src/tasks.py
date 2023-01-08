@@ -89,11 +89,6 @@ class Agent:
         num_files = len(files)
         self.db.job_start_work(job.id, num_files)
 
-        # HACK this is obviously temporary
-        rebase = "/mnt/samples/"
-        rebase_to = "/home/msm/Projects/mquery/samples/"
-        files = [rebase_to + file[len(rebase) :] for file in files]
-
         filemap_raw = {name: self.plugins.filter(name) for name in files}
         filemap = {k: v for k, v in filemap_raw.items() if v}
 
