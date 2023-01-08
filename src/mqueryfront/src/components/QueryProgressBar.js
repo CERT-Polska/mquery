@@ -26,25 +26,17 @@ const QueryProgressBar = (props) => {
         total_files ? Math.round((files * datasetFrac * 100) / total_files) : 0;
 
     const isFinished = isStatusFinished(status);
-    let inProgeressPct = getPercentage(files_in_progress);
-    let erroredPct = getPercentage(files_errored);
-    let processedPct =
+    const inProgeressPct = getPercentage(files_in_progress);
+    const erroredPct = getPercentage(files_errored);
+    const processedPct =
         total_files === 0 && isFinished ? 100 : getPercentage(files_processed);
-
-    if (status == "cancelled") {
-        inProgeressPct = 0;
-        erroredPct = 100;
-        processedPct = 100;
-    }
 
     const errorString = files_errored === 1 ? "error" : "errors";
     const errorTooltip = `${files_errored} ${errorString} during processing`;
 
     const matches = `${files_matched} matches`;
     let statusInfo = null;
-    if (status === "cancelled") {
-        statusInfo = null;
-    } else if (total_datasets === 0 && status === "new") {
+    if (total_datasets === 0 && status === "new") {
         statusInfo = "Collecting datasets...";
     } else if (datasets_left > 0) {
         statusInfo = `Searching for candidates: ${datasetsDone}/${total_datasets} (${datasetPct}%)...`;
