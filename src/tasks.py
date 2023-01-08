@@ -1,0 +1,269 @@
+from typing import List, Optional
+import logging
+from lib.ursadb import Json, UrsaDb
+from schema import JobSchema
+from lib.yaraparse import parse_yara, combine_rules
+from plugins import PluginManager
+import config
+from rq import get_current_job
+from db import Database, JobId, MatchInfo
+from redis import Redis
+from rq import Queue
+from contextlib import contextmanager
+from util import make_sha256_tag
+from metadata import Metadata
+import yara  # type: ignore
+
+
+queue = Queue(connection=Redis(config.REDIS_HOST, config.REDIS_PORT))
+
+
+class Agent:
+    def __init__(self, group_id: str, ursa_url: str, db: Database) -> None:
+        """Creates a new agent instance. Every agents belongs to some group
+        (identified by the group_id). There may be multiple agent workers in a
+        single group, but they must all work on the same ursadb instance.
+
+        :param group_id: Identifier of the agent group this agent belongs to.
+        :type group_id: str
+        :param ursa_url: URL to connected ursadb instance. Ideally this should
+            be public, because this will allow mquery to collect measurements.
+        :type ursa_url: str
+        :param db: Reference to main database/task queue.
+        :type db: Database
+        """
+        self.group_id = group_id
+        self.ursa_url = ursa_url
+        self.db = db
+        self.ursa = UrsaDb(self.ursa_url)
+
+        self.plugins = PluginManager(config.PLUGINS, self.db)
+
+    def register(self) -> None:
+        """Register the plugin in the database. Should happen when starting
+        the worker process."""
+        plugins_spec = {
+            plugin_class.get_name(): plugin_class.config_fields
+            for plugin_class in self.plugins.plugin_classes
+        }
+        self.db.register_active_agent(
+            self.group_id,
+            self.ursa_url,
+            plugins_spec,
+            [
+                active_plugin.get_name()
+                for active_plugin in self.plugins.active_plugins
+            ],
+        )
+
+    def get_datasets(self) -> List[str]:
+        """Returns a list of dataset IDs, or throws an exception on error."""
+        result = self.ursa.topology()
+
+        if "error" in result:
+            raise RuntimeError(result["error"])
+
+        return list(result["result"]["datasets"].keys())
+
+
+    def update_metadata(
+        self, job: JobId, orig_name: str, path: str, matches: List[str]
+    ) -> None:
+        """
+        Runs metadata plugins for the given file in a given job.
+        :param group_id: Identifier of the agent group this agent belongs to.
+        :type group_id: str
+        :param ursa_url: URL to connected ursadb instance. Ideally this should
+            be public, because this will allow mquery to collect measurements.
+        :type ursa_url: str
+        :param db: Reference to main database/task queue.
+        :type db: Database
+        """
+
+        # Initialise default values in the metadata.
+        metadata: Metadata = {
+            "job": job.hash,
+            "path": path,
+            "sha256": make_sha256_tag(path),
+        }
+        # Run all the plugins in configured order.
+        for plugin in self.plugins.active_plugins:
+            if not plugin.is_extractor:
+                continue
+
+            extracted_meta = plugin.run(orig_name, metadata)
+            metadata.update(extracted_meta)
+
+        # Remove unnecessary keys from the metadata.
+        del metadata["job"]
+        del metadata["path"]
+
+        # Update the database.
+        match = MatchInfo(orig_name, metadata, matches)
+        self.db.add_match(job, match)
+
+
+    def execute_yara(self, job: JobSchema, files: List[str]) -> None:
+        rule = yara.compile(source=job.raw_yara)
+        num_matches = 0
+        num_errors = 0
+        num_files = len(files)
+        self.db.job_start_work(JobId(job.id), num_files)
+
+        # HACK this is obviously temporary
+        rebase = "/mnt/samples/"
+        rebase_to = "/home/msm/Projects/mquery/samples/"
+        files = [rebase_to + file[len(rebase):] for file in files]
+
+        filemap_raw = {name: self.plugins.filter(name) for name in files}
+        filemap = {k: v for k, v in filemap_raw.items() if v}
+
+        for orig_name, path in filemap.items():
+            try:
+                matches = rule.match(path)
+                if matches:
+                    self.update_metadata(
+                        JobId(job.id), orig_name, path, [r.rule for r in matches]
+                    )
+                    num_matches += 1
+            except yara.Error:
+                logging.error("Yara failed to check file %s", orig_name)
+                num_errors += 1
+            except FileNotFoundError:
+                logging.error(
+                    "Failed to open file for yara check: %s", orig_name
+                )
+                num_errors += 1
+
+        self.plugins.cleanup()
+
+        self.db.job_update_work(JobId(job.id), num_files, num_matches, num_errors)
+
+    def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:
+        """See documentation of db.agent_add_tasks_in_progress"""
+        self.db.agent_add_tasks_in_progress(JobId(job.id), self.group_id, tasks)
+
+
+
+@contextmanager
+def job_context(job_id: JobId):
+    agent = make_agent()
+
+    try:
+        yield agent
+    except Exception as e:
+        logging.exception("Failed to execute %s.", job_id)
+        agent.db.fail_job(job_id, str(e))
+        raise
+
+
+def make_agent(group_override: Optional[str]=None):
+    db = Database(config.REDIS_HOST, config.REDIS_PORT)
+    if group_override is not None:
+        group_id = group_override
+    else:
+        group_id = get_current_job().origin
+    return Agent(group_id, config.BACKEND, db)
+
+
+def ursadb_command(command: str) -> Json:
+    agent = make_agent()
+    json = agent.ursa.execute_command(command)
+    return json
+
+
+def start_search(job_id: JobId) -> None:
+    with job_context(job_id) as agent:
+        job = agent.db.get_job(job_id)
+        if job.status == "cancelled":
+            logging.info("Job was cancelled, returning...")
+            return
+
+        datasets = agent.get_datasets()
+        agent.db.init_job_datasets(job_id, len(datasets))
+
+        # Caveat: if no datasets, this call is still important, because it
+        # will let the db know that this agent has nothing more to do.
+        agent.add_tasks_in_progress(job, len(datasets))
+
+        rules = parse_yara(job.raw_yara)
+        parsed = combine_rules(rules)
+        logging.info("Will use the following query: %s", parsed.query)
+
+        prev_job = None
+        for dataset in datasets:
+            # We add dependencies between all the jobs, to enforce sequential
+            # execution. The goal is to avoid overwhelming ursadb with too
+            # many queries.
+            prev_job = queue.enqueue(
+                query_ursadb,
+                job_id,
+                dataset,
+                parsed.query,
+                depends_on=prev_job
+            )
+
+
+def __get_batch_sizes(file_count: int) -> List[int]:
+    """Returns a list of integers that sums to file_count. The idea is to split
+    the work between all workers into units that are not too small and not
+    too big. Currently just creates equally sized batches."""
+    result = []
+    BATCH_SIZE = 50
+    while file_count > BATCH_SIZE:
+        result.append(BATCH_SIZE)
+        file_count -= BATCH_SIZE
+    if file_count > 0:
+        result.append(file_count)
+    return result
+
+
+def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
+    with job_context(job_id) as agent:
+        job = agent.db.get_job(job_id)
+        if job.status == "cancelled":
+            logging.info("Job was cancelled, returning...")
+            return
+
+        result = agent.ursa.query(ursadb_query, job.taints, dataset_id)
+        if "error" in result:
+            raise RuntimeError(result["error"])
+
+        file_count = result["file_count"]
+        iterator = result["iterator"]
+        logging.info(f"Iterator {iterator} contains {file_count} files")
+
+        total_files = agent.db.update_job_files(job_id, file_count)
+        if job.files_limit and total_files > job.files_limit:
+            raise RuntimeError(
+                f"Too many candidates after prefiltering (limit: {job.files_limit}). "
+                "Try a more precise query."
+            )
+
+        batches = __get_batch_sizes(file_count)
+        for batch in batches:
+            queue.enqueue(run_yara_batch, job_id, iterator, batch)
+
+        agent.db.dataset_query_done(job_id)
+
+        # add len(batches) new tasks, -1 to account for this task
+        agent.add_tasks_in_progress(job, len(batches) - 1)
+
+
+def run_yara_batch(job_id: JobId, iterator_id: str, batch_size: int) -> None:
+    with job_context(job_id) as agent:
+        job = agent.db.get_job(job_id)
+        if job.status == "cancelled":
+            logging.info("Job was cancelled, returning...")
+            return
+
+        pop_result = agent.ursa.pop(iterator_id, batch_size)
+        logging.info("job %s: Pop successful: %s", job_id.hash, pop_result)
+        if pop_result.was_locked:
+            # Iterator is currently locked, re-enqueue self
+            queue.enqueue(run_yara_batch, job_id, iterator_id, batch_size)
+            return
+
+        agent.execute_yara(job, pop_result.files)
+
+        agent.add_tasks_in_progress(job, -1)

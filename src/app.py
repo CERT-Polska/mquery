@@ -221,29 +221,6 @@ def config_list() -> List[ConfigSchema]:
 
 
 @app.post(
-    "/api/compact",
-    response_model=StatusSchema,
-    tags=["internal"],
-    dependencies=[Depends(is_admin)],
-)
-def compact_files() -> StatusSchema:
-    """
-    Broadcasts compact command to all ursadb instances. This uses `compact all;`
-    subcommand (which is more intuitive because it always compacts), instead of the
-    recommended `compact smart;` which ignores useless merges. Because of this,
-    and also because of lack of control, this it's not recommended for advanced
-    users - see documentation and `compactall.py` script to learn more.
-
-    This still won't merge datasets of different types or with different tags,
-    and will silently do nothing in such cases.
-
-    This endpoint is not stable and may be subject to change in the future.
-    """
-    db.broadcast_command(f"compact all;")
-    return StatusSchema(status="ok")
-
-
-@app.post(
     "/api/config/edit",
     response_model=StatusSchema,
     tags=["internal"],

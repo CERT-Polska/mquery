@@ -7,6 +7,7 @@ import random
 import string
 from redis import StrictRedis
 from enum import Enum
+from rq import Queue
 
 
 # "Magic" plugin name, used for configuration of mquery itself
@@ -68,25 +69,25 @@ class Database:
             host=redis_host, port=redis_port, decode_responses=True
         )
 
-    def get_yara_by_job(self, job: JobId) -> str:
-        """Gets yara rule associated with job"""
-        return self.redis.hget(job.key, "raw_yara")
+    def __schedule(self, agent: str, task: Any, *args: Any) -> None:
+        Queue(agent, connection=self.redis).enqueue(task, *args)
 
     def get_job_ids(self) -> List[JobId]:
         """Gets IDs of all jobs in the database"""
         return [JobId(key) for key in self.redis.keys("job:*")]
 
-    def cancel_job(self, job: JobId) -> None:
-        """Sets the job status to cancelled"""
+    def cancel_job(self, job: JobId, message: str) -> None:
+        """Sets the job status to cancelled, with optional error message"""
         self.redis.hmset(
-            job.key, {"status": "cancelled", "finished": int(time())}
+            job.key,
+            {"status": "cancelled", "error": message, "finished": int(time())},
         )
 
     def fail_job(self, job: JobId, message: str) -> None:
-        """Sets the job status to failed."""
+        """Sets the job status to cancelled with provided error message."""
         self.redis.hmset(
             job.key,
-            {"status": "failed", "error": message, "finished": int(time())},
+            {"status": "cancelled", "error": message, "finished": int(time())},
         )
 
     def get_job(self, job: JobId) -> JobSchema:
@@ -121,6 +122,7 @@ class Database:
         self.redis.rpush(job.meta_key, match.to_json())
 
     def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
+        """Make sure that the file path is in the job results"""
         file_list = self.redis.lrange(job.meta_key, ordinal, ordinal)
         return file_list and file_path == json.loads(file_list[0])["file"]
 
@@ -133,67 +135,46 @@ class Database:
         """
         self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
 
+    def agent_finish_job(self, job: JobId) -> None:
+        """Decrements the number of active agents in the given job. If there
+        are no more agents, job status is changed to done."""
+        new_agents = self.redis.hincrby(job.key, "agents_left", -1)
+        if new_agents <= 0:
+            self.redis.hmset(
+                job.key, {"status": "done", "finished": int(time())}
+            )
+
+    def agent_add_tasks_in_progress(self, job: JobId, agent: str, tasks: int) -> None:
+        """Increments (or decrements, for negative tasks) the number of tasks
+        that are in progress for agent. This number should always be positive
+        for jobs in status inprogress. This function will automatically call
+        agent_finish_job if the agent has no more tasks left"""
+        new_tasks = self.redis.incrby(f"agentjob:{agent}:{job.hash}", tasks)
+        assert new_tasks >= 0
+        if new_tasks == 0:
+            self.agent_finish_job(job)
+
     def job_update_work(
-        self, job: JobId, files_processed: int, files_matched: int
+        self, job: JobId, processed: int, matched: int, errored: int
     ) -> None:
         """Update progress for the job. This will increment number of files processed
         and matched, and if as a result all files are processed, will change the job
         status to `done`
         """
-        self.redis.hincrby(job.key, "files_processed", files_processed)
-        self.redis.hincrby(job.key, "files_in_progress", -files_processed)
-        self.redis.hincrby(job.key, "files_matched", files_matched)
+        self.redis.hincrby(job.key, "files_processed", processed)
+        self.redis.hincrby(job.key, "files_in_progress", -processed)
+        self.redis.hincrby(job.key, "files_matched", matched)
+        self.redis.hincrby(job.key, "files_errored", errored)
 
-    def job_update_error(self, job: JobId, files_errored: int) -> None:
-        """Update error for the job if it appears during agents' work.
-        This will increment number of files errored and write them to the variable.
-        """
-        self.redis.hincrby(job.key, "files_errored", files_errored)
+    def init_job_datasets(
+        self, job: JobId, num_datasets: int
+    ) -> None:
+        self.redis.hincrby(job.key, "total_datasets", num_datasets)
+        self.redis.hincrby(job.key, "datasets_left", num_datasets)
+        self.redis.hset(job.key, "status", "processing")
 
-
-    # TODO temporary
-    def create_search_object(
-        self,
-        rule_name: str,
-        rule_author: str,
-        raw_yara: str,
-        priority: Optional[str],
-        files_limit: int,
-        reference: str,
-        taints: List[str],
-        agents: List[str],
-    ) -> JobId:
-        job = JobId(
-            "".join(
-                random.SystemRandom().choice(
-                    string.ascii_uppercase + string.digits
-                )
-                for _ in range(12)
-            )
-        )
-        job_obj = {
-            "status": "new",
-            "rule_name": rule_name,
-            "rule_author": rule_author,
-            "raw_yara": raw_yara,
-            "submitted": int(time()),
-            "priority": priority or "medium",
-            "files_limit": files_limit,
-            "reference": reference,
-            "files_in_progress": 0,
-            "files_processed": 0,
-            "files_matched": 0,
-            "total_files": 0,
-            "files_errored": 0,
-            "agents_left": len(agents),
-            "datasets_left": 0,
-            "total_datasets": 0,
-            "taints": json.dumps(taints)
-        }
-
-        self.redis.hmset(job.key, job_obj)
-        return job
-
+    def dataset_query_done(self, job: JobId):
+        self.redis.hincrby(job.key, "datasets_left", -1)
 
     def create_search_task(
         self,
@@ -226,8 +207,8 @@ class Database:
             "files_in_progress": 0,
             "files_processed": 0,
             "files_matched": 0,
-            "total_files": 0,
             "files_errored": 0,
+            "total_files": 0,
             "agents_left": len(agents),
             "datasets_left": 0,
             "total_datasets": 0,
@@ -235,44 +216,10 @@ class Database:
         }
 
         self.redis.hmset(job.key, job_obj)
+        import tasks
         for agent in agents:
-            self.redis.rpush(f"agent:{agent}:queue-search", job.hash)
+            self.__schedule(agent, tasks.start_search, job)
         return job
-
-    def broadcast_command(self, command: str) -> None:
-        for agent in self.get_active_agents().keys():
-            self.redis.rpush(f"agent:{agent}:queue-command", command)
-
-    def init_job_datasets(
-        self, agent_id: str, job: JobId, datasets: List[str]
-    ) -> None:
-        if datasets:
-            self.redis.lpush(f"job-ds:{agent_id}:{job.hash}", *datasets)
-            self.redis.hincrby(job.key, "total_datasets", len(datasets))
-            self.redis.hincrby(job.key, "datasets_left", len(datasets))
-        self.redis.hset(job.key, "status", "processing")
-
-    def get_next_search_dataset(
-        self, agent_id: str, job: JobId
-    ) -> Optional[str]:
-        return self.redis.lpop(f"job-ds:{agent_id}:{job.hash}")
-
-    def dataset_query_done(self, job: JobId):
-        self.redis.hincrby(job.key, "datasets_left", -1)
-
-    def job_datasets_left(self, agent_id: str, job: JobId) -> int:
-        return self.redis.llen(f"job-ds:{agent_id}:{job.hash}")
-
-    def job_yara_left(self, agent_id: str, job: JobId) -> int:
-        """Gets the number of yara jobs per agent for a given job.
-        We have to get the whole queue for this, and check all entries"""
-        agent_prefix = f"agent:{agent_id}"
-        raw_yara = self.redis.lrange(f"{agent_prefix}:queue-yara", 0, -1)
-        all_yara = [json.loads(job) for job in raw_yara]
-        return len([j for j in all_yara if j["job"] == job.key])
-
-    def agent_continue_search(self, agent_id: str, job: JobId) -> None:
-        self.redis.rpush(f"agent:{agent_id}:queue-search", job.hash)
 
     def get_job_matches(
         self, job: JobId, offset: int = 0, limit: Optional[int] = None
@@ -292,54 +239,8 @@ class Database:
                 }
         return MatchesSchema(job=self.get_job(job), matches=matches)
 
-    def reload_configuration(self, config_version: int):
-        # Send request to any of agents that configuration must be reloaded
-        self.redis.lpush(f"config-reload:{config_version}", "reload")
-        # After 300 seconds of inactivity: reload request is deleted
-        self.redis.expire(f"config-reload:{config_version}", 300)
-
-    def agent_get_task(self, agent_id: str, config_version: int) -> AgentTask:
-        agent_prefix = f"agent:{agent_id}"
-        # config-reload is a notification queue that is set by web to notify
-        # agents that configuration has been changed
-        task_queues = [
-            f"config-reload:{config_version}",
-            f"{agent_prefix}:queue-command",
-            f"{agent_prefix}:queue-search",
-            f"{agent_prefix}:queue-yara",
-        ]
-        queue_task: Any = self.redis.blpop(task_queues)
-        queue, task = queue_task
-
-        if queue == f"config-reload:{config_version}":
-            return AgentTask(TaskType.RELOAD, task)
-
-        if queue.endswith(":queue-command"):
-            return AgentTask(TaskType.COMMAND, task)
-
-        if queue.endswith(":queue-search"):
-            return AgentTask(TaskType.SEARCH, task)
-
-        if queue.endswith(":queue-yara"):
-            return AgentTask(TaskType.YARA, task)
-
-        raise RuntimeError("Unexpected queue")
-
     def update_job_files(self, job: JobId, total_files: int) -> int:
         return self.redis.hincrby(job.key, "total_files", total_files)
-
-    def agent_start_job(
-        self, agent_id: str, job: JobId, iterator: str
-    ) -> None:
-        job_data = json.dumps({"job": job.key, "iterator": iterator})
-        self.redis.rpush(f"agent:{agent_id}:queue-yara", job_data)
-
-    def agent_finish_job(self, job: JobId) -> None:
-        new_agents = self.redis.hincrby(job.key, "agents_left", -1)
-        if new_agents <= 0:
-            self.redis.hmset(
-                job.key, {"status": "done", "finished": int(time())}
-            )
 
     def register_active_agent(
         self,
@@ -408,9 +309,6 @@ class Database:
             for key in sorted(plugin_configs[plugin].keys())
         ]
 
-    def get_config_version(self) -> int:
-        return int(self.redis.get("plugin-version") or 0)
-
     def get_plugin_config(self, plugin_name: str) -> Dict[str, str]:
         return self.redis.hgetall(f"plugin:{plugin_name}")
 
@@ -419,8 +317,6 @@ class Database:
 
     def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
         self.redis.hset(f"plugin:{plugin_name}", key, value)
-        prev_version = self.redis.incrby("plugin-version", 1) - 1
-        self.reload_configuration(prev_version)
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")
