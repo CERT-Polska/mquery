@@ -4,6 +4,8 @@ from multiprocessing import Process
 import logging
 from util import setup_logging
 import tasks
+import config
+from redis import Redis
 from rq import Connection, Worker  # type: ignore
 
 
@@ -13,7 +15,7 @@ def start_worker(args: argparse.Namespace, process_index: int) -> None:
         "Agent [%s] running (process %s)...", args.group_id, process_index
     )
 
-    with Connection():
+    with Connection(Redis(config.REDIS_HOST, config.REDIS_PORT)):
         w = Worker([args.group_id])
         w.work()
 
