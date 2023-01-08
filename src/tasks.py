@@ -5,7 +5,7 @@ from schema import JobSchema
 from lib.yaraparse import parse_yara, combine_rules
 from plugins import PluginManager
 import config
-from rq import get_current_job, Queue
+from rq import get_current_job, Queue  # type: ignore
 from db import Database, JobId, MatchInfo
 from redis import Redis
 from contextlib import contextmanager

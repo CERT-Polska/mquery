@@ -4,8 +4,7 @@ from multiprocessing import Process
 import logging
 from util import setup_logging
 import tasks
-
-from rq import Connection, Worker
+from rq import Connection, Worker  # type: ignore
 
 
 def start_worker(args: argparse.Namespace, process_index: int) -> None:

@@ -21,7 +21,7 @@ from zmq import Again
 from lib.yaraparse import parse_yara
 
 from util import mquery_version
-from db import Database, JobId
+from db import Database
 from typing import Any, Callable, List, Union, Dict, Iterable, Optional
 import tempfile
 import zipfile

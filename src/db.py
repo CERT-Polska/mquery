@@ -7,7 +7,7 @@ import random
 import string
 from redis import StrictRedis
 from enum import Enum
-from rq import Queue
+from rq import Queue  # type: ignore
 
 
 # "Magic" plugin name, used for configuration of mquery itself
@@ -27,24 +27,8 @@ class AgentTask:
         self.data = data
 
 
+# Type alias for Job ids
 JobId = str
-# class JobId:
-#     """Represents a unique job ID in redis. Looks like this: `job:IU32AD3`"""
-
-#     def __init__(self, key: str) -> None:
-#         """Creates a new JobId object. Can take both key and raw hash."""
-#         if not key.startswith("job:"):
-#             key = f"job:{key}"
-#         self.key = key
-#         self.hash = key[4:]
-
-#     @property
-#     def meta_key(self) -> str:
-#         """Every job has exactly one related meta key"""
-#         return f"meta:{self.hash}"
-
-#     def __repr__(self) -> str:
-#         return self.key
 
 
 class MatchInfo:
@@ -78,7 +62,7 @@ class Database:
         return [key[4:] for key in self.redis.keys("job:*")]
 
     def cancel_job(self, job: JobId) -> None:
-        """Sets the job status to cancelled, with optional error message"""
+        """Sets the job status to cancelled"""
         self.redis.hmset(
             f"job:{job}",
             {"status": "cancelled", "finished": int(time())},
