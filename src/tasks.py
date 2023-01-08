@@ -14,19 +14,20 @@ from metadata import Metadata
 import yara  # type: ignore
 
 
-queue = Queue(connection=Redis(config.REDIS_HOST, config.REDIS_PORT))
-
-
 class Agent:
-    def __init__(self, group_id: str, ursa_url: str, db: Database) -> None:
+    def __init__(self, group_id: str) -> None:
         """Creates a new agent instance. Every agents belongs to some group
         (identified by the group_id). There may be multiple agent workers in a
-        single group, but they must all work on the same ursadb instance."""
+        single group, but they must all work on the same ursadb instance.
+        Reads connection parameters and plugins from the global config."""
         self.group_id = group_id
-        self.ursa_url = ursa_url
-        self.db = db
+        self.ursa_url = config.BACKEND
+        self.db = Database(config.REDIS_HOST, config.REDIS_PORT)
         self.ursa = UrsaDb(self.ursa_url)
         self.plugins = PluginManager(config.PLUGINS, self.db)
+        self.queue = Queue(
+            group_id, connection=Redis(config.REDIS_HOST, config.REDIS_PORT)
+        )
 
     def register(self) -> None:
         """Register the plugin in the database. Should happen when starting
@@ -129,12 +130,11 @@ def job_context(job_id: JobId):
 
 def make_agent(group_override: Optional[str] = None):
     """Creates a new agent using the default settings from config."""
-    db = Database(config.REDIS_HOST, config.REDIS_PORT)
     if group_override is not None:
         group_id = group_override
     else:
         group_id = get_current_job().origin
-    return Agent(group_id, config.BACKEND, db)
+    return Agent(group_id)
 
 
 def ursadb_command(command: str) -> Json:
@@ -169,7 +169,7 @@ def start_search(job_id: JobId) -> None:
             # We add dependencies between all the jobs, to enforce sequential
             # execution. The goal is to avoid overwhelming ursadb with too
             # many queries.
-            prev_job = queue.enqueue(
+            prev_job = agent.queue.enqueue(
                 query_ursadb,
                 job_id,
                 dataset,
@@ -217,7 +217,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
 
         batches = __get_batch_sizes(file_count)
         for batch in batches:
-            queue.enqueue(run_yara_batch, job_id, iterator, batch)
+            agent.queue.enqueue(run_yara_batch, job_id, iterator, batch)
 
         agent.db.dataset_query_done(job_id)
 
@@ -225,7 +225,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
         agent.add_tasks_in_progress(job, len(batches) - 1)
 
 
-def run_yara_batch(job_id: JobId, iterator_id: str, batch_size: int) -> None:
+def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
     """Actually scans files, and updates a database with the results"""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
@@ -233,11 +233,11 @@ def run_yara_batch(job_id: JobId, iterator_id: str, batch_size: int) -> None:
             logging.info("Job was cancelled, returning...")
             return
 
-        pop_result = agent.ursa.pop(iterator_id, batch_size)
+        pop_result = agent.ursa.pop(iterator, batch_size)
         logging.info("job %s: Pop successful: %s", job_id, pop_result)
         if pop_result.was_locked:
             # Iterator is currently locked, re-enqueue self
-            queue.enqueue(run_yara_batch, job_id, iterator_id, batch_size)
+            agent.queue.enqueue(run_yara_batch, job_id, iterator, batch_size)
             return
 
         agent.execute_yara(job, pop_result.files)
