@@ -27,23 +27,24 @@ class AgentTask:
         self.data = data
 
 
-class JobId:
-    """Represents a unique job ID in redis. Looks like this: `job:IU32AD3`"""
+JobId = str
+# class JobId:
+#     """Represents a unique job ID in redis. Looks like this: `job:IU32AD3`"""
 
-    def __init__(self, key: str) -> None:
-        """Creates a new JobId object. Can take both key and raw hash."""
-        if not key.startswith("job:"):
-            key = f"job:{key}"
-        self.key = key
-        self.hash = key[4:]
+#     def __init__(self, key: str) -> None:
+#         """Creates a new JobId object. Can take both key and raw hash."""
+#         if not key.startswith("job:"):
+#             key = f"job:{key}"
+#         self.key = key
+#         self.hash = key[4:]
 
-    @property
-    def meta_key(self) -> str:
-        """Every job has exactly one related meta key"""
-        return f"meta:{self.hash}"
+#     @property
+#     def meta_key(self) -> str:
+#         """Every job has exactly one related meta key"""
+#         return f"meta:{self.hash}"
 
-    def __repr__(self) -> str:
-        return self.key
+#     def __repr__(self) -> str:
+#         return self.key
 
 
 class MatchInfo:
@@ -74,26 +75,26 @@ class Database:
 
     def get_job_ids(self) -> List[JobId]:
         """Gets IDs of all jobs in the database"""
-        return [JobId(key) for key in self.redis.keys("job:*")]
+        return [key[4:] for key in self.redis.keys("job:*")]
 
-    def cancel_job(self, job: JobId, message: str) -> None:
+    def cancel_job(self, job: JobId) -> None:
         """Sets the job status to cancelled, with optional error message"""
         self.redis.hmset(
-            job.key,
-            {"status": "cancelled", "error": message, "finished": int(time())},
+            f"job:{job}",
+            {"status": "cancelled", "finished": int(time())},
         )
 
     def fail_job(self, job: JobId, message: str) -> None:
         """Sets the job status to cancelled with provided error message."""
         self.redis.hmset(
-            job.key,
+            f"job:{job}",
             {"status": "cancelled", "error": message, "finished": int(time())},
         )
 
     def get_job(self, job: JobId) -> JobSchema:
-        data = self.redis.hgetall(job.key)
+        data = self.redis.hgetall(f"job:{job}")
         return JobSchema(
-            id=job.hash,
+            id=job,
             status=data.get("status", "ERROR"),
             error=data.get("error", None),
             rule_name=data.get("rule_name", "ERROR"),
@@ -116,40 +117,40 @@ class Database:
 
     def remove_query(self, job: JobId) -> None:
         """Sets the job status to removed"""
-        self.redis.hmset(job.key, {"status": "removed"})
+        self.redis.hmset(f"job:{job}", {"status": "removed"})
 
     def add_match(self, job: JobId, match: MatchInfo) -> None:
-        self.redis.rpush(job.meta_key, match.to_json())
+        self.redis.rpush(f"meta:{job}", match.to_json())
 
     def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
         """Make sure that the file path is in the job results"""
-        file_list = self.redis.lrange(job.meta_key, ordinal, ordinal)
+        file_list = self.redis.lrange(f"meta:{job}", ordinal, ordinal)
         return file_list and file_path == json.loads(file_list[0])["file"]
 
-    def job_start_work(self, job: JobId, files_in_progress: int) -> None:
+    def job_start_work(self, job: JobId, in_progress: int) -> None:
         """Updates the number of files being processed right now.
         :param job: ID of the job being updated.
-        :type job: JobId
-        :param files_in_progress: Number of files in the current work unit.
-        :type files_in_progress: int
+        :param in_progress: Number of files in the current work unit.
         """
-        self.redis.hincrby(job.key, "files_in_progress", files_in_progress)
+        self.redis.hincrby(f"job:{job}", "files_in_progress", in_progress)
 
     def agent_finish_job(self, job: JobId) -> None:
         """Decrements the number of active agents in the given job. If there
         are no more agents, job status is changed to done."""
-        new_agents = self.redis.hincrby(job.key, "agents_left", -1)
+        new_agents = self.redis.hincrby(f"job:{job}", "agents_left", -1)
         if new_agents <= 0:
             self.redis.hmset(
-                job.key, {"status": "done", "finished": int(time())}
+                f"job:{job}", {"status": "done", "finished": int(time())}
             )
 
-    def agent_add_tasks_in_progress(self, job: JobId, agent: str, tasks: int) -> None:
+    def agent_add_tasks_in_progress(
+        self, job: JobId, agent: str, tasks: int
+    ) -> None:
         """Increments (or decrements, for negative tasks) the number of tasks
         that are in progress for agent. This number should always be positive
         for jobs in status inprogress. This function will automatically call
         agent_finish_job if the agent has no more tasks left"""
-        new_tasks = self.redis.incrby(f"agentjob:{agent}:{job.hash}", tasks)
+        new_tasks = self.redis.incrby(f"agentjob:{agent}:{job}", tasks)
         assert new_tasks >= 0
         if new_tasks == 0:
             self.agent_finish_job(job)
@@ -161,20 +162,18 @@ class Database:
         and matched, and if as a result all files are processed, will change the job
         status to `done`
         """
-        self.redis.hincrby(job.key, "files_processed", processed)
-        self.redis.hincrby(job.key, "files_in_progress", -processed)
-        self.redis.hincrby(job.key, "files_matched", matched)
-        self.redis.hincrby(job.key, "files_errored", errored)
+        self.redis.hincrby(f"job:{job}", "files_processed", processed)
+        self.redis.hincrby(f"job:{job}", "files_in_progress", -processed)
+        self.redis.hincrby(f"job:{job}", "files_matched", matched)
+        self.redis.hincrby(f"job:{job}", "files_errored", errored)
 
-    def init_job_datasets(
-        self, job: JobId, num_datasets: int
-    ) -> None:
-        self.redis.hincrby(job.key, "total_datasets", num_datasets)
-        self.redis.hincrby(job.key, "datasets_left", num_datasets)
-        self.redis.hset(job.key, "status", "processing")
+    def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
+        self.redis.hincrby(f"job:{job}", "total_datasets", num_datasets)
+        self.redis.hincrby(f"job:{job}", "datasets_left", num_datasets)
+        self.redis.hset(f"job:{job}", "status", "processing")
 
     def dataset_query_done(self, job: JobId):
-        self.redis.hincrby(job.key, "datasets_left", -1)
+        self.redis.hincrby(f"job:{job}", "datasets_left", -1)
 
     def create_search_task(
         self,
@@ -187,13 +186,9 @@ class Database:
         taints: List[str],
         agents: List[str],
     ) -> JobId:
-        job = JobId(
-            "".join(
-                random.SystemRandom().choice(
-                    string.ascii_uppercase + string.digits
-                )
-                for _ in range(12)
-            )
+        job = "".join(
+            random.choice(string.ascii_uppercase + string.digits)
+            for _ in range(12)
         )
         job_obj = {
             "status": "new",
@@ -212,11 +207,12 @@ class Database:
             "agents_left": len(agents),
             "datasets_left": 0,
             "total_datasets": 0,
-            "taints": json.dumps(taints)
+            "taints": json.dumps(taints),
         }
 
-        self.redis.hmset(job.key, job_obj)
+        self.redis.hmset(f"job:{job}", job_obj)
         import tasks
+
         for agent in agents:
             self.__schedule(agent, tasks.start_search, job)
         return job
@@ -228,7 +224,7 @@ class Database:
             end = -1
         else:
             end = offset + limit - 1
-        meta = self.redis.lrange("meta:" + job.hash, offset, end)
+        meta = self.redis.lrange(f"meta:{job}", offset, end)
         matches = [json.loads(m) for m in meta]
         for match in matches:
             # Compatibility fix for old jobs, without sha256 metadata key.
@@ -240,7 +236,7 @@ class Database:
         return MatchesSchema(job=self.get_job(job), matches=matches)
 
     def update_job_files(self, job: JobId, total_files: int) -> int:
-        return self.redis.hincrby(job.key, "total_files", total_files)
+        return self.redis.hincrby(f"job:{job}", "total_files", total_files)
 
     def register_active_agent(
         self,

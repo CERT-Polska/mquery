@@ -5,10 +5,9 @@ from schema import JobSchema
 from lib.yaraparse import parse_yara, combine_rules
 from plugins import PluginManager
 import config
-from rq import get_current_job
+from rq import get_current_job, Queue
 from db import Database, JobId, MatchInfo
 from redis import Redis
-from rq import Queue
 from contextlib import contextmanager
 from util import make_sha256_tag
 from metadata import Metadata
@@ -22,21 +21,11 @@ class Agent:
     def __init__(self, group_id: str, ursa_url: str, db: Database) -> None:
         """Creates a new agent instance. Every agents belongs to some group
         (identified by the group_id). There may be multiple agent workers in a
-        single group, but they must all work on the same ursadb instance.
-
-        :param group_id: Identifier of the agent group this agent belongs to.
-        :type group_id: str
-        :param ursa_url: URL to connected ursadb instance. Ideally this should
-            be public, because this will allow mquery to collect measurements.
-        :type ursa_url: str
-        :param db: Reference to main database/task queue.
-        :type db: Database
-        """
+        single group, but they must all work on the same ursadb instance."""
         self.group_id = group_id
         self.ursa_url = ursa_url
         self.db = db
         self.ursa = UrsaDb(self.ursa_url)
-
         self.plugins = PluginManager(config.PLUGINS, self.db)
 
     def register(self) -> None:
@@ -65,24 +54,15 @@ class Agent:
 
         return list(result["result"]["datasets"].keys())
 
-
     def update_metadata(
         self, job: JobId, orig_name: str, path: str, matches: List[str]
     ) -> None:
-        """
-        Runs metadata plugins for the given file in a given job.
-        :param group_id: Identifier of the agent group this agent belongs to.
-        :type group_id: str
-        :param ursa_url: URL to connected ursadb instance. Ideally this should
-            be public, because this will allow mquery to collect measurements.
-        :type ursa_url: str
-        :param db: Reference to main database/task queue.
-        :type db: Database
-        """
+        """Saves matches to the database, and runs appropriate metadata
+        plugins."""
 
         # Initialise default values in the metadata.
         metadata: Metadata = {
-            "job": job.hash,
+            "job": job,
             "path": path,
             "sha256": make_sha256_tag(path),
         }
@@ -102,18 +82,17 @@ class Agent:
         match = MatchInfo(orig_name, metadata, matches)
         self.db.add_match(job, match)
 
-
     def execute_yara(self, job: JobSchema, files: List[str]) -> None:
         rule = yara.compile(source=job.raw_yara)
         num_matches = 0
         num_errors = 0
         num_files = len(files)
-        self.db.job_start_work(JobId(job.id), num_files)
+        self.db.job_start_work(job.id, num_files)
 
         # HACK this is obviously temporary
         rebase = "/mnt/samples/"
         rebase_to = "/home/msm/Projects/mquery/samples/"
-        files = [rebase_to + file[len(rebase):] for file in files]
+        files = [rebase_to + file[len(rebase) :] for file in files]
 
         filemap_raw = {name: self.plugins.filter(name) for name in files}
         filemap = {k: v for k, v in filemap_raw.items() if v}
@@ -123,32 +102,27 @@ class Agent:
                 matches = rule.match(path)
                 if matches:
                     self.update_metadata(
-                        JobId(job.id), orig_name, path, [r.rule for r in matches]
+                        job.id, orig_name, path, [r.rule for r in matches]
                     )
                     num_matches += 1
             except yara.Error:
                 logging.error("Yara failed to check file %s", orig_name)
                 num_errors += 1
             except FileNotFoundError:
-                logging.error(
-                    "Failed to open file for yara check: %s", orig_name
-                )
+                logging.error("Failed to open file %s", orig_name)
                 num_errors += 1
 
         self.plugins.cleanup()
-
-        self.db.job_update_work(JobId(job.id), num_files, num_matches, num_errors)
+        self.db.job_update_work(job.id, num_files, num_matches, num_errors)
 
     def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:
         """See documentation of db.agent_add_tasks_in_progress"""
-        self.db.agent_add_tasks_in_progress(JobId(job.id), self.group_id, tasks)
-
+        self.db.agent_add_tasks_in_progress(job.id, self.group_id, tasks)
 
 
 @contextmanager
 def job_context(job_id: JobId):
     agent = make_agent()
-
     try:
         yield agent
     except Exception as e:
@@ -157,7 +131,8 @@ def job_context(job_id: JobId):
         raise
 
 
-def make_agent(group_override: Optional[str]=None):
+def make_agent(group_override: Optional[str] = None):
+    """Creates a new agent using the default settings from config."""
     db = Database(config.REDIS_HOST, config.REDIS_PORT)
     if group_override is not None:
         group_id = group_override
@@ -200,7 +175,7 @@ def start_search(job_id: JobId) -> None:
                 job_id,
                 dataset,
                 parsed.query,
-                depends_on=prev_job
+                depends_on=prev_job,
             )
 
 
@@ -219,6 +194,7 @@ def __get_batch_sizes(file_count: int) -> List[int]:
 
 
 def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
+    """Queries ursadb and creates yara scans tasks with file batches"""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":
@@ -251,6 +227,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
 
 
 def run_yara_batch(job_id: JobId, iterator_id: str, batch_size: int) -> None:
+    """Actually scans files, and updates a database with the results"""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":
@@ -258,12 +235,11 @@ def run_yara_batch(job_id: JobId, iterator_id: str, batch_size: int) -> None:
             return
 
         pop_result = agent.ursa.pop(iterator_id, batch_size)
-        logging.info("job %s: Pop successful: %s", job_id.hash, pop_result)
+        logging.info("job %s: Pop successful: %s", job_id, pop_result)
         if pop_result.was_locked:
             # Iterator is currently locked, re-enqueue self
             queue.enqueue(run_yara_batch, job_id, iterator_id, batch_size)
             return
 
         agent.execute_yara(job, pop_result.files)
-
         agent.add_tasks_in_progress(job, -1)

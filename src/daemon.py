@@ -7,6 +7,7 @@ import tasks
 
 from rq import Connection, Worker
 
+
 def start_worker(args: argparse.Namespace, process_index: int) -> None:
     setup_logging()
     logging.info(

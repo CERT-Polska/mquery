@@ -322,7 +322,7 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     (index of the file in that job), to ensure that user can't download
     arbitrary files (for example "/etc/passwd").
     """
-    if not db.job_contains(JobId(job_id), ordinal, file_path):
+    if not db.job_contains(job_id, ordinal, file_path):
         return Response("No such file in result set.", status_code=404)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
@@ -339,14 +339,14 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
 
 
 @app.get(
-    "/api/download/hashes/{hash}", dependencies=[Depends(can_view_queries)]
+    "/api/download/hashes/{job_id}", dependencies=[Depends(can_view_queries)]
 )
-def download_hashes(hash: str) -> Response:
+def download_hashes(job_id: str) -> Response:
     """Returns a list of job matches as a sha256 strings joined with newlines"""
 
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
-        for d in db.get_job_matches(JobId(hash)).matches
+        for d in db.get_job_matches(job_id).matches
     )
     return Response(hashes + "\n")
 
@@ -367,11 +367,11 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
 
 
 @app.get(
-    "/api/download/files/{hash}",
+    "/api/download/files/{job_id}",
     dependencies=[Depends(is_user), Depends(can_download_files)],
 )
-async def download_files(hash: str) -> StreamingResponse:
-    matches = db.get_job_matches(JobId(hash)).matches
+async def download_files(job_id: str) -> StreamingResponse:
+    matches = db.get_job_matches(job_id).matches
     return StreamingResponse(zip_files(matches))
 
 
@@ -436,24 +436,24 @@ def query(
         data.taints,
         list(active_agents.keys()),
     )
-    return QueryResponseSchema(query_hash=job.hash)
+    return QueryResponseSchema(query_hash=job)
 
 
 @app.get(
-    "/api/matches/{hash}",
+    "/api/matches/{job_id}",
     response_model=MatchesSchema,
     tags=["stable"],
     dependencies=[Depends(can_view_queries)],
 )
 def matches(
-    hash: str, offset: int = Query(...), limit: int = Query(...)
+    job_id: str, offset: int = Query(...), limit: int = Query(...)
 ) -> MatchesSchema:
     """
     Returns a list of matched files, along with metadata tags and other
     useful information. Results from this query can be used to download files
     using the `/download` endpoint.
     """
-    return db.get_job_matches(JobId(hash), offset, limit)
+    return db.get_job_matches(job_id, offset, limit)
 
 
 @app.get(
@@ -467,7 +467,7 @@ def job_info(job_id: str) -> JobSchema:
     Returns a metadata for a single job. May be useful for monitoring
     a job progress.
     """
-    return db.get_job(JobId(job_id))
+    return db.get_job(job_id)
 
 
 @app.delete(
@@ -480,7 +480,7 @@ def job_cancel(job_id: str) -> StatusSchema:
     """
     Cancels the job with a provided `job_id`.
     """
-    db.cancel_job(JobId(job_id))
+    db.cancel_job(job_id)
     return StatusSchema(status="ok")
 
 
@@ -507,7 +507,7 @@ def job_statuses() -> JobsSchema:
     dependencies=[Depends(can_manage_queries)],
 )
 def query_remove(job_id: str) -> StatusSchema:
-    db.remove_query(JobId(job_id))
+    db.remove_query(job_id)
     return StatusSchema(status="ok")
 
 
