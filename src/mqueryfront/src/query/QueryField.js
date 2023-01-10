@@ -12,6 +12,7 @@ const QueryField = (props) => (
             onTaintSelect={props.onTaintSelect}
             availableTaints={props.availableTaints}
             selectedTaints={props.selectedTaints}
+            forceSlowQueries={props.forceSlowQueries}
         />
         <div className="mt-2 monaco-container">
             <QueryMonaco

@@ -15,6 +15,7 @@ const INITIAL_STATE = {
     selectedTaints: [],
     job: null,
     activePage: 1,
+    forceSlowQueries: false,
 };
 
 const PAGE_SIZE = 20;
@@ -94,6 +95,9 @@ class QueryPageInner extends Component {
     };
 
     handleYaraUpdate(value) {
+        this.setState({
+            forceSlowQueries: false,
+        });
         this.setState({ rawYara: value });
     }
 
@@ -167,6 +171,7 @@ class QueryPageInner extends Component {
                 method: method,
                 priority: priority,
                 taints: taints,
+                force_slow_queries: this.state.forceSlowQueries,
             });
             if (method === "query") {
                 this.props.navigate(`/query/${response.data.query_hash}`);
@@ -183,6 +188,11 @@ class QueryPageInner extends Component {
                     : error.toString(),
                 queryPlan: null,
             });
+            if (this.state.queryError.match(/You can force a slow query/)) {
+                this.setState({
+                    forceSlowQueries: true,
+                });
+            }
         }
     }
 
@@ -249,6 +259,7 @@ class QueryPageInner extends Component {
                     onYaraUpdate={this.handleYaraUpdate}
                     parsedError={this.parsedError}
                     selectedTaints={this.state.selectedTaints}
+                    forceSlowQueries={this.state.forceSlowQueries}
                 />
             </ErrorBoundary>
         );

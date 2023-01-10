@@ -6,14 +6,28 @@ const QueryParseStatus = (props) => {
     if (!queryPlan) return null;
 
     const parseResult = queryPlan.map((rule) => {
-        const { is_private, is_global, rule_name, parsed } = rule;
+        const {
+            is_private,
+            is_global,
+            is_degenerate,
+            rule_name,
+            parsed,
+        } = rule;
 
-        const badge =
-            is_private || is_global ? (
-                <span className="badge badge-info">
-                    {is_private ? "private" : "global"}
-                </span>
-            ) : null;
+        const private_badge = is_private ? (
+            <span className="badge bg-info">private</span>
+        ) : null;
+        const global_badge = is_global ? (
+            <span className="badge bg-info">private</span>
+        ) : null;
+        const degenerate_badge = is_degenerate ? (
+            <span className="badge bg-danger">degenerate</span>
+        ) : null;
+        const badges = (
+            <>
+                {private_badge} {global_badge} {degenerate_badge}
+            </>
+        );
 
         return (
             <div key={rule_name} className="mt-3">
@@ -22,7 +36,7 @@ const QueryParseStatus = (props) => {
                         <span className="me-2 font-weight-bold">
                             {rule_name}
                         </span>
-                        {badge}
+                        {badges}
                     </label>
                     <div className="jumbotron text-monospace text-break p-2">
                         {parsed}

@@ -65,6 +65,7 @@ class QueryRequestSchema(BaseModel):
     files_limit: Optional[int]
     reference: Optional[str]  # arbitrary data specified by the user
     required_plugins: List[str] = Field([])
+    force_slow_queries: bool = False
 
 
 class QueryResponseSchema(BaseModel):
@@ -76,6 +77,7 @@ class ParseResponseSchema(BaseModel):
     rule_author: str
     is_global: bool
     is_private: bool
+    is_degenerate: bool
     parsed: str
 
 

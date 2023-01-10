@@ -331,6 +331,8 @@ class Database:
             "openid_url": "OpenID Connect base url",
             "openid_client_id": "OpenID client ID",
             "openid_secret": "Secret used for JWT token verification",
+            # Query and performance config
+            "query_allow_slow": "Allow users to run queries that will end up scanning the whole malware collection",
         }
 
     def get_config(self) -> List[ConfigSchema]:

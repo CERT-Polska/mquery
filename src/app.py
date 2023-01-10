@@ -419,7 +419,7 @@ def query(
         )
 
     if not rules:
-        raise HTTPException(status_code=400, detail=f"No rule was specified.")
+        raise HTTPException(status_code=400, detail="No rule was specified.")
 
     if data.method == RequestQueryMethod.parse:
         return [
@@ -428,10 +428,33 @@ def query(
                 rule_author=rule.author,
                 is_global=rule.is_global,
                 is_private=rule.is_private,
+                is_degenerate=rule.parse().is_degenerate,
                 parsed=rule.parse().query,
             )
             for rule in rules
         ]
+
+    degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
+    allow_slow = db.get_mquery_config_key("query_allow_slow") == "true"
+    if degenerate_rules and not (allow_slow and data.force_slow_queries):
+        if allow_slow:
+            # Warning: "You can force a slow query" literal is used to
+            # pattern match on the error message in the frontend.
+            help_message = "You can force a slow query if you want."
+        else:
+            help_message = "This is not allowed by this server."
+        degenerate_rule_names = ", ".join(degenerate_rules)
+        doc_url = "https://cert-polska.github.io/mquery/docs/yara.html"
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid query. Some of the rules require a full Yara scan of"
+                "every indexed file. "
+                f"{help_message} "
+                f"Slow rules: {degenerate_rule_names}. "
+                f"Read {doc_url} for more details."
+            ),
+        )
 
     active_agents = db.get_active_agents()
 

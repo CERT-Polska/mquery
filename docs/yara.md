@@ -215,3 +215,25 @@ the rule could cripple mquery performance.
 Remember that parser is your friend. If your query runs too slow, click "parse" instead
 of "query" and investigate if the query looks reasonable.
 
+## Slow Yara rules.
+
+Some yara rules cannot be optimised by mquery and will end up scanning the whole
+malware collection. One example of such rule is:
+
+```
+rule UnluckyExample
+{
+    strings:
+        $code = {48 8b 0? 0f b6 c? 48 8b 4? 34 50}
+
+    condition:
+        all of them and pe.imphash() == "b8bb385806b89680e13fc0cf24f4431e"
+}
+```
+
+This is not necessarily a bad rule, but there's not a single full 3gram that can
+be used to narrow the set of suspected files. Due to how mquery works, this will
+yara scan every malware file in the dataset, and will be very slow. Becaue of this,
+such queries are by defauly disasllowed. They can be enabled by setting
+`query_allow_slow` config key to true. In this case mquery will allow such
+queries, but it'll ask for confirmation first.
