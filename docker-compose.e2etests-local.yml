@@ -39,7 +39,7 @@ services:
       - "redis"
       - "ursadb"
   ursadb:
-    image: mqueryci/ursadb:v1.5.0
+    image: mqueryci/ursadb:v1.5.1
     ports:
       - "9281:9281"
     volumes:

@@ -33,7 +33,7 @@ services:
       - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
   ursadb:
     restart: always
-    image: mqueryci/ursadb:v1.5.0
+    image: mqueryci/ursadb:v1.5.1
     ports:
     - "127.0.0.1:9281:9281"
     volumes:
