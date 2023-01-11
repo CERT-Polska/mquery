@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import ErrorBoundary from "../components/ErrorBoundary";
 import axios from "axios";
-import { isAuthEnabled } from "../utils";
+import { isAuthEnabled, openidLoginUrl } from "../utils";
 
 class AuthPage extends Component {
     constructor(props) {
@@ -26,25 +26,7 @@ class AuthPage extends Component {
         const code = urlParams.get("code");
 
         if (code === null) {
-            const login_url = new URL(
-                this.props.config["openid_url"] + "/auth"
-            );
-            login_url.searchParams.append(
-                "client_id",
-                this.props.config["openid_client_id"]
-            );
-            login_url.searchParams.append("response_type", "code");
-            login_url.searchParams.append(
-                "redirect_uri",
-                window.location.origin + "/auth"
-            );
-
-            if (!login_url) {
-                this.setState({ error: "OIDC login URL not configured" });
-            } else {
-                window.location = login_url;
-            }
-            return;
+            window.location = openidLoginUrl(this.props.config);
         }
 
         const params = new URLSearchParams();
