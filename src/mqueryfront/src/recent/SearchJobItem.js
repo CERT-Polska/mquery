@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import PriorityIcon from "../components/PriorityIcon";
 import ActionRemove from "../components/ActionRemove";
 import ActionCancel from "../components/ActionCancel";
 import QueryProgressBar from "../components/QueryProgressBar";
@@ -26,7 +25,7 @@ export const SearchJobItemEmpty = () => {
 
 const SearchJobItem = (props) => {
     const { job, onRemove, onCancel } = props;
-    const { id, status, submitted, rule_name, priority } = job;
+    const { id, status, submitted, rule_name } = job;
     const rule_author = props.job.rule_author
         ? props.job.rule_author
         : "(no author)";
@@ -53,9 +52,6 @@ const SearchJobItem = (props) => {
                             {rule_name}
                         </Link>
                     </div>
-                    <span className="ms-2">
-                        <PriorityIcon priority={priority} size="1x" />
-                    </span>
                 </div>
                 <p className="mb-0" style={{ fontSize: 11 }}>
                     {submittedDate}

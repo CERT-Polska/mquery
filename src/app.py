@@ -476,7 +476,6 @@ def query(
         rules[-1].name,
         rules[-1].author,
         data.raw_yara,
-        data.priority,
         data.files_limit or 0,
         data.reference or "",
         data.taints,

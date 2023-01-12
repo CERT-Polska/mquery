@@ -35,7 +35,6 @@ job_id = requests.post(
         "method": "query",
         "raw_yara": yara_rule,
         "taint": None,
-        "priority": "normal",
         "method": "query",
     },
 ).json()["query_hash"]

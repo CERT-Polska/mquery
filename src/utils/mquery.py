@@ -22,7 +22,6 @@ def query(mquery_server: str, yara_rule: str) -> str:
             "method": "query",
             "raw_yara": yara_rule,
             "taint": None,
-            "priority": "normal",
             "method": "query",
         },
     ).json()

@@ -12,7 +12,6 @@ class JobSchema(BaseModel):
     raw_yara: str
     submitted: int
     finished: Optional[int]
-    priority: str
     files_limit: int
     reference: str
     files_processed: int
@@ -60,7 +59,6 @@ class RequestConfigEdit(BaseModel):
 class QueryRequestSchema(BaseModel):
     raw_yara: str
     taints: Optional[List[str]]
-    priority: Optional[str]
     method: str
     files_limit: Optional[int]
     reference: Optional[str]  # arbitrary data specified by the user
