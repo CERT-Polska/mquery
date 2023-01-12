@@ -184,11 +184,12 @@ class Agent:
         num_files = len(files)
         self.db.job_start_work(job, num_files)
 
-        filemap_raw = {name: self.plugins.filter(name) for name in files}
-        filemap = {k: v for k, v in filemap_raw.items() if v}
-
-        for orig_name, path in filemap.items():
+        for orig_name in files:
             try:
+                path = self.plugins.filter(orig_name)
+                if not path:
+                    continue
+
                 matches = rule.match(path)
                 if matches:
                     self.__update_metadata(
@@ -203,6 +204,10 @@ class Agent:
                     "Failed to open file for yara check: %s", orig_name
                 )
                 num_errors += 1
+            except Exception:
+                logging.error("Unknown error (plugin failure?): %s", orig_name)
+                num_errors += 1
+
 
         self.plugins.cleanup()
 

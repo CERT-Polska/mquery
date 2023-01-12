@@ -13,6 +13,12 @@
     Here you can find documentation for them.
 - [For future contributors](../CONTRIBUTING.md): How to contribute.
 
+## How to...
+
+- [Install mquery natively (without docker)](how-to/install-native.md)
+- [Integrate mquery with s3](how-to/integrate-with-s3.md)
+
+
 ## Relevant [ursadb's documentation](https://cert-polska.github.io/ursadb)
 
 Ursadb is the backend doing the heavy lifting for mquery. If you need to work with large
