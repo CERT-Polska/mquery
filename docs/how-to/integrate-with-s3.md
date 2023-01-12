@@ -35,8 +35,9 @@ it is possible, but you may need to edit S3 plugin source code.
 This integration works in the following way:
 
 * First, you index your S3 samples in any way you want. You just need to
-  make sure that the filenames in s3 and ursadb are the same.
-  The easiest way to do this is to use the s3index.py utility script.
+  make sure that the filenames in s3 and ursadb are the same. For example,
+  you can download all your bucket to a temporary directory, index it,
+  and remove the directory. This is automated with the s3index.py script.
 * When mquery needs to access a raw sample data (for example, to run Yara)
   it runs the S3 plugin.
 * Our plugin looks only at the filename. For example, if file path returned
@@ -44,7 +45,8 @@ This integration works in the following way:
   looks at `9535be65f6d2f315971e53440e4e1` and completely ignores the path.
 * Next, plugin downloads that filename from a configured S3 bucket - in our
   example, plugin will get a file called `9535be65f6d2f315971e53440e4e1`.
-* This file is used for the requested operation, like scanning with Yara.
+* This file is used for the requested operation, like scanning with Yara,
+  and removed when it's no longer necessary.
 
 During the indexing, samples are temporary downloaded to the ursadb machine, but
 don't worry - after indexing samples can be safely removed - so ursadb machine
