@@ -4,7 +4,7 @@ from typing import Optional, List, IO
 import os
 import shutil
 import tempfile
-from minio import Minio
+from minio import Minio  # type: ignore
 
 
 class S3Plugin(MetadataPlugin):
@@ -30,7 +30,7 @@ class S3Plugin(MetadataPlugin):
             config["s3_url"],
             config["s3_access_key"],
             config["s3_secret_key"],
-            secure=config["s3_secure"] == "true"
+            secure=config["s3_secure"] == "true",
         )
         self.bucket = config["s3_bucket"]
 
@@ -41,7 +41,7 @@ class S3Plugin(MetadataPlugin):
         name = os.path.basename(orig_name)
         tmp = tempfile.NamedTemporaryFile()
         self.tmpfiles.append(tmp)
-        
+
         response = self.minio.get_object(self.bucket, name)
         try:
             with open(tmp.name, "wb") as f_out:

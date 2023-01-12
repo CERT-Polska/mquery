@@ -1,12 +1,11 @@
 import os
 import logging
 import argparse
-import tempfile
 import shutil
-from typing import Set, List, Any
+from typing import Set, List
 from pathlib import Path
 from lib.ursadb import UrsaDb
-from minio import Minio
+from minio import Minio  # type: ignore
 
 
 def all_indexed_names(ursa: UrsaDb) -> Set[str]:
@@ -69,7 +68,9 @@ def main() -> None:
     parser.add_argument("--s3-secret-key", help="Secret key.", required=True)
     parser.add_argument("--s3-access-key", help="Access key.", required=True)
     parser.add_argument("--s3-bucket", help="Bucket name.", required=True)
-    parser.add_argument("--s3-secure", help="Use https (1 or 0)?.", type=int, default=True)
+    parser.add_argument(
+        "--s3-secure", help="Use https (1 or 0)?.", type=int, default=True
+    )
     parser.add_argument(
         "--workdir", help="Path to a working directory.", default=None
     )
@@ -148,15 +149,14 @@ def main() -> None:
 
         if len(batch) == args.batch:
             process_and_delete_batch(
-                ursa, batch, compact_threshold, args.types, args.tags
+                ursa, batch, compact_threshold, types, args.tags
             )
             batch = []
 
     if len(batch):
         process_and_delete_batch(
-            ursa, batch, compact_threshold, args.types, args.tags
+            ursa, batch, compact_threshold, types, args.tags
         )
-
 
     if list(workdir.iterdir()):
         logging.info("Workdir not removed, because it's not empty.")
