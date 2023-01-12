@@ -36,6 +36,8 @@ class S3Plugin(MetadataPlugin):
 
     def filter(self, orig_name: str, file_path: str) -> Optional[str]:
         if orig_name != file_path:
+            # We override the file. It doesn't make sense to use other
+            # content-modifying filters before the s3 plugin.
             raise RuntimeError("S3 plugin should be the first filter")
 
         name = os.path.basename(orig_name)

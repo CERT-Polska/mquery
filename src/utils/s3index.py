@@ -9,6 +9,7 @@ from minio import Minio  # type: ignore
 
 
 def all_indexed_names(ursa: UrsaDb) -> Set[str]:
+    """Gets all unique filenames of indexed files."""
     iterator = ursa.query("{}")["iterator"]
     result: Set[str] = set()
     while True:
@@ -27,6 +28,7 @@ def process_and_delete_batch(
     types: List[str],
     tags: List[str],
 ) -> None:
+    """Index a list of file paths with specified parameters."""
     logging.info("Processing batch of %s files", len(batch))
     current_datasets = len(
         ursa.execute_command("topology;")["result"]["datasets"]
@@ -53,12 +55,6 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser(description="Index files from s3.")
-    parser.add_argument(
-        "--mode",
-        help="Mode of operation. Only prepare batches, index them, or both.",
-        default="prepare-and-index",
-        choices=["prepare", "index", "prepare-and-index"],
-    )
     parser.add_argument(
         "--ursadb",
         help="URL of the ursadb instance.",

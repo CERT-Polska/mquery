@@ -1,10 +1,10 @@
 # Integrate mquery with s3
 
 One very common question is "how to use Mquery with s3". S3 is a file storage
-API exposed by many open- and closed-source solutions, like Minio or of course
-AWS. Mquery does not support S3 natively, but can work with S3 thanks to its
+API is exposed by many open- and closed-source solutions, like Minio or of course
+AWS. Mquery does not support S3 natively but can work with S3 thanks to its
 very flexible plugin system. Unfortunately, this is not completely transparent,
-and S3 deployment is not easy. In this guide I'll explain how to integrat
+and S3 deployment is not easy. In this guide, I'll explain how to integrate
 Mquery with existing s3 deployment.
 
 ## Requirements
@@ -17,20 +17,20 @@ install additional dependencies, and it's not trivial with existing images.
 To make things simpler, we assume you installed mquery natively (see
 [Install mquery natively (without docker)](./install-native.md) if you want to
 learn how to do this).
-* S3-compatible server with your samples. In this guide we'll deploy minio for
+* S3-compatible server with your samples. In this guide, we'll deploy Minio for
 demonstration purposes.
 
 ## Caveats
 
-The integration has some rough edges, and assumes some things. Most importantly:
+The integration has some rough edges and assumes some things. Most importantly:
 
 * Malware collection that you want to index cannot have duplicate filenames. This is obvious if your data is already in s3 (s3 buckets cannot have
 duplicate filenames), but it's something to keep in mind if you're moving
-existing collection from disk to s3. Ideally you should store your files
+existing collections from disk to s3. Ideally, you should store your files
 using hashes (like sha256) as names.
 * Do not mix s3 and non-s3 storage in a single database. Mquery works best if
 either all your files are stored in s3, or none are. If you really need to,
-it is possible, but you may need to edit S3 plugin source code.
+it is possible, but you may need to edit the S3 plugin source code.
 
 This integration works in the following way:
 
@@ -38,18 +38,18 @@ This integration works in the following way:
   make sure that the filenames in s3 and ursadb are the same. For example,
   you can download all your bucket to a temporary directory, index it,
   and remove the directory. This is automated with the s3index.py script.
-* When mquery needs to access a raw sample data (for example, to run Yara)
+* When mquery needs to access raw sample data (for example, to run Yara)
   it runs the S3 plugin.
-* Our plugin looks only at the filename. For example, if file path returned
-  from ursadb is `/opt/mquery/samples/9535be65f6d2f315971e53440e4e1`, plugin
+* Our plugin looks only at the filename. For example, if the file path returned
+  from ursadb is `/opt/mquery/samples/9535be65f6d2f315971e53440e4e1`, the plugin
   looks at `9535be65f6d2f315971e53440e4e1` and completely ignores the path.
-* Next, plugin downloads that filename from a configured S3 bucket - in our
-  example, plugin will get a file called `9535be65f6d2f315971e53440e4e1`.
+* Next, the plugin downloads that filename from a configured S3 bucket - in our
+  example, the plugin will get a file called `9535be65f6d2f315971e53440e4e1`.
 * This file is used for the requested operation, like scanning with Yara,
   and removed when it's no longer necessary.
 
-During the indexing, samples are temporary downloaded to the ursadb machine, but
-don't worry - after indexing samples can be safely removed - so ursadb machine
+During the indexing, samples are temporarily downloaded to the ursadb machine, but
+don't worry - after indexing, samples can be safely removed - so the ursadb machine
 will only contain the index.
 
 ## Integration procedure
@@ -74,7 +74,7 @@ that you must use `Minio` server.
 
 ### 2. Deploy a minio server for test purposes
 
-(This is optional - if you already have a S3 server, you can use it)
+(This is optional - if you already have an S3 server, you can use it)
 
 We will use docker to keep things simple. Remember, that this is just for
 demonstration - our server will be neither secure nor persistent. Install docker if you don't have it already:
@@ -96,7 +96,7 @@ and call it `mquery`.
 
 ### 3. Enable S3 plugin
 
-Open mquery config file (`/opt/mquery/src/config.py` in the example installation):
+Open the Mquery config file (`/opt/mquery/src/config.py` in the example installation):
 
 ```
 vim /opt/mquery/src/config.py
@@ -128,7 +128,7 @@ Traceback (most recent call last):
 KeyError: "Required configuration key 's3_url' is not set"
 ```
 
-Navigate to mquery config page at http://localhost/config. You should see
+Navigate to the Mquery config page at http://localhost/config. You should see
 the plugin configuration there. Set all the fields:
 
 * `s3_url` to your S3 url - in our example this will be `your_ip:9000` (for
@@ -139,7 +139,7 @@ the plugin configuration there. Set all the fields:
   Create key pair in minio if you don't have one already.
 * `s3_secure` to `false` (in our example - you probably want HTTPs in production).
 
-At this point worker should be able to load plugins correctly.
+At this point, workers should be able to load plugins correctly.
 
 ### 5. Index your files
 
@@ -166,6 +166,10 @@ python3 -m utils.s3index \
     --s3-secure 0
 ```
 
+`--workdir` is used to specify directory where the samples are temporarily downloaded. This is important, because this will be the path that ursadb sees
+and stores in the index. To make things simple for yourself, you should
+always use the same working directory, for example `/var/s3/mquery`.
+
 This may take a while (or A LOT of time)), depending on how many samples you have.
 Unfortunately, this script is not parallelised, and it's not safe to run
 multiple instances of this script at once. Future versions of this script
@@ -173,5 +177,5 @@ will improve the performance.
 
 ## Next steps
 
-Congratulations, that's all! You are able to index files in s3, and query them
+Congratulations, that's all! You can index files in s3 and query them
 using mquery.
