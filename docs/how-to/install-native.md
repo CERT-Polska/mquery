@@ -146,7 +146,7 @@ Last but not least, you need ursadb running. This part is easy:
 /opt/ursadb/ursadb /var/mquery/index/db.ursa
 ```
 
-### Next steps
+## Next steps
 
 Congratulations, Mquery is now installed and working. You can now...
 

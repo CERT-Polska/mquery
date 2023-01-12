@@ -18,17 +18,19 @@ class S3Plugin(MetadataPlugin):
         "s3_bucket": "Bucket where the samples are stored.",
         "s3_access_key": "S3 access key.",
         "s3_secret_key": "S3 secret key.",
+        "s3_secure": "Use https? Set to 'true' or 'false'.",
     }
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         super().__init__(db, config)
         self.tmpfiles: List[IO[bytes]] = []
 
+        assert config["s3_secure"] in ["true", "false"]
         self.minio = Minio(
             config["s3_url"],
             config["s3_access_key"],
             config["s3_secret_key"],
-            secure=False
+            secure=config["s3_secure"] == "true"
         )
         self.bucket = config["s3_bucket"]
 
