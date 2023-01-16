@@ -74,8 +74,8 @@ There are three things checked here:
 - PE imphash is either "7a861cd9c495e1d950a43cb708a22985" or "566a7a4ef613a797389b570f8b4f79df".
 
 You probably see where this is going - all of these conditions are ignored.
-Mquery doesn't care about 2-byte fragments (or their location in the file), or file
-size, and can't compute imphash. Mquery won't be able to speed up this yara rule, and will end up running yara on every file in the dataset (slow!).
+That's because mquery doesn't care about 2-byte fragments (or their location in the file), or file
+size, and can't compute imphash. It won't be able to speed up this yara rule, and will end up running yara on every file in the dataset (slow!).
 
 ### bad case 2
 
