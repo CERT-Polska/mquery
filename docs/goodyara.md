@@ -16,7 +16,7 @@ later running real yara on them. Prefiltering works by looking at all input
 strings, splitting them into short fragments (called n-grams), and looking
 them up separately. For example, this rule:
 
-```
+```yara
 rule mquery_example
 {
     strings:
@@ -130,7 +130,7 @@ What works well then? Everything with at least one reasonably-long string.
 
 For example, this rule:
 
-```
+```yara
 rule MiniRAT_Gen_1 {
    meta:
       description = "Detects Mini RAT malware"
