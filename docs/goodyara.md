@@ -1,10 +1,10 @@
 # How to write good Yara rules
 
-In the ideal world, every Yara rule would be supported equally well by mquery.
+In an ideal world, every YARA rule would be supported equally well by mquery.
 Unfortunately, this is not the case. Some rules work great, but some are pretty slow.
 
 In this document, we will give some hints on how to make your rules more
-Mquery-friendly. It assumes you're already familiar with the Yara language.
+mquery-friendly. It assumes you're already familiar with the YARA language.
 
 We will only cover the basic rules here. To learn more read [this](./yara.md)
 document with more details.
@@ -12,7 +12,7 @@ document with more details.
 ## The basics
 
 Simplifying a lot, mquery works by first generating a list of "likely hits", and
-later running real yara on them. Prefiltering works by looking at all input
+later running real YARA on them. Prefiltering works by looking at all input
 strings, splitting them into short fragments (called n-grams), and looking
 them up separately. For example, this rule:
 
@@ -26,7 +26,7 @@ rule mquery_example
 }
 ```
 
-Is looking for a sequence o bytes {11 22 33 44 55}. Internally, mquery will
+Is looking for a sequence of bytes {11 22 33 44 55}. Internally, mquery will
 look for:
 
 - files containing a trigram {11 22 33}
@@ -34,7 +34,7 @@ look for:
 - files containing a trigram {33 44 55}
 
 And AND the resulting sets together. False positives are later sorted out by
-running a normal Yara matching on candidate files.
+running a normal YARA matching on candidate files.
 
 Not only 3grams are used. For plaintext strings and Unicode strings (a-zA-Z0-9)
 4-grams (n-grams of length 4, like "firs" and "irst") are used if enabled.
@@ -75,7 +75,7 @@ There are three things checked here:
 
 You probably see where this is going - all of these conditions are ignored.
 Mquery doesn't care about 2-byte fragments (or their location in the file), or file
-size, and can't compute imphash. Mquery won't be able to speed up this yara rule, and will end up running yara on every file in the dataset (slow!).
+size, and can't compute imphash. Mquery won't be able to speed up this YARA rule, and will end up running YARA on every file in the dataset (slow!).
 
 ### bad case 2
 
