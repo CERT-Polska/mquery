@@ -444,7 +444,7 @@ def query(
         else:
             help_message = "This is not allowed by this server."
         degenerate_rule_names = ", ".join(degenerate_rules)
-        doc_url = "https://cert-polska.github.io/mquery/docs/yara.html"
+        doc_url = "https://cert-polska.github.io/mquery/docs/goodyara.html"
         raise HTTPException(
             status_code=400,
             detail=(

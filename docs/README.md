@@ -7,6 +7,8 @@
     mquery. In simple cases it can be solved without leaving the web UI, but
     many things will require more advanced approach. Read this if you need to
     index a considerable number of files.
+- [How to write good yara rules](./goodyara.md): How to write YARA rules that
+    will work well in mquery.
 - [Yara support and limitations](./yara.md): Explains how mquery
     accelerates queries, what will, and what won't work.
 - [Utility scripts](./utils): Mquery ships with a few useful scripts.
