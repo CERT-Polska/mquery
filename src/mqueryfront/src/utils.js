@@ -5,15 +5,10 @@ const statusClassMap = {
     done: "success",
     new: "info",
     processing: "info",
-    expired: "warning",
+    expired: "warning", // TODO: remove after merging #317
     cancelled: "danger",
-    failed: "danger",
+    failed: "danger", // TODO: remove after merging #317
     removed: "dark",
-};
-
-export const getProgressBarClass = (status) => {
-    const classSufix = statusClassMap[status];
-    return "progress-bar" + (classSufix ? " bg-" + classSufix : "");
 };
 
 export const isAuthEnabled = (config) =>

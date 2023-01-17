@@ -6,6 +6,7 @@ const QueryResultsStatus = (props) => {
     const { job, matches, qhash, pagination, onCancel } = props;
     const { status, files_matched } = job;
 
+    // TODO: remove after merging #317
     if (status === "expired") {
         return (
             <div className="mquery-scroll-matches">

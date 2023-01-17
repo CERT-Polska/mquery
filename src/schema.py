@@ -24,6 +24,7 @@ class JobSchema(BaseModel):
     taints: List[str]
     datasets_left: int
     total_datasets: int
+    agents_left: int
 
 
 class JobsSchema(BaseModel):
