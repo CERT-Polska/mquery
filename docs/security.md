@@ -15,7 +15,7 @@ and disallow anonymous users or at least don't give them admin rights.
 ### Mquery daemon (agent)
 
 No special considerations. Every daemon process must have network
-access to Redis and Ursadb.
+access to Redis and UrsaDB.
 
 ### Redis
 
@@ -28,11 +28,11 @@ be available from the public network.
 ### Ursadb
 
 Mquery daemons must have network access to their respective ursadb instances.
-Similarly to Redis, it's best to restrict network access to the Ursadb instance. Ursadb protocol does not take malicious actors into account, and
+Similarly to Redis, it's best to restrict network access to the UrsaDB instance. Ursadb protocol does not take malicious actors into account, and
 unauthenticated users can, for example, remove indexed data from the database,
 or cause a denial of service.
 
-In the provided docker-compose files, the Ursadb user is overridden to root by
+In the provided docker-compose files, the UrsaDB user is overridden to root by
 default. This is for
 backwards compatibility, and to simplify deployment. For production instances
 consider running ursadb with the default user (`ursa`, UID 1000). This means

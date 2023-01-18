@@ -4,11 +4,11 @@ There are four main independent components in mquery deployments:
 
 - web frontend
 - daemons (also called "agents" or "workers")
-- Ursadb (backend database)
+- UrsaDB (backend database)
 - Redis
 
 In a normal situation, there is one web frontend, one shared Redis database, and
-for every ursadb instance, there is a group of one or more agents dedicated to
+for every UrsaDB instance, there is a group of one or more agents dedicated to
 it:
 
 ![](./distributed.png)
@@ -29,23 +29,23 @@ Fastapi framework).
 It talks with Redis directly, and schedules tasks for the workers.
 
 For some administrative tasks (like checking ongoing tasks) it also sends requests
-to ursadb directly.
+to UrsaDB directly.
 
 ### Mquery daemon (agent)
 
 The workhorse of the entire setup. There must be at least one daemon for
-every ursadb instance. Daemon's tasks include querying the assigned ursadb
+every UrsaDB instance. Daemon's tasks include querying the assigned UrsaDB
 instance for samples and running YARA rules on candidate samples.
 
 ### Redis
 
-Is just a shared database used for communication between daemon and mquery.
+It's a shared database that's used for several purposes. The main one being communication between daemon and mquery.
 It is also used as a task queue for jobs scheduled for agents. And it's also
-used for persistent storage of job results. Finally, it's used to store
-plugin configuration and job cache for agents. In short, it's pretty overloaded
+used for persistent storage of job results. Finally, it's utilized to store
+plugin configuration and job cache for agents. To sum up, it's pretty overloaded
 and used to store everything as the main database of the project.
 
-### Ursadb
+### UrsaDB
 
 Ursadb is a [separate project](https://github.com/CERT-Polska/ursadb), used in
 mquery as a backend database to optimise YARA rules. Ursadb itself has no
