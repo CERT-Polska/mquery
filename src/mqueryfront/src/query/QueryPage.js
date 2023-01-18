@@ -77,12 +77,12 @@ class QueryPageInner extends Component {
         }
     }
 
-    handleSubmitQuery(priority) {
-        this.submitJob("query", priority);
+    handleSubmitQuery() {
+        this.submitJob("query");
     }
 
     handleParseQuery() {
-        this.submitJob("parse", null);
+        this.submitJob("parse");
     }
 
     handleEditQuery() {
@@ -161,7 +161,7 @@ class QueryPageInner extends Component {
         return response ? response.data : {};
     }
 
-    async submitJob(method, priority) {
+    async submitJob(method) {
         try {
             const taints =
                 this.state.selectedTaints.map((obj) => obj.value) || [];
@@ -169,7 +169,6 @@ class QueryPageInner extends Component {
             const response = await api.post("/query", {
                 raw_yara: this.state.rawYara,
                 method: method,
-                priority: priority,
                 taints: taints,
                 force_slow_queries: this.state.forceSlowQueries,
             });

@@ -260,7 +260,6 @@ def request_query(log, i, taints=[]):
             "method": "query",
             "raw_yara": i,
             "taints": taints,
-            "priority": "low",
         },
     )
     log.info("API response: %s", res.json())
