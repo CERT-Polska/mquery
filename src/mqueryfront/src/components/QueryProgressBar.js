@@ -1,9 +1,36 @@
 import React from "react";
 import ActionCancel from "./ActionCancel";
 import QueryTimer from "./QueryTimer";
-import { isStatusFinished, getProgressBarClass } from "../utils";
+import { isStatusFinished } from "../utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
+
+const finalProgressBar = (job, text, cssBg) => (
+    <div>
+        <div className="progress">
+            <div
+                className={"progress-bar " + cssBg}
+                role="progressbar"
+                style={{ width: "100%" }}
+                data-toggle="tooltip"
+                title={text}
+            >
+                {text}
+            </div>
+        </div>
+        <div>
+            <div className="float-right">
+                <QueryTimer
+                    job={job}
+                    isFinished={true}
+                    duration={true}
+                    countDown={true}
+                />
+            </div>
+            <div className="clearfix"></div>
+        </div>
+    </div>
+);
 
 const QueryProgressBar = (props) => {
     const { job, compact, onCancel } = props;
@@ -16,66 +43,72 @@ const QueryProgressBar = (props) => {
         files_matched,
         total_datasets,
         datasets_left,
+        agents_left,
     } = job;
+
+    const getPercentage = (files) =>
+        total_files ? Math.round((files * datasetFrac * 100) / total_files) : 0;
 
     const datasetsDone = total_datasets - datasets_left;
     const datasetFrac = total_datasets > 0 ? datasetsDone / total_datasets : 0;
     const datasetPct = Math.round(datasetFrac * 100);
 
-    const getPercentage = (files) =>
-        total_files ? Math.round((files * datasetFrac * 100) / total_files) : 0;
+    // TODO: remove the "failed" status after merging #317
+    if (status == "cancelled" || status == "failed") {
+        return finalProgressBar(job, "query cancelled", "bg-danger");
+    }
 
     const isFinished = isStatusFinished(status);
     const inProgeressPct = getPercentage(files_in_progress);
     const erroredPct = getPercentage(files_errored);
+    const filesSuccess = files_processed - files_errored;
     const processedPct =
-        total_files === 0 && isFinished ? 100 : getPercentage(files_processed);
+        total_files === 0 && isFinished ? 100 : getPercentage(filesSuccess);
 
-    const errorString = files_errored === 1 ? "error" : "errors";
-    const errorTooltip = `${files_errored} ${errorString} during processing`;
-
+    let statusInfo = "";
     const matches = `${files_matched} matches`;
-    let statusInfo = null;
-    if (total_datasets === 0 && status === "new") {
-        statusInfo = "Collecting datasets...";
-    } else if (datasets_left > 0) {
-        statusInfo = `Searching for candidates: ${datasetsDone}/${total_datasets} (${datasetPct}%)...`;
-    } else if (status === "processing") {
-        statusInfo = `Matching Yara: ${files_processed} / ${total_files} (${processedPct}%), ${matches}`;
+    const matches_long = `${matches} (out of ${total_files} candidates)`;
+    if (agents_left > 0) {
+        statusInfo += `Backends working: ${agents_left}. `;
     }
-
+    if (total_datasets === 0 && status === "new") {
+        statusInfo += "Collecting datasets. ";
+    }
+    if (datasets_left > 0) {
+        statusInfo += `Querying datasets: ${datasetsDone}/${total_datasets} (${datasetPct}%). `;
+    }
+    if (status === "processing" && files_processed < total_files) {
+        statusInfo += `Matching Yara: ${files_processed} / ${total_files} (${processedPct}%), ${matches}. `;
+    }
     return (
         <div>
             <div className="progress">
                 <div
-                    className={getProgressBarClass(status)}
+                    className={"progress-bar bg-success"}
                     role="progressbar"
                     style={{ width: processedPct + "%" }}
                     data-toggle="tooltip"
-                    title={status}
+                    title={`${filesSuccess} files checked`}
                 >
                     {Math.round(processedPct)}%
                 </div>
-                {total_files > 0 && inProgeressPct > 0 && (
-                    <div
-                        className={"progress-bar bg-warning"}
-                        role="progressbar"
-                        style={{ width: inProgeressPct + "%" }}
-                    ></div>
-                )}
-                {files_errored > 0 && (
-                    <div
-                        className={"progress-bar bg-danger"}
-                        role="progressbar"
-                        style={{ width: erroredPct + "%" }}
-                        data-toggle="tooltip"
-                        title={errorTooltip}
-                    />
-                )}
+                <div
+                    className={"progress-bar bg-warning"}
+                    role="progressbar"
+                    style={{ width: inProgeressPct + "%" }}
+                    title={`${files_in_progress} files in progress`}
+                ></div>
+                <div
+                    className={"progress-bar bg-danger"}
+                    role="progressbar"
+                    style={{ width: erroredPct + "%" }}
+                    data-toggle="tooltip"
+                    title={`${files_errored} files errored when checking`}
+                />
             </div>
             <div className={compact ? "small" : ""}>
                 <div className="float-left">
-                    {statusInfo && (
+                    {!isFinished && (
                         <FontAwesomeIcon
                             icon={faSpinner}
                             spin
@@ -83,7 +116,7 @@ const QueryProgressBar = (props) => {
                             className="me-1"
                         />
                     )}
-                    {statusInfo || matches}
+                    {statusInfo || (compact ? matches : matches_long)}
                 </div>
                 <div className="float-right">
                     <QueryTimer

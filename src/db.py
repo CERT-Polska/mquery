@@ -111,6 +111,7 @@ class Database:
             taints=json.loads(data.get("taints", "[]")),
             total_datasets=data.get("total_datasets", 0),
             datasets_left=data.get("datasets_left", 0),
+            agents_left=data.get("agents_left", 0),
         )
 
     def remove_query(self, job: JobId) -> None:
