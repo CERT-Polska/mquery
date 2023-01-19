@@ -5,7 +5,7 @@ Data format in redis can and does change between mquery releases.
 
 ### Why redis?
 
-Because very early daemon was a trivial piece of code, and redis as a job
+Because very early daemon was a trivial piece of code, and Redis as a job
 queue was the easiest solution. Since then mquery got extended with (in
 no particular order) batching, users, jobs, commands, task cancellations,
 distributed agents, configuration, and more.
