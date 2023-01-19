@@ -16,5 +16,6 @@ be connected to multiple mquery servers:
 ![](./distribured-rev.png)
 
 All of mquery's core functionality works in this setup, but there are some
-rough edges. Most notably, HTTP file download is hard to get working
-correctly (but hashes are computed and shown correctly).
+deployment problems. For example, web interface assumes that the samples are stored
+(or mounted) at the same location as in the workers. If that's not the case,
+it can be corrected with custom [plugins](./plugins.md).
