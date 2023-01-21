@@ -149,13 +149,14 @@ class Database:
     def job_update_work(
         self, job: JobId, processed: int, matched: int, errored: int
     ) -> None:
-        """Update progress for the job. This will increment number of files processed
-        and matched, and if as a result all files are processed, will change the job
-        status to `done`"""
-        self.redis.hincrby(f"job:{job}", "files_processed", processed)
+        """Updates progress for the job. This will increment numbers processed,
+        inprogress, errored and matched files.
+        This will return the number of processed files after the operation."""
+        files = self.redis.hincrby(f"job:{job}", "files_processed", processed)
         self.redis.hincrby(f"job:{job}", "files_in_progress", -processed)
         self.redis.hincrby(f"job:{job}", "files_matched", matched)
         self.redis.hincrby(f"job:{job}", "files_errored", errored)
+        return files
 
     def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
         """Sets total_datasets and datasets_left, and status to processing"""

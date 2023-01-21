@@ -113,7 +113,14 @@ class Agent:
                 num_errors += 1
 
         self.plugins.cleanup()
-        self.db.job_update_work(job.id, num_files, num_matches, num_errors)
+        new_processed = self.db.job_update_work(
+            job.id, num_files, num_matches, num_errors
+        )
+        if new_processed > config.YARA_LIMIT:
+            self.db.fail_job(
+                job,
+                f"Configured limit of yara matches ({config.YARA_LIMIT}) exceeded"
+            )
 
     def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:
         """See documentation of db.agent_add_tasks_in_progress"""
