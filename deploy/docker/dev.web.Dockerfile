@@ -4,10 +4,9 @@ WORKDIR /usr/src/app/src
 
 RUN apt update; apt install -y cmake
 
-# plugin requirements
-# requirements.txt is added because at least one file must exist
+# mquery and plugin requirements
 COPY requirements.txt src/plugins/requirements-*.txt /tmp/
-RUN ls /tmp/requirements-*.txt | xargs -i,, pip --no-cache-dir install -r ,,
+RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 
 # ./src is expected to be mounted with a docker volume
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000", "--reload"]
