@@ -545,6 +545,9 @@ def server() -> ServerSchema:
         auth_enabled=db.get_mquery_config_key("auth_enabled"),
         openid_url=db.get_mquery_config_key("openid_url"),
         openid_client_id=db.get_mquery_config_key("openid_client_id"),
+        # This is - of course - subject to change. I want to use typed config
+        # for this. For now, this PR is a draft.
+        about="Hello world from this <b>mquery</b> instance."
     )
 
 

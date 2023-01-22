@@ -130,3 +130,5 @@ class ServerSchema(BaseModel):
     auth_enabled: Optional[str]
     openid_url: Optional[str]
     openid_client_id: Optional[str]
+    about: Optional[str]
+    """HTML code to be displayed on the /about page."""

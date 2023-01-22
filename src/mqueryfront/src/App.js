@@ -5,6 +5,7 @@ import QueryPage from "./query/QueryPage";
 import RecentPage from "./recent/RecentPage";
 import StatusPage from "./status/StatusPage";
 import ConfigPage from "./config/ConfigPage";
+import AboutPage from "./about/AboutPage";
 import AuthPage from "./auth/AuthPage";
 import api, { parseJWT } from "./api";
 import "./App.css";
@@ -49,6 +50,11 @@ function App() {
                 <Route exact path="/recent" element={<RecentPage />} />
                 <Route exact path="/config" element={<ConfigPage />} />
                 <Route exact path="/status" element={<StatusPage />} />
+                <Route
+                    exact
+                    path="/about"
+                    element={<AboutPage config={config} />}
+                />
                 <Route
                     exact
                     path="/auth"
