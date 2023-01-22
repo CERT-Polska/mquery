@@ -79,6 +79,11 @@ class Database:
     def get_job(self, job: JobId) -> JobSchema:
         """Retrieves a job from the database. Tries to fix corrupted objects"""
         data = self.redis.hgetall(f"job:{job}")
+        if data.get("status") in ["expired", "failed"]:
+            # There is no support for migrations in Redis "databases".
+            # These are old statuses, not used in the new versions anymore.
+            data["status"] = "cancelled"
+
         return JobSchema(
             id=job,
             status=data.get("status", "ERROR"),

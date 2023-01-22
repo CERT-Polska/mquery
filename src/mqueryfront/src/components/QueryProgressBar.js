@@ -53,8 +53,7 @@ const QueryProgressBar = (props) => {
     const datasetFrac = total_datasets > 0 ? datasetsDone / total_datasets : 0;
     const datasetPct = Math.round(datasetFrac * 100);
 
-    // TODO: remove the "failed" status after merging #317
-    if (status == "cancelled" || status == "failed") {
+    if (status == "cancelled") {
         return finalProgressBar(job, "query cancelled", "bg-danger");
     }
 
