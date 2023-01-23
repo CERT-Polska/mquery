@@ -1,13 +1,11 @@
 export const isStatusFinished = (status) =>
-    ["done", "cancelled", "failed", "expired", "removed"].includes(status);
+    ["done", "cancelled", "removed"].includes(status);
 
 const statusClassMap = {
     done: "success",
     new: "info",
     processing: "info",
-    expired: "warning", // TODO: remove after merging #317
     cancelled: "danger",
-    failed: "danger", // TODO: remove after merging #317
     removed: "dark",
 };
 

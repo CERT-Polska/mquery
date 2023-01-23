@@ -77,7 +77,7 @@ def process_job(
 
             offset += 1
 
-        FINISHED_STATES = ["cancelled", "failed", "done", "removed"]
+        FINISHED_STATES = ["cancelled", "done"]
         if not matches:
             if out["job"]["status"] in FINISHED_STATES:
                 break
