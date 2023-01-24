@@ -9,8 +9,8 @@ def parse_plugin_list(plugins: str) -> List[str]:
     """Parses and validates a plugin list into a list of non-empty components
     divided by `,`.
 
-    >>> parse_plugin_list("plugins.Test, plugins.Other")
-    ["plugins.Test", "plugins.Other"]
+    >>> parse_plugin_list("plugins.Test:A, plugins.Other:A")
+    ["plugins.Test:A", "plugins.Other:A"]
 
     >>> parse_plugin_list("")
     []
@@ -38,8 +38,8 @@ def load_plugins(specs: List[str]) -> List[Type[MetadataPlugin]]:
 
 
 class PluginManager:
-    def __init__(self, specs: List[str], db: Database) -> None:
-        self.plugin_classes = load_plugins(specs)
+    def __init__(self, spec: str, db: Database) -> None:
+        self.plugin_classes = load_plugins(parse_plugin_list(spec))
 
         active_plugins = []
         for plugin_class in self.plugin_classes:

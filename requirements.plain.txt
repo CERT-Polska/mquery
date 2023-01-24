@@ -9,3 +9,4 @@ yara-python
 yaramod
 cachetools
 pyjwt[crypto]
+typed-config

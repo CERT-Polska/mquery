@@ -32,7 +32,6 @@ Docker compose dedicated for developers.
 ```
 git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
 cd mquery
-cp src/config.docker.py src/config.py
 # now set SAMPLES_DIR to a directory with your files, and INDEX_DIR to
 # empty directory for database files to live in. By default database will
 # expect files in ./samples directory, and keep index in ./index.

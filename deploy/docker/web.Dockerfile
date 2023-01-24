@@ -17,5 +17,4 @@ RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 
 COPY "src/." "."
 COPY --from=build "/app/build" "./mqueryfront/build"
-COPY "src/config.docker.py" "config.py"
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5000"]

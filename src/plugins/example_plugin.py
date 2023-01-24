@@ -1,9 +1,11 @@
 from db import Database
-
 from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 
 class ExampleTagPlugin(MetadataPlugin):
+    """This plugin is a minimal (almost) example of extractor plugin.
+    It will tag every processed file with configured tag and URL."""
+
     cacheable = True
     is_extractor = True
     config_fields = {

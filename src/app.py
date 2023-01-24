@@ -3,7 +3,7 @@ import os
 from threading import Lock
 
 import uvicorn  # type: ignore
-import config
+from config import app_config
 from fastapi import (
     FastAPI,
     Body,
@@ -48,9 +48,9 @@ from schema import (
 )
 
 
-db = Database(config.REDIS_HOST, config.REDIS_PORT)
+db = Database(app_config.redis.host, app_config.redis.port)
 app = FastAPI()
-plugins = PluginManager(config.PLUGINS, db)
+plugins = PluginManager(app_config.mquery.plugins, db)
 plugin_lock = Lock()
 
 

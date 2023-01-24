@@ -22,3 +22,4 @@ yara-python==4.1.3
 yaramod==3.12.1
 PyJWT[crypto]==2.3.0
 rq==1.11.1
+typed-config==1.3.2

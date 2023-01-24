@@ -8,6 +8,5 @@ RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 
 COPY "src/" "/app"
 RUN chmod +x "/app/daemon.py"
-COPY "src/config.docker.py" "/app/config.py"
 
 ENTRYPOINT ["/app/daemon.py"]
