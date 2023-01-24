@@ -116,10 +116,11 @@ class Agent:
         new_processed = self.db.job_update_work(
             job.id, num_files, num_matches, num_errors
         )
-        if new_processed > config.YARA_LIMIT:
+        yara_limit = app_config.mquery.yara_limit
+        if yara_limit != 0 and new_processed > yara_limit:
             self.db.fail_job(
-                job,
-                f"Configured limit of yara matches ({config.YARA_LIMIT}) exceeded"
+                job.id,
+                f"Configured limit of yara matches ({yara_limit}) exceeded. "
             )
 
     def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:
