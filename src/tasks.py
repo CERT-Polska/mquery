@@ -26,7 +26,8 @@ class Agent:
         self.ursa = UrsaDb(self.ursa_url)
         self.plugins = PluginManager(app_config.mquery.plugins, self.db)
         self.queue = Queue(
-            group_id, connection=Redis(app_config.redis.host, app_config.redis.port)
+            group_id,
+            connection=Redis(app_config.redis.host, app_config.redis.port),
         )
 
     def register(self) -> None:
