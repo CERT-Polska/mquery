@@ -13,6 +13,7 @@ class RedisConfig(Config):
 class MqueryConfig(Config):
     backend = key(cast=str, required=False, default="tcp://127.0.0.1:9281")
     plugins = key(cast=str, required=False, default="")
+    about = key(cast=str, required=False, default="")
 
 
 class AppConfig(Config):
