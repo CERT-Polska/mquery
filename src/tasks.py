@@ -120,7 +120,7 @@ class Agent:
         if yara_limit != 0 and new_processed > yara_limit:
             self.db.fail_job(
                 job.id,
-                f"Configured limit of yara matches ({yara_limit}) exceeded. "
+                f"Configured limit of yara matches ({yara_limit}) exceeded",
             )
 
     def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:
