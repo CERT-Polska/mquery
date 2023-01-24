@@ -148,7 +148,7 @@ class Database:
 
     def job_update_work(
         self, job: JobId, processed: int, matched: int, errored: int
-    ) -> None:
+    ) -> int:
         """Updates progress for the job. This will increment numbers processed,
         inprogress, errored and matched files.
         This will return the number of processed files after the operation."""
