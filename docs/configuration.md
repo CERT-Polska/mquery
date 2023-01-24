@@ -31,6 +31,15 @@ the ini section name with a key name - for example, to change redis host
 value use `REDIS_HOST`. Environment variables take precedence over values
 from the config file!
 
+Currently, supported configuration keys are:
+
+- `redis.host`: Hostname of a main redis server.
+- `redis.port`: Port of a main redis server.
+- `mquery.backend`: URL to a ursadb instance (for example,
+  `tcp://ursadb-server:9281`)
+- `mquery.plugins`: List of supported plugins, separated by commas (for
+  example `plugins.archive:GzipPlugin, plugins.custom:CustomPlugin`)
+
 ## Mquery plugin configuration
 
 In contrast to the core configuration, plugins can be configured dynamically.
