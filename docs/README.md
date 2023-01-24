@@ -3,6 +3,7 @@
 ## User guide
 
 - [Installation](../INSTALL.md): Installation instruction.
+- [Configuration](./configuration.md): Additional configuration options.
 - [Components](./components.md): More detailed description of mquery components.
 - [Indexing](./indexing.md): Indexing files is one of the most important things in
     mquery. In simple cases it can be solved without leaving the web UI, but

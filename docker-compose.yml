@@ -15,7 +15,8 @@ services:
       - "redis"
       - "ursadb"
     environment:
-      - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
+      - "REDIS_HOST=redis"
+      - "MQUERY_BACKEND=tcp://ursadb:9281"
   daemon:
     restart: always
     build:
@@ -30,7 +31,8 @@ services:
       - "redis"
       - "ursadb"
     environment:
-      - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
+      - "REDIS_HOST=redis"
+      - "MQUERY_BACKEND=tcp://ursadb:9281"
   ursadb:
     restart: always
     image: mqueryci/ursadb:v1.5.1

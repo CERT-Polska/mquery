@@ -4,7 +4,7 @@ from lib.ursadb import Json, UrsaDb
 from schema import JobSchema
 from lib.yaraparse import parse_yara, combine_rules
 from plugins import PluginManager
-import config
+from config import app_config
 from rq import get_current_job, Queue  # type: ignore
 from db import Database, JobId, MatchInfo
 from redis import Redis
@@ -21,12 +21,13 @@ class Agent:
         single group, but they must all work on the same ursadb instance.
         Reads connection parameters and plugins from the global config."""
         self.group_id = group_id
-        self.ursa_url = config.BACKEND
-        self.db = Database(config.REDIS_HOST, config.REDIS_PORT)
+        self.ursa_url = app_config.mquery.backend
+        self.db = Database(app_config.redis.host, app_config.redis.port)
         self.ursa = UrsaDb(self.ursa_url)
-        self.plugins = PluginManager(config.PLUGINS, self.db)
+        self.plugins = PluginManager(app_config.mquery.plugins, self.db)
         self.queue = Queue(
-            group_id, connection=Redis(config.REDIS_HOST, config.REDIS_PORT)
+            group_id,
+            connection=Redis(app_config.redis.host, app_config.redis.port),
         )
 
     def register(self) -> None:

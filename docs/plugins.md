@@ -13,19 +13,19 @@ by plugins.
 
 ![](plugin-config.png)
 
-To add a new plugin to the system, you need to change PLUGINS key in
-`config.py` for bare metal setup. For example:
+To add a new plugin to the system, you need to change mquery.plugins key in
+[the config](./configuration.md). For example:
 
 ```python
-PLUGINS = ["plugins.mwdb_uploads:MalwarecageUploadsMetadata"]
+[mquery]
+plugins=plugins.mwdb_uploads:MalwarecageUploadsMetadata
 ```
 
 To load a plugin `MalwarecageUploadsMetadata` from `plugins.mwdb_uploads`
 module.
 
-To load plugins with docker-compose deployment, you can change
-`MQUERY_PLUGINS` environment variable in the container to load existing
-plugin, but to load your own plugin you need to create your own image.
+Remember that you can also use environment variable MQUERY_PLUGINS to do the
+same thing - this may be useful for docker-based deployments.
 
 ## Filter plugins
 

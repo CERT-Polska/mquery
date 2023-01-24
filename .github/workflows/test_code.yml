@@ -28,8 +28,6 @@ jobs:
         run: pip3 install mypy==0.790
       - name: install requirements
         run: pip3 install -r requirements.txt
-      - name: copy config
-        run: cp src/config.example.py src/config.py
       - name: run mypy
         run: mypy src
   test_python_style:
@@ -41,8 +39,6 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.10'
-      - name: copy config
-        run: cp src/config.example.py src/config.py
       - name: install flake8==3.7.9
         run: pip3 install flake8==3.7.9
       - name: run flake8
@@ -56,8 +52,6 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: '3.10'
-      - name: copy config
-        run: cp src/config.example.py src/config.py
       - name: install black
         run: pip3 install black==22.3.0
       - name: run black
@@ -115,6 +109,9 @@ jobs:
         run: docker-compose up --scale daemon=1 --build -d
       - name: run e2e tests
         run: docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
+      - name: get run logs
+        if: always()
+        run: docker-compose logs
       - name: stop docker compose
         if: always()
         run: docker-compose down
