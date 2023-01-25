@@ -6,3 +6,4 @@ venv/
 samples/
 index/
 .env
+mquery.ini
