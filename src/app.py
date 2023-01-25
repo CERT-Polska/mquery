@@ -545,6 +545,7 @@ def server() -> ServerSchema:
         auth_enabled=db.get_mquery_config_key("auth_enabled"),
         openid_url=db.get_mquery_config_key("openid_url"),
         openid_client_id=db.get_mquery_config_key("openid_client_id"),
+        about=app_config.mquery.about,
     )
 
 

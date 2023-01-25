@@ -20,6 +20,8 @@ class MqueryConfig(Config):
     plugins = key(cast=str, required=False, default="")
     # Maximum number of yara-scanned files per query (0 means no limit).
     yara_limit = key(cast=int, required=False, default=0)
+    # Html code to be displayed on the about page. 
+    about = key(cast=str, required=False, default="")
 
 
 class AppConfig(Config):

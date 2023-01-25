@@ -130,3 +130,4 @@ class ServerSchema(BaseModel):
     auth_enabled: Optional[str]
     openid_url: Optional[str]
     openid_client_id: Optional[str]
+    about: str
