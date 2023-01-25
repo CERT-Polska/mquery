@@ -151,7 +151,7 @@ class Database:
     ) -> int:
         """Updates progress for the job. This will increment numbers processed,
         inprogress, errored and matched files.
-        This will return the number of processed files after the operation."""
+        Returns the number of processed files after the operation."""
         files = self.redis.hincrby(f"job:{job}", "files_processed", processed)
         self.redis.hincrby(f"job:{job}", "files_in_progress", -processed)
         self.redis.hincrby(f"job:{job}", "files_matched", matched)
