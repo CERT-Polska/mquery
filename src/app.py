@@ -559,6 +559,7 @@ def serve_index(path: str) -> FileResponse:
 @app.get("/query", include_in_schema=False)
 @app.get("/config", include_in_schema=False)
 @app.get("/auth", include_in_schema=False)
+@app.get("/about", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     # Static routes are always publicly accessible without authorisation.
     return FileResponse("mqueryfront/build/index.html")
