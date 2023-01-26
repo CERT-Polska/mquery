@@ -118,9 +118,14 @@ class Agent:
         )
         yara_limit = app_config.mquery.yara_limit
         if yara_limit != 0 and new_processed > yara_limit:
+            scan_percent = new_processed / job.total_files
+            scanned_datasets = job.total_datasets - job.datasets_left
+            dataset_percent = scanned_datasets / job.total_datasets
             self.db.fail_job(
                 job.id,
-                f"Configured limit of yara matches ({yara_limit}) exceeded",
+                f"Configured limit of {yara_limit} YARA matches exceeded. "
+                f"Scanned {new_processed}/{job.total_files} ({scan_percent:.0%}) of candidates "
+                f"in {scanned_datasets}/{job.total_datasets} ({dataset_percent:.0%}) of datasets.",
             )
 
     def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:

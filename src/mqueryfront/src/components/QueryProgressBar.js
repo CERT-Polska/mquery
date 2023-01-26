@@ -5,13 +5,13 @@ import { isStatusFinished } from "../utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSpinner } from "@fortawesome/free-solid-svg-icons";
 
-const finalProgressBar = (job, text, cssBg) => (
+const finalProgressBar = (job, text, cssBg, progress = 100) => (
     <div>
         <div className="progress">
             <div
                 className={"progress-bar " + cssBg}
                 role="progressbar"
-                style={{ width: "100%" }}
+                style={{ width: `${progress}%` }}
                 data-toggle="tooltip"
                 title={text}
             >
@@ -53,16 +53,17 @@ const QueryProgressBar = (props) => {
     const datasetFrac = total_datasets > 0 ? datasetsDone / total_datasets : 0;
     const datasetPct = Math.round(datasetFrac * 100);
 
-    if (status == "cancelled") {
-        return finalProgressBar(job, "query cancelled", "bg-danger");
-    }
-
     const isFinished = isStatusFinished(status);
     const inProgeressPct = getPercentage(files_in_progress);
     const erroredPct = getPercentage(files_errored);
     const filesSuccess = files_processed - files_errored;
     const processedPct =
         total_files === 0 && isFinished ? 100 : getPercentage(filesSuccess);
+
+    if (status == "cancelled") {
+        const percent = processedPct;
+        return finalProgressBar(job, "query cancelled", "bg-danger", percent);
+    }
 
     let statusInfo = "";
     const matches = `${files_matched} matches`;
