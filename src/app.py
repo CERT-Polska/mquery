@@ -191,6 +191,7 @@ def expand_role(role: str) -> List[str]:
         "admin": [
             "user",
             "can_list_all_queries",
+            "can_manage_all_queries",
         ],
         "user": [
             "can_view_queries",
@@ -198,6 +199,8 @@ def expand_role(role: str) -> List[str]:
             "can_list_queries",
             "can_download_files",
         ],
+        "can_manage_all_queries": ["can_manage_queries"],
+        "can_list_all_queries": ["can_list_queries"],
     }
     implied_roles = [role]
     for subrole in role_implications.get(role, []):
@@ -386,8 +389,7 @@ async def download_files(job_id: str) -> StreamingResponse:
     dependencies=[Depends(can_manage_queries)],
 )
 def query(
-    data: QueryRequestSchema = Body(...),
-    user: User = Depends(current_user)
+    data: QueryRequestSchema = Body(...), user: User = Depends(current_user)
 ) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
     """
     Starts a new search. Response will contain a new job ID that can be used
@@ -503,10 +505,20 @@ def job_info(job_id: str) -> JobSchema:
     tags=["stable"],
     dependencies=[Depends(can_manage_queries)],
 )
-def job_cancel(job_id: str) -> StatusSchema:
+def job_cancel(
+    job_id: str, user: User = Depends(current_user)
+) -> StatusSchema:
     """
     Cancels the job with a provided `job_id`.
     """
+    if "can_manage_all_queries" not in get_user_roles(user):
+        job = db.get_job(job_id)
+        if job.rule_author != user.name:
+            raise HTTPException(
+                status_code=400,
+                detail="You don't have enough permissions to cancel this job.",
+            )
+
     db.cancel_job(job_id)
     return StatusSchema(status="ok")
 
@@ -525,7 +537,6 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     jobs = [db.get_job(job) for job in db.get_job_ids()]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
     jobs = [j for j in jobs if j.status != "removed"]
-    print(get_user_roles(user))
     if "can_list_all_queries" not in get_user_roles(user):
         jobs = [j for j in jobs if j.rule_author == user.name]
 
@@ -537,7 +548,17 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     response_model=StatusSchema,
     dependencies=[Depends(can_manage_queries)],
 )
-def query_remove(job_id: str) -> StatusSchema:
+def query_remove(
+    job_id: str, user: User = Depends(current_user)
+) -> StatusSchema:
+    if "can_manage_all_queries" not in get_user_roles(user):
+        job = db.get_job(job_id)
+        if job.rule_author != user.name:
+            raise HTTPException(
+                status_code=400,
+                detail="You don't have enough permissions to remove this job.",
+            )
+
     db.remove_query(job_id)
     return StatusSchema(status="ok")
 
