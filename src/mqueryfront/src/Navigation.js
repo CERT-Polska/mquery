@@ -46,8 +46,8 @@ function Navigation(props) {
                 <button
                     className="navbar-toggler"
                     type="button"
-                    data-toggle="collapse"
-                    data-target="#navbarSupportedContent"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent"
                     aria-controls="navbarSupportedContent"
                     aria-expanded="false"
                     aria-label="Toggle navigation"
