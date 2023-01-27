@@ -131,3 +131,4 @@ class ServerSchema(BaseModel):
     openid_url: Optional[str]
     openid_client_id: Optional[str]
     about: str
+    roles: List[str]

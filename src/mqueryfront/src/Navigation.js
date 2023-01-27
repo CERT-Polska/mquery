@@ -6,20 +6,13 @@ import { isAuthEnabled, openidLoginUrl } from "./utils";
 function Navigation(props) {
     const authEnabled = isAuthEnabled(props.config);
     const aboutHtml = props.config ? props.config.about : null;
+    const roles = props.config ? props.config.roles : [];
+    const isAdmin = roles.includes("admin");
+    const canListQueries = roles.includes("can_list_queries");
     let loginElm = null;
-    let isAdmin = false;
     if (!authEnabled) {
-        isAdmin = true; // Auth is disabled - everyone is an admin.
         loginElm = null;
     } else if (props.session != null) {
-        try {
-            const clientId = props.config["openid_client_id"];
-            const roles = props.session["resource_access"][clientId]["roles"];
-            isAdmin = roles.includes("admin");
-        } catch {
-            // In case session is corrupted, don't crash the entire webpage.
-            isAdmin = false;
-        }
         loginElm = (
             <li className="nav-item nav-right">
                 <a className="nav-link" href="#" onClick={props.logout}>
@@ -65,11 +58,12 @@ function Navigation(props) {
                                 Query
                             </Link>
                         </li>
+                        {canListQueries ?
                         <li className="nav-item">
                             <Link className="nav-link" to={"/recent"}>
                                 Recent jobs
                             </Link>
-                        </li>
+                        </li> : null}
                         {isAdmin ? (
                             <li className="nav-item">
                                 <Link className="nav-link" to={"/config"}>

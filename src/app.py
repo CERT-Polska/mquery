@@ -149,17 +149,7 @@ class RoleChecker:
         if not auth_enabled or auth_enabled == "false":
             return
 
-        client_id = db.get_mquery_config_key("openid_client_id")
-        user_roles = user.roles(client_id)
-        auth_default_roles = db.get_mquery_config_key("auth_default_roles")
-        if auth_default_roles is None:
-            default_roles = []
-        else:
-            default_roles = [
-                role.strip() for role in auth_default_roles.split(",")
-            ]
-        all_roles = list(set(user_roles + default_roles))
-        all_roles = sum((expand_role(role) for role in all_roles), [])
+        all_roles = get_user_roles(user)
 
         if not any(role in self.need_permissions for role in all_roles):
             message = (
@@ -183,17 +173,33 @@ can_list_queries = RoleChecker(["can_list_queries"])
 can_download_files = RoleChecker(["can_download_files"])
 
 
+def get_user_roles(user: User) -> List[str]:
+    client_id = db.get_mquery_config_key("openid_client_id")
+    user_roles = user.roles(client_id)
+    auth_default_roles = db.get_mquery_config_key("auth_default_roles")
+    if not auth_default_roles:
+        auth_default_roles = "admin"
+    default_roles = [role.strip() for role in auth_default_roles.split(",")]
+    all_roles = set(user_roles + default_roles)
+    return sum((expand_role(role) for role in all_roles), [])
+
 def expand_role(role: str) -> List[str]:
     """Some roles imply other roles or permissions. For example, admin role
     also gives permissions for all user permissions."""
     role_implications = {
+        # Admin is allowed to do everything.
         "admin": ["user"],
+        # User has full read/write permissions to all queries.
         "user": [
+            "can_list_queries",
+            "basic_user",
+        ],
+        # Shared user can run queries, but can't list them.
+        "basic_user": [
             "can_view_queries",
             "can_manage_queries",
-            "can_list_queries",
             "can_download_files",
-        ],
+        ]
     }
     implied_roles = [role]
     for subrole in role_implications.get(role, []):
@@ -368,7 +374,7 @@ def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
 
 @app.get(
     "/api/download/files/{job_id}",
-    dependencies=[Depends(is_user), Depends(can_download_files)],
+    dependencies=[Depends(can_download_files)],
 )
 async def download_files(job_id: str) -> StreamingResponse:
     matches = db.get_job_matches(job_id).matches
@@ -539,13 +545,14 @@ def query_remove(job_id: str) -> StatusSchema:
 
 
 @app.get("/api/server", response_model=ServerSchema, tags=["stable"])
-def server() -> ServerSchema:
+def server(user: User = Depends(current_user)) -> ServerSchema:
     return ServerSchema(
         version=mquery_version(),
         auth_enabled=db.get_mquery_config_key("auth_enabled"),
         openid_url=db.get_mquery_config_key("openid_url"),
         openid_client_id=db.get_mquery_config_key("openid_client_id"),
         about=app_config.mquery.about,
+        roles=get_user_roles(user)
     )
 
 
