@@ -89,7 +89,7 @@ class Database:
             status=data.get("status", "ERROR"),
             error=data.get("error", None),
             rule_name=data.get("rule_name", "ERROR"),
-            rule_author=data.get("rule_author", None),
+            rule_author=data.get("rule_author", "unknown"),
             raw_yara=data.get("raw_yara", "ERROR"),
             submitted=data.get("submitted", 0),
             finished=data.get("finished", None),

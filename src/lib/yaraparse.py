@@ -126,14 +126,6 @@ class YaraRuleData:
     def is_private(self) -> bool:
         return self.rule.is_private
 
-    @property
-    def author(self) -> str:
-        author_meta = self.rule.get_meta_with_name("author")
-        if author_meta:
-            return author_meta.value.pure_text
-        else:
-            return ""
-
 
 def ursify_hex(hex_str: str) -> UrsaExpression:
     # easier to manage

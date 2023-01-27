@@ -149,17 +149,7 @@ class RoleChecker:
         if not auth_enabled or auth_enabled == "false":
             return
 
-        client_id = db.get_mquery_config_key("openid_client_id")
-        user_roles = user.roles(client_id)
-        auth_default_roles = db.get_mquery_config_key("auth_default_roles")
-        if auth_default_roles is None:
-            default_roles = []
-        else:
-            default_roles = [
-                role.strip() for role in auth_default_roles.split(",")
-            ]
-        all_roles = list(set(user_roles + default_roles))
-        all_roles = sum((expand_role(role) for role in all_roles), [])
+        all_roles = get_user_roles(user)
 
         if not any(role in self.need_permissions for role in all_roles):
             message = (
@@ -183,11 +173,25 @@ can_list_queries = RoleChecker(["can_list_queries"])
 can_download_files = RoleChecker(["can_download_files"])
 
 
+def get_user_roles(user: User) -> List[str]:
+    client_id = db.get_mquery_config_key("openid_client_id")
+    user_roles = user.roles(client_id)
+    auth_default_roles = db.get_mquery_config_key("auth_default_roles")
+    if not auth_default_roles:
+        auth_default_roles = "admin"
+    default_roles = [role.strip() for role in auth_default_roles.split(",")]
+    all_roles = set(user_roles + default_roles)
+    return sum((expand_role(role) for role in all_roles), [])
+
+
 def expand_role(role: str) -> List[str]:
     """Some roles imply other roles or permissions. For example, admin role
     also gives permissions for all user permissions."""
     role_implications = {
-        "admin": ["user"],
+        "admin": [
+            "user",
+            "can_list_all_queries",
+        ],
         "user": [
             "can_view_queries",
             "can_manage_queries",
@@ -383,6 +387,7 @@ async def download_files(job_id: str) -> StreamingResponse:
 )
 def query(
     data: QueryRequestSchema = Body(...),
+    user: User = Depends(current_user)
 ) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
     """
     Starts a new search. Response will contain a new job ID that can be used
@@ -402,7 +407,7 @@ def query(
         return [
             ParseResponseSchema(
                 rule_name=rule.name,
-                rule_author=rule.author,
+                rule_author=user.name,
                 is_global=rule.is_global,
                 is_private=rule.is_private,
                 is_degenerate=rule.parse().is_degenerate,
@@ -451,7 +456,7 @@ def query(
 
     job = db.create_search_task(
         rules[-1].name,
-        rules[-1].author,
+        user.name,
         data.raw_yara,
         data.files_limit or 0,
         data.reference or "",
@@ -512,7 +517,7 @@ def job_cancel(job_id: str) -> StatusSchema:
     tags=["stable"],
     dependencies=[Depends(can_list_queries)],
 )
-def job_statuses() -> JobsSchema:
+def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     """
     Returns statuses of all the jobs in the system. May take some time (> 1s)
     when there are a lot of them.
@@ -520,6 +525,10 @@ def job_statuses() -> JobsSchema:
     jobs = [db.get_job(job) for job in db.get_job_ids()]
     jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
     jobs = [j for j in jobs if j.status != "removed"]
+    print(get_user_roles(user))
+    if "can_list_all_queries" not in get_user_roles(user):
+        jobs = [j for j in jobs if j.rule_author == user.name]
+
     return JobsSchema(jobs=jobs)
 
 
