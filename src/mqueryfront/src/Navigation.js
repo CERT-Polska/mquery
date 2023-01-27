@@ -12,9 +12,14 @@ function Navigation(props) {
         isAdmin = true; // Auth is disabled - everyone is an admin.
         loginElm = null;
     } else if (props.session != null) {
-        const clientId = props.config["openid_client_id"];
-        const userRoles = props.session["resource_access"][clientId]["roles"];
-        isAdmin = userRoles.includes("admin");
+        try {
+            const clientId = props.config["openid_client_id"];
+            const roles = props.session["resource_access"][clientId]["roles"];
+            isAdmin = roles.includes("admin");
+        } catch {
+            // In case session is corrupted, don't crash the entire webpage.
+            isAdmin = false;
+        }
         loginElm = (
             <li className="nav-item nav-right">
                 <a className="nav-link" href="#" onClick={props.logout}>
