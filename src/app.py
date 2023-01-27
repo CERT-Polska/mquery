@@ -164,7 +164,7 @@ class RoleChecker:
         if not any(role in self.need_permissions for role in all_roles):
             message = (
                 f"Operation not allowed for user {user.name} "
-                f"(user effective roles: {user_roles}) "
+                f"(user effective roles: {all_roles}) "
                 f"(required roles: any of {self.need_permissions})"
             )
             error_code = 401 if user.is_anonymous else 403
@@ -281,7 +281,7 @@ def backend_status() -> BackendStatusSchema:
     "/api/backend/datasets",
     response_model=BackendStatusDatasetsSchema,
     tags=["internal"],
-    dependencies=[Depends(is_admin)],
+    dependencies=[Depends(can_view_queries)],
 )
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
     """
