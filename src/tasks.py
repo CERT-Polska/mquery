@@ -233,13 +233,13 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
             )
 
         batches = __get_batch_sizes(file_count)
+        # add len(batches) new tasks, -1 to account for this task
+        agent.add_tasks_in_progress(job, len(batches) - 1)
+
         for batch in batches:
             agent.queue.enqueue(run_yara_batch, job_id, iterator, batch)
 
         agent.db.dataset_query_done(job_id)
-
-        # add len(batches) new tasks, -1 to account for this task
-        agent.add_tasks_in_progress(job, len(batches) - 1)
 
 
 def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
