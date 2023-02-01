@@ -11,6 +11,12 @@ class RedisConfig(Config):
     port = key(cast=int, required=False, default=6379)
 
 
+@section("rq")
+class RqConfig(Config):
+    # Maximum timeout value for tasks (in seconds)
+    timeout = key(cast=int, required=False, default=180)
+
+
 @section("mquery")
 class MqueryConfig(Config):
     # URL to a UrsaDB instance.
@@ -26,6 +32,7 @@ class MqueryConfig(Config):
 
 class AppConfig(Config):
     redis = group_key(RedisConfig)
+    rq = group_key(RqConfig)
     mquery = group_key(MqueryConfig)
 
 
