@@ -119,9 +119,12 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
     except jwt.InvalidTokenError:
-        # A generic signature error. Maybe we should raise 401 here, but on the
-        # other hand we don't want to raise 401 if auth_enabled is not enabled.
-        return User(None)
+        # Invalid token means invalid signature, issuer, or just expired.
+        # Return 401 and allow the user to re-authenticate.
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid token, please re-authenticate.",
+        )
 
     return User(token_json)
 
