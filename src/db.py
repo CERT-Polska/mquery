@@ -57,7 +57,9 @@ class Database:
 
     def __schedule(self, agent: str, task: Any, *args: Any) -> None:
         """Schedules the task to agent group `agent` using rq."""
-        Queue(agent, connection=self.redis).enqueue(task, *args, job_timeout=app_config.rq.timeout)
+        Queue(agent, connection=self.redis).enqueue(
+            task, *args, job_timeout=app_config.rq.timeout
+        )
 
     def get_job_ids(self) -> List[JobId]:
         """Gets IDs of all jobs in the database"""
