@@ -10,10 +10,17 @@ import AuthPage from "./auth/AuthPage";
 import api, { parseJWT } from "./api";
 import "./App.css";
 
+function getCurrentTokenOrNull() {
+    // This function handles missing and corrupted token in the same way.
+    try {
+        return parseJWT(localStorage.getItem("rawToken"));
+    } catch {
+        return null;
+    }
+}
+
 function App() {
     const [config, setConfig] = useState(null);
-    const rawToken = localStorage.getItem("rawToken");
-    const token = rawToken ? parseJWT(rawToken) : null;
 
     useEffect(() => {
         api.get("/server").then((response) => {
@@ -40,6 +47,8 @@ function App() {
             window.location.href = "/";
         }
     };
+
+    const token = getCurrentTokenOrNull();
 
     return (
         <div className="App">

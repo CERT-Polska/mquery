@@ -105,13 +105,22 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
     if not authorization:
         return User(None)
 
-    bearer, token = authorization.split()
-    if bearer != "Bearer":
-        return User(None)
+    # 401 error object, that will force the user to re-authenticate.
+    unauthorized = HTTPException(
+        status_code=401,
+        detail="Invalid token, please re-authenticate.",
+    )
+
+    # Be nice for the user, even when they send us an invalid header.
+    token_parts = authorization.split()
+    if len(token_parts) != 2 or token_parts[0] != "Bearer":
+        raise unauthorized
+
+    _bearer, token = token_parts
 
     secret = db.get_mquery_config_key("openid_secret")
     if secret is None:
-        return User(None)
+        raise RuntimeError("Invalid configuration - missing_openid_secret.")
 
     public_key = serialization.load_der_public_key(base64.b64decode(secret))  # type: ignore
     try:
@@ -119,9 +128,8 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
     except jwt.InvalidTokenError:
-        # A generic signature error. Maybe we should raise 401 here, but on the
-        # other hand we don't want to raise 401 if auth_enabled is not enabled.
-        return User(None)
+        # Invalid token means invalid signature, issuer, or just expired.
+        raise unauthorized
 
     return User(token_json)
 
