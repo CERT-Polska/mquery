@@ -12,7 +12,7 @@ This guide was tested on Ubuntu 22.10.
 ## Requirements
 
 * Linux system with at least 4GB RAM and enough disk space for your samples
-and index
+and index files
 * Sudo access
 
 ## Installation procedure
@@ -21,7 +21,7 @@ and index
 
 This depends on your package manager. For Ubuntu:
 
-```
+```shell
 sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server python3-dev python3.10-venv
 ```
 
@@ -30,7 +30,7 @@ sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server pyt
 For purposes of this guide, we will install mquery components to `/opt`. Modify
 according to your preferences.
 
-```
+```shell
 cd /opt/
 git clone https://github.com/CERT-Polska/mquery.git
 ```
@@ -41,7 +41,7 @@ We will install all dependencies in a so-called Python virtual environment.
 This means they will not be available globally, but to access them you will
 have to run `source /opt/mquery/venv/bin/activate`
 
-```
+```shell
 cd /opt/mquery
 python3 -m venv venv
 source /opt/mquery/venv/bin/activate  # activate the virtual env
@@ -50,10 +50,10 @@ pip install -r /opt/mquery/requirements.txt  # this may take a few minutes
 
 ### 4. Build the frontend 
 
-Mquery's frontend is built in react and we need to build a bundle before
+Mquery's frontend is built in react and we need to build the bundle before
 we can start a web server.
 
-```
+```shell
 cd /opt/mquery/src/mqueryfront
 npm install --legacy-peer-deps
 npm run build
@@ -61,14 +61,14 @@ npm run build
 
 ### 5. Download (or build) Ursadb
 
-The final component we will need to get is Ursadb. It's written in C++, so we need
+The final component we will need to get is UrsaDB. It's written in C++, so we need
 to compile it first or download a pre-compiled release.
 
 You can get a compiled release from https://github.com/CERT-Polska/ursadb/releases/.
 Just download a tar.gz from the newest release, unpack it, and you're good
 to go:
 
-```
+```shell
 cd /opt
 wget https://github.com/CERT-Polska/ursadb/releases/download/v1.5.1/ursadb.tar.gz
 tar xvf ursadb.tar.gz
@@ -76,7 +76,7 @@ tar xvf ursadb.tar.gz
 
 You can also compile it yourself:
 
-```
+```shell
 cd /opt
 git clone --recurse-submodules https://github.com/CERT-Polska/ursadb.git
 cd /opt/ursadb
@@ -93,7 +93,7 @@ and our index in `/var/mquery/index`.
 Create a new database (change the path to `/opt/ursadb/build/ursadb_new` if
 you built ursadb from source):
 
-```
+```shell
 mkdir /var/mquery /var/mquery/samples /var/mquery/index
 /opt/ursadb/ursadb_new /var/mquery/index/db.ursa
 ```
@@ -102,7 +102,7 @@ mkdir /var/mquery /var/mquery/samples /var/mquery/index
 
 The default configuration is almost good for us, we just need to change the samples dir:
 
-```
+```shell
 cd /opt/mquery/src
 cp config.example.py config.py 
 vim config.py
@@ -119,7 +119,7 @@ You will need at least three separate terminals to run all the components:
 
 The web server is the only client-visible part, and probably the most important:
 
-```
+```shell
 cd /opt/mquery/src/
 source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
 uvicorn app:app --host 0.0.0.0 --port 80
@@ -132,7 +132,7 @@ you want - you probably want more than one. To make it simpler, you can start
 a worker with a flag, for example, `--scale 4`, to create 4 workers using a
 single command:
 
-```
+```shell
 cd /opt/mquery/src
 source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
 python3 daemon.py --scale 4
@@ -142,7 +142,7 @@ python3 daemon.py --scale 4
 
 Last but not least, you need ursadb running. This part is easy:
 
-```
+```shell
 /opt/ursadb/ursadb /var/mquery/index/db.ursa
 ```
 

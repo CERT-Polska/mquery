@@ -53,7 +53,7 @@ class S3Plugin(MetadataPlugin):
             response.release_conn()
         return tmp.name
 
-    def clean(self):
+    def clean(self) -> None:
         for tmp in self.tmpfiles:
             tmp.close()
         self.tmpfiles = []

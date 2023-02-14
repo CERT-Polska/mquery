@@ -1,8 +1,8 @@
 # s3index.py
 
-Can be used to index files from s3.
+Can be used to index files from S3.
 
-This script was created to accompany the [S3 integration guide](../how-to/integrate-with-s3.md). It will download files from s3 temporarily and index
+This script was created to accompany the [S3 integration guide](../how-to/integrate-with-s3.md). It will download files from S3 temporarily and index
 them with ursadb. After indexing local copies of samples are deleted.
 
 WARNING: this script is still in the development, and usage may change
@@ -43,9 +43,9 @@ options:
 
 ## Example
 
-Only --workdir and s3-related parameters are required:
+Only --workdir and S3-related parameters are required:
 
-```
+```shell
 $ python3 -m utils.s3index \
     --workdir /root/mquery_tmp \
     --s3-url localhost:9000 \
