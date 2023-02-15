@@ -23,8 +23,8 @@ plugins=
 
 ### New features
 
-- It's now possible to limit the number of yara-scanned files (#339)
-- It's not possible to disallow running slow queries (#315, #312)
+- It's now possible to limit the number of YARA-scanned files (#339)
+- It's now possible to disallow running slow queries (#315, #312)
 - Added a configurable /about page, to describe your instance (#341)
 - Daemon now has a --scale flag, to automatically fork into mutliple processes (#298)
 - More flexible user roles (#350, #314)
@@ -32,7 +32,7 @@ plugins=
 ### Documentation
 
 - Mquery component documentation (#334)
-- Yara support documentation (#333)
+- YARA support documentation (#333)
 - S3 support documentation (#327)
 
 ### UI Improvements
@@ -43,7 +43,7 @@ plugins=
 
 ### Improvements
 
-- A big backend improvement - jobs are now scheduled with a rq framework (#317)
+- A big backend improvement - jobs are now scheduled using the RQ framework (#317)
 - Exceptions thrown during filtering with plugins are now handled correctly (#317)
 - Login is now faster - there are no unnecessary redirects (#322)
 
