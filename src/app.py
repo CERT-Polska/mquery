@@ -50,28 +50,6 @@ from schema import (
 
 db = Database(app_config.redis.host, app_config.redis.port)
 app = FastAPI()
-plugins = PluginManager(app_config.mquery.plugins, db)
-plugin_lock = Lock()
-
-
-def use_plugins(background: BackgroundTasks) -> None:
-    """Acquires a plugin_lock, and releases it after cleanup and returning a response.
-    This function should be called by every API endpoint that uses plugins.
-
-    This lock is necessary, because nothing in the plugins API makes it obvious that
-    they should be thread-safe - so we assume that they're not.
-    """
-
-    def release_and_cleanup():
-        try:
-            # Hopefully this won't crash...
-            plugins.cleanup()
-        finally:
-            # ...but just in case it does, we absolutely have to release the lock.
-            plugin_lock.release()
-
-    plugin_lock.acquire()
-    background.add_task(release_and_cleanup)
 
 
 class User:
@@ -326,7 +304,7 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
 @app.get(
     "/api/download",
     tags=["stable"],
-    dependencies=[Depends(can_download_files), Depends(use_plugins)],
+    dependencies=[Depends(can_download_files)],
 )
 def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
@@ -339,6 +317,8 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     if not db.job_contains(job_id, ordinal, file_path):
         return Response("No such file in result set.", status_code=404)
+
+    plugins = PluginManager(app_config.mquery.plugins, db)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     final_path = plugins.filter(file_path)
@@ -366,7 +346,11 @@ def download_hashes(job_id: str) -> Response:
     return Response(hashes + "\n")
 
 
-def zip_files(matches: List[Dict[Any, Any]]) -> Iterable[bytes]:
+def zip_files(matches: List[Dict[str, Any]]) -> Iterable[bytes]:
+    """ Adds all the samples to a zip archive (replacing original filename
+    with sha256) and returns it as a stream of bytes. """
+    plugins = PluginManager(app_config.mquery.plugins, db)
+
     with tempfile.NamedTemporaryFile() as writer:
         with open(writer.name, "rb") as reader:
             with zipfile.ZipFile(writer, mode="w") as zipwriter:
