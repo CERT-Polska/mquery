@@ -52,6 +52,16 @@ db = Database(app_config.redis.host, app_config.redis.port)
 app = FastAPI()
 
 
+def with_plugins() -> Iterable[PluginManager]:
+    """Cleans up plugins after processing."""
+
+    plugins = PluginManager(app_config.mquery.plugins, db)
+    try:
+        yield plugins
+    finally:
+        plugins.cleanup()
+
+
 class User:
     def __init__(self, token: Optional[Dict]) -> None:
         self.__token = token
@@ -306,7 +316,12 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
     tags=["stable"],
     dependencies=[Depends(can_download_files)],
 )
-def download(job_id: str, ordinal: int, file_path: str) -> Response:
+def download(
+    job_id: str,
+    ordinal: int,
+    file_path: str,
+    plugins: PluginManager = Depends(with_plugins),
+) -> Response:
     """
     Sends a file from given `file_path`. This path should come from
     results of one of the previous searches.
@@ -317,8 +332,6 @@ def download(job_id: str, ordinal: int, file_path: str) -> Response:
     """
     if not db.job_contains(job_id, ordinal, file_path):
         return Response("No such file in result set.", status_code=404)
-
-    plugins = PluginManager(app_config.mquery.plugins, db)
 
     attach_name, ext = os.path.splitext(os.path.basename(file_path))
     final_path = plugins.filter(file_path)
@@ -346,9 +359,11 @@ def download_hashes(job_id: str) -> Response:
     return Response(hashes + "\n")
 
 
-def zip_files(matches: List[Dict[str, Any]]) -> Iterable[bytes]:
-    """ Adds all the samples to a zip archive (replacing original filename
-    with sha256) and returns it as a stream of bytes. """
+def zip_files(
+    plugins: PluginManager, matches: List[Dict[str, Any]]
+) -> Iterable[bytes]:
+    """Adds all the samples to a zip archive (replacing original filename
+    with sha256) and returns it as a stream of bytes."""
     plugins = PluginManager(app_config.mquery.plugins, db)
 
     with tempfile.NamedTemporaryFile() as writer:
@@ -369,9 +384,11 @@ def zip_files(matches: List[Dict[str, Any]]) -> Iterable[bytes]:
     "/api/download/files/{job_id}",
     dependencies=[Depends(is_user), Depends(can_download_files)],
 )
-async def download_files(job_id: str) -> StreamingResponse:
+async def download_files(
+    job_id: str, plugins: PluginManager = Depends(with_plugins)
+) -> StreamingResponse:
     matches = db.get_job_matches(job_id).matches
-    return StreamingResponse(zip_files(matches))
+    return StreamingResponse(zip_files(plugins, matches))
 
 
 @app.post(
