@@ -1,6 +1,5 @@
 from lib.ursadb import UrsaDb
 import os
-from threading import Lock
 
 import uvicorn  # type: ignore
 from config import app_config
@@ -11,7 +10,6 @@ from fastapi import (
     HTTPException,
     Depends,
     Header,
-    BackgroundTasks,
 )  # type: ignore
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
