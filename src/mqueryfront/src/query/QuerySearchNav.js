@@ -1,5 +1,5 @@
 import React from "react";
-import ReactMultiSelectCheckboxes from "react-multiselect-checkboxes";
+import Select from "react-select";
 
 const QuerySearchNav = (props) => {
     const { onChange, availableTaints } = props;
@@ -17,11 +17,13 @@ const QuerySearchNav = (props) => {
     }
 
     return (
-        <ReactMultiSelectCheckboxes
+        <Select
             onChange={onChange}
             options={options}
             value={props.selectedTaints}
-            placeholderButtonLabel={placeholder}
+            placeholder={placeholder}
+            isMulti
+            isSearchable
         />
     );
 };
