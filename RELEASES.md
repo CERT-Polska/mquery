@@ -1,3 +1,65 @@
+# Version 1.4
+
+### Breaking changes
+
+**[Breaking change]** mquery now users typedconfig library instead of the previous config.py file.
+
+ - if you deployed mquery using docker (configurable by environment variables)
+   then no action is required and this is backwards-compatible for you
+ - if you deployed mquery natively using the default configuration, no action is required
+ - finally, if you deploy mquery natively and changed the default config.py, you will have to create a mquery.ini
+   file with your config. The format is very simple. Example of a complete config file (there are only 4 possible
+   configuration keys supported currently. All are optional):
+
+```
+[redis]
+host=localhost
+port=6379
+
+[mquery]
+backend=tcp://localhost:9281
+plugins=
+```
+
+### New features
+
+- It's now possible to limit the number of YARA-scanned files (#339)
+- It's now possible to disallow running slow queries (#315, #312)
+- Added a configurable /about page, to describe your instance (#341)
+- Daemon now has a --scale flag, to automatically fork into mutliple processes (#298)
+- More flexible user roles (#350, #314)
+
+### Documentation
+
+- Mquery component documentation (#334)
+- YARA support documentation (#333)
+- S3 support documentation (#327)
+
+### UI Improvements
+
+- Progress bar now shows more information (#345)
+- Counter race condition fixed (#348)
+- Bootstrap update and following fixes (#346, 
+
+### Improvements
+
+- A big backend improvement - jobs are now scheduled using the RQ framework (#317)
+- Exceptions thrown during filtering with plugins are now handled correctly (#317)
+- Login is now faster - there are no unnecessary redirects (#322)
+
+### Bugfixes
+
+- /about route fixed (#343)
+- Indexing script won't skip the last few files anymore (#328)
+- Actually raise errors from the API (#311)
+- Fix multi-agent job completion (#282)
+
+### Others
+
+- Dockerignore and Gitignore updated (#344)
+- Some obsolete features removed from the codebase (#330, #313, #306)
+
+
 # Version 1.3
 
 ### New features
