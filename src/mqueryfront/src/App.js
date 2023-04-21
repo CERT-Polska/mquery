@@ -21,6 +21,7 @@ function getCurrentTokenOrNull() {
 
 function App() {
     const [config, setConfig] = useState(null);
+
     useEffect(() => {
         api.get("/server").then((response) => {
             setConfig(response.data);
