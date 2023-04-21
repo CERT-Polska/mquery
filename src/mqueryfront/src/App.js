@@ -21,7 +21,6 @@ function getCurrentTokenOrNull() {
 
 function App() {
     const [config, setConfig] = useState(null);
-    console.log("This is meant to fail the CI");
     useEffect(() => {
         api.get("/server").then((response) => {
             setConfig(response.data);
