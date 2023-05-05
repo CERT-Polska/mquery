@@ -439,7 +439,7 @@ def query(
         raise HTTPException(
             status_code=400,
             detail=(
-                "Invalid query. Some of the rules require a full Yara scan of"
+                "Invalid query. Some of the rules require a full Yara scan of "
                 "every indexed file. "
                 f"{help_message} "
                 f"Slow rules: {degenerate_rule_names}. "
