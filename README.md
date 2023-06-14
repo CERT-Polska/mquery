@@ -5,8 +5,7 @@ analyst-friendly web GUI to look through your digital warehouse.
 
 It can be used to search through terabytes of malware in a blink of an eye:
 
-![mquery web GUI](docs/interface-v1.4.mp4)
-_a query on 2.1M files_
+![mquery web GUI](docs/interface-v1.4.gif)
 
 Under the hood we use our [UrsaDB](https://github.com/CERT-Polska/ursadb), to
 accelerate yara queries with ngrams.
