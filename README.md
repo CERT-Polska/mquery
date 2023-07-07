@@ -5,8 +5,7 @@ analyst-friendly web GUI to look through your digital warehouse.
 
 It can be used to search through terabytes of malware in a blink of an eye:
 
-![mquery web GUI](docs/interface-v1.2.gif)
-_a query on 2.1M files_
+![mquery web GUI](docs/interface-v1.4.gif)
 
 Under the hood we use our [UrsaDB](https://github.com/CERT-Polska/ursadb), to
 accelerate yara queries with ngrams.
@@ -41,10 +40,32 @@ configurable with variable in the `.env` file).
 
 ### 3. Index your collection
 
-If you use the default configuration, just click "reindex" button on the status
-page:
+Launch ursacli in docker:
 
-![](./docs/index-button.png)
+```shell
+sudo docker-compose exec ursadb ursacli
+[2023-06-14 17:20:24.940] [info] Connecting to tcp://localhost:9281
+[2023-06-14 17:20:24.942] [info] Connected to UrsaDB v1.5.1+98421d7 (connection id: 006B8B46B6)
+ursadb>
+```
+
+Index the samples with n-grams of your choosing (this may take a while!)
+
+```shell
+ursadb> index "/mnt/samples" with [gram3, text4, wide8, hash4];
+[2023-06-14 17:29:27.672] [info] Working... 1% (109 / 8218)
+[2023-06-14 17:29:28.674] [info] Working... 1% (125 / 8218)
+...
+[2023-06-14 17:37:40.265] [info] Working... 99% (8217 / 8218)
+[2023-06-14 17:37:41.266] [info] Working... 99% (8217 / 8218)
+{
+    "result": {
+        "status": "ok"
+    },
+    "type": "ok"
+}
+```
+
 
 This will scan samples directory for all new files and index them. You can
 monitor the progress in the `tasks` window on the left:
@@ -56,14 +77,6 @@ You have to repeat this process every time you want to add new files!
 After indexing is over, you will notice new datasets:
 
 ![](./docs/indexed-datasets.png)
-
-Merging datasets takes time, but having too many datasets slows mquery down.
-Click `compact` button to merge some datasets with each other (or use the
-[compactall](./docs/utils/compactall.md) script).
-
-After this process, you end up with a nice, clean index:
-
-![](./docs/compacted-datasets.png)
 
 This is a good and easy way to start, but if you have a big collection you are
 strongly encouraged to read [indexing page](./docs/indexing.md) in the manual. 
