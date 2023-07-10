@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Pagination from "react-js-pagination";
+import Pagination from "replace-js-pagination";
 import FilterIcon from "../components/FilterIcon";
 import QueryMatchesItem from "./QueryMatchesItem";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

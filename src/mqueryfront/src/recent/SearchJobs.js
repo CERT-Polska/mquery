@@ -1,7 +1,7 @@
 import React from "react";
 import FilteringTableHeader from "../components/FilteringTableHeader";
 import FilteringTitle from "../components/FilteringTitle";
-import Pagination from "react-js-pagination";
+import Pagination from "replace-js-pagination";
 import SearchJobItem, { SearchJobItemEmpty } from "./SearchJobItem";
 
 const SearchJobs = (props) => {
