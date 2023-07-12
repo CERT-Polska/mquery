@@ -13,8 +13,15 @@ class RedisConfig(Config):
 
 @section("rq")
 class RqConfig(Config):
-    # Maximum timeout value for tasks (in seconds)
-    timeout = key(cast=int, required=False, default=180)
+    # Timeout value for task initiation (in seconds). In most cases this is
+    # instant, so 60 seconds is very generous.
+    start_timeout = key(cast=int, required=False, default=60)
+    # Timeout value (in seconds) for a ursadb query.
+    ursadb_timeout = key(cast=int, required=False, default=600)
+    # Timeout value (in seconds) for yara scanning a batch of files.
+    # In some cases this may take some time (for example, when a large
+    # batch of files is downloaded from a remote storage).
+    yara_timeout = key(cast=int, required=False, default=600)
 
 
 @section("mquery")

@@ -192,6 +192,7 @@ def start_search(job_id: JobId) -> None:
                 dataset,
                 parsed.query,
                 depends_on=prev_job,
+                job_timeout=app_config.rq.ursadb_timeout
             )
 
 
@@ -237,7 +238,13 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
         agent.add_tasks_in_progress(job, len(batches) - 1)
 
         for batch in batches:
-            agent.queue.enqueue(run_yara_batch, job_id, iterator, batch)
+            agent.queue.enqueue(
+                run_yara_batch,
+                job_id,
+                iterator,
+                batch,
+                job_timeout=app_config.rq.yara_timeout
+            )
 
         agent.db.dataset_query_done(job_id)
 
@@ -254,7 +261,13 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
         logging.info("job %s: Pop successful: %s", job_id, pop_result)
         if pop_result.was_locked:
             # Iterator is currently locked, re-enqueue self
-            agent.queue.enqueue(run_yara_batch, job_id, iterator, batch_size)
+            agent.queue.enqueue(
+                run_yara_batch,
+                job_id,
+                iterator,
+                batch_size,
+                job_timeout=app_config.rq.yara_timeout
+            )
             return
 
         agent.execute_yara(job, pop_result.files)
