@@ -192,7 +192,7 @@ def start_search(job_id: JobId) -> None:
                 dataset,
                 parsed.query,
                 depends_on=prev_job,
-                job_timeout=app_config.rq.ursadb_timeout,
+                job_timeout=app_config.rq.job_timeout,
             )
 
 
@@ -243,7 +243,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
                 job_id,
                 iterator,
                 batch,
-                job_timeout=app_config.rq.yara_timeout,
+                job_timeout=app_config.rq.job_timeout,
             )
 
         agent.db.dataset_query_done(job_id)
@@ -266,7 +266,7 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
                 job_id,
                 iterator,
                 batch_size,
-                job_timeout=app_config.rq.yara_timeout,
+                job_timeout=app_config.rq.job_timeout,
             )
             return
 

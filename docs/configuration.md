@@ -41,9 +41,7 @@ Currently, supported configuration keys are:
   example `plugins.archive:GzipPlugin, plugins.custom:CustomPlugin`)
 - `mquery.yara_limit`: Maximum number of yara-scanned files per query (0 means no limit).
 - `mquery.about`: HTML code to be displayed on the about page.
-- `rq.start_timeout`: Timeout value for task initiation (in seconds). The default is OK for most users.
-- `rq.ursadb_timeout`: Timeout value (in seconds) for a ursadb query. The default is OK for most users.
-- `rq.yara_timeout`: Timeout value (in seconds) for yara scanning a batch of files. The default is OK for most users.
+- `rq.job_timeout`: Timeout value for rq jobs. The default is OK for most users.
 
 ## Mquery plugin configuration
 
