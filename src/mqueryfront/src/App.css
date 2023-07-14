@@ -10,7 +10,7 @@
 
 .mquery-scroll-matches td {
     word-break: break-all;
-    font-family: "monospace";
+    font-family: monospace;
 }
 
 .mquery-scroll-matches td i {
