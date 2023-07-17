@@ -39,6 +39,9 @@ Currently, supported configuration keys are:
   `tcp://ursadb-server:9281`)
 - `mquery.plugins`: List of supported plugins, separated by commas (for
   example `plugins.archive:GzipPlugin, plugins.custom:CustomPlugin`)
+- `mquery.yara_limit`: Maximum number of yara-scanned files per query (0 means no limit).
+- `mquery.about`: HTML code to be displayed on the about page.
+- `rq.job_timeout`: Timeout value for rq jobs. The default is OK for most users.
 
 ## Mquery plugin configuration
 

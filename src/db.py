@@ -5,6 +5,7 @@ from time import time
 import json
 import random
 import string
+from config import app_config
 from redis import StrictRedis
 from enum import Enum
 from rq import Queue  # type: ignore
@@ -56,7 +57,9 @@ class Database:
 
     def __schedule(self, agent: str, task: Any, *args: Any) -> None:
         """Schedules the task to agent group `agent` using rq."""
-        Queue(agent, connection=self.redis).enqueue(task, *args)
+        Queue(agent, connection=self.redis).enqueue(
+            task, *args, job_timeout=app_config.rq.job_timeout
+        )
 
     def get_job_ids(self) -> List[JobId]:
         """Gets IDs of all jobs in the database"""
