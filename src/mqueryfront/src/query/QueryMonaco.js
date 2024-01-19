@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import Editor, { monaco } from "@monaco-editor/react";
 import YARA from "./yara-lang";
 
+monaco.config({ paths: { vs: "/monaco-vs" } });
+
 class QueryMonaco extends Component {
     constructor(props) {
         super(props);
