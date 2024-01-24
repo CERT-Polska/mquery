@@ -12,7 +12,7 @@ import requests
 import random
 import os
 
-from mquery.lib.ursadb import UrsaDb  # noqa
+from ..lib.ursadb import UrsaDb  # noqa
 
 
 @pytest.mark.timeout(30)
