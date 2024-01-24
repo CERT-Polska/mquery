@@ -9,6 +9,9 @@ makes it also easier to understand what's going on, and is easier to tweak.
 
 This guide was tested on Ubuntu 22.10.
 
+Note: this installation guide is slightly obsolete. It was tested and it'll
+work, but an easier way to install mquery using a Python package is coming.
+
 ## Requirements
 
 * Linux system with at least 4GB RAM and enough disk space for your samples
@@ -35,20 +38,7 @@ cd /opt/
 git clone https://github.com/CERT-Polska/mquery.git
 ```
 
-### 3. Install python dependencies
-
-We will install all dependencies in a so-called Python virtual environment.
-This means they will not be available globally, but to access them you will
-have to run `source /opt/mquery/venv/bin/activate`
-
-```shell
-cd /opt/mquery
-python3 -m venv venv
-source /opt/mquery/venv/bin/activate  # activate the virtual env
-pip install -r /opt/mquery/requirements.txt  # this may take a few minutes
-```
-
-### 4. Build the frontend 
+### 3. Build the frontend 
 
 Mquery's frontend is built in react and we need to build the bundle before
 we can start a web server.
@@ -57,6 +47,19 @@ we can start a web server.
 cd /opt/mquery/src/mqueryfront
 npm install --legacy-peer-deps
 npm run build
+```
+
+### 4. Install python dependencies
+
+We will install all dependencies in a so-called Python virtual environment.
+This means they will not be available globally, but to access them you will
+have to run `source /opt/mquery/venv/bin/activate`
+
+```shell
+cd /opt/mquery
+python3 -m venv venv  # create a new virtual env
+source /opt/mquery/venv/bin/activate  # activate the virtual env
+pip install /opt/mquery/  # this may take a few minutes
 ```
 
 ### 5. Download (or build) Ursadb
@@ -100,16 +103,12 @@ mkdir /var/mquery /var/mquery/samples /var/mquery/index
 
 ### Configure mquery
 
-The default configuration is almost good for us, we just need to change the samples dir:
+The default configuration is good for us, but in case you need to configure
+something, you can create and edit a configuratoin file:
 
 ```shell
-cd /opt/mquery/src
-cp config.example.py config.py 
-vim config.py
+vim /etc/mquery/mquery.ini  # other option is ~/.config/mquery/mquery.ini
 ```
-
-Edit the config.py and change `INDEX_DIR` to `/var/mquery/samples`. After
-editing, save the file and exit by typing `[esc]:x[enter]`
 
 ### Start everything
 
@@ -120,9 +119,8 @@ You will need at least three separate terminals to run all the components:
 The web server is the only client-visible part, and probably the most important:
 
 ```shell
-cd /opt/mquery/src/
 source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
-uvicorn app:app --host 0.0.0.0 --port 80
+uvicorn mquery.app:app --host 0.0.0.0 --port 80
 ```
 
 #### Terminal 2: mquery worker
@@ -133,9 +131,8 @@ a worker with a flag, for example, `--scale 4`, to create 4 workers using a
 single command:
 
 ```shell
-cd /opt/mquery/src
 source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
-python3 daemon.py --scale 4
+mquery-daemon --scale 4
 ```
 
 #### Terminal 3: ursadb

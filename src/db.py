@@ -1,14 +1,15 @@
 from collections import defaultdict
 from typing import List, Optional, Dict, Any
-from schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
 from time import time
 import json
 import random
 import string
-from config import app_config
 from redis import StrictRedis
 from enum import Enum
 from rq import Queue  # type: ignore
+
+from .schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
+from .config import app_config
 
 
 # "Magic" plugin name, used for configuration of mquery itself
@@ -206,7 +207,7 @@ class Database:
         }
 
         self.redis.hmset(f"job:{job}", job_obj)
-        import tasks
+        from . import tasks
 
         for agent in agents:
             self.__schedule(agent, tasks.start_search, job)

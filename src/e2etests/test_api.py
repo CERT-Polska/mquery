@@ -10,8 +10,9 @@ import zmq  # type: ignore
 import pytest  # type: ignore
 import requests
 import random
-from lib.ursadb import UrsaDb  # noqa
 import os
+
+from ..lib.ursadb import UrsaDb  # noqa
 
 
 @pytest.mark.timeout(30)

@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import mquery.daemon
+
+
+mquery.daemon.main()

@@ -1,5 +1,5 @@
-from db import Database
-from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
+from ..db import Database
+from ..metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 
 class ExampleTagPlugin(MetadataPlugin):

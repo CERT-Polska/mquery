@@ -1,17 +1,18 @@
 from typing import List, Optional
 import logging
-from lib.ursadb import Json, UrsaDb
-from schema import JobSchema
-from lib.yaraparse import parse_yara, combine_rules
-from plugins import PluginManager
-from config import app_config
 from rq import get_current_job, Queue  # type: ignore
-from db import Database, JobId, MatchInfo
 from redis import Redis
 from contextlib import contextmanager
-from util import make_sha256_tag
-from metadata import Metadata
 import yara  # type: ignore
+
+from .db import Database, JobId, MatchInfo
+from .util import make_sha256_tag
+from .config import app_config
+from .plugins import PluginManager
+from .schema import JobSchema
+from .lib.yaraparse import parse_yara, combine_rules
+from .lib.ursadb import Json, UrsaDb
+from .metadata import Metadata
 
 
 class Agent:

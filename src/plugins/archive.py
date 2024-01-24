@@ -1,9 +1,10 @@
-from db import Database
-from metadata import MetadataPlugin, MetadataPluginConfig
 from typing import Optional, List, IO
 import gzip
 import shutil
 import tempfile
+
+from ..db import Database
+from ..metadata import MetadataPlugin, MetadataPluginConfig
 
 
 class GzipPlugin(MetadataPlugin):

@@ -8,3 +8,5 @@ samples/
 index/
 e2e-state
 mquery.ini
+src/mqueryfront/build
+src/mqueryfront/node_modules

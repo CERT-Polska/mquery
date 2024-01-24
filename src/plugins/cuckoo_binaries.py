@@ -1,8 +1,7 @@
 import re
-
 from typing import Optional
 
-from metadata import Metadata, MetadataPlugin
+from ..metadata import Metadata, MetadataPlugin
 
 
 class CuckooBinariesMetadata(MetadataPlugin):

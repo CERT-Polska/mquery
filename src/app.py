@@ -1,8 +1,7 @@
-from lib.ursadb import UrsaDb
 import os
 
 import uvicorn  # type: ignore
-from config import app_config
+from pathlib import Path
 from fastapi import (
     FastAPI,
     Body,
@@ -15,20 +14,20 @@ from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
 from starlette.staticfiles import StaticFiles  # type: ignore
 from zmq import Again
-
-from lib.yaraparse import parse_yara
-
-from util import mquery_version
-from db import Database
 from typing import Any, Callable, List, Union, Dict, Iterable, Optional
 import tempfile
 import zipfile
 import jwt
 import base64
 from cryptography.hazmat.primitives import serialization
-from plugins import PluginManager
 
-from schema import (
+from .config import app_config
+from .util import mquery_version
+from .db import Database
+from .lib.yaraparse import parse_yara
+from .plugins import PluginManager
+from .lib.ursadb import UrsaDb
+from .schema import (
     JobsSchema,
     JobSchema,
     RequestConfigEdit,
@@ -44,7 +43,6 @@ from schema import (
     AgentSchema,
     ServerSchema,
 )
-
 
 db = Database(app_config.redis.host, app_config.redis.port)
 app = FastAPI()
@@ -588,7 +586,7 @@ def server() -> ServerSchema:
 
 @app.get("/query/{path}", include_in_schema=False)
 def serve_index(path: str) -> FileResponse:
-    return FileResponse("mqueryfront/build/index.html")
+    return FileResponse(Path(__file__).parent / "mqueryfront/build/index.html")
 
 
 @app.get("/recent", include_in_schema=False)
@@ -599,7 +597,7 @@ def serve_index(path: str) -> FileResponse:
 @app.get("/about", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     # Static routes are always publicly accessible without authorisation.
-    return FileResponse("mqueryfront/build/index.html")
+    return FileResponse(Path(__file__).parent / "mqueryfront/build/index.html")
 
 
 app.mount(
