@@ -1,7 +1,8 @@
 import re
-from db import Database
-from metadata import MetadataPlugin, MetadataPluginConfig
 from typing import Optional
+
+from ..metadata import MetadataPlugin, MetadataPluginConfig
+from ..db import Database
 
 
 class RegexBlacklistPlugin(MetadataPlugin):

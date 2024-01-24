@@ -9,6 +9,7 @@ from .util import setup_logging
 from . import tasks
 from .config import app_config
 
+
 def start_worker(args: argparse.Namespace, process_index: int) -> None:
     setup_logging()
     logging.info(

@@ -4,5 +4,6 @@ RUN pip3 install pytest==7.1.2
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install -r /app/requirements.txt
 COPY src/ /app/
+RUN pip3 install src/
 WORKDIR /app
 CMD ["python", "-m", "pytest", "--log-cli-level=INFO", "e2etests/"]

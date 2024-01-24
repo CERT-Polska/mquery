@@ -1,10 +1,11 @@
 """Plugin that serves as an example how to use existing typed-config
 machinery to configure your own plugins"""
 
-from db import Database
-from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 from typedconfig import Config, key, section
-from config import app_config
+
+from ..db import Database
+from ..metadata import Metadata, MetadataPlugin, MetadataPluginConfig
+from ..config import app_config
 
 
 @section("plugin.example")

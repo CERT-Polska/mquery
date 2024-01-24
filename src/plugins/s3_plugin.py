@@ -1,10 +1,11 @@
-from db import Database
-from metadata import MetadataPlugin, MetadataPluginConfig
 from typing import Optional, List, IO
 import os
 import shutil
 import tempfile
 from minio import Minio  # type: ignore
+
+from ..db import Database
+from ..metadata import MetadataPlugin, MetadataPluginConfig
 
 
 class S3Plugin(MetadataPlugin):

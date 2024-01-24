@@ -1,10 +1,9 @@
 import os
 import re
-
 from typing import Optional
 
-from db import Database
-from metadata import Metadata, MetadataPlugin, MetadataPluginConfig
+from ..db import Database
+from ..metadata import Metadata, MetadataPlugin, MetadataPluginConfig
 
 
 class CuckooAnalysisMetadata(MetadataPlugin):
