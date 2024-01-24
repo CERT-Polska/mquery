@@ -2,12 +2,12 @@
 import argparse
 from multiprocessing import Process
 import logging
-from util import setup_logging
-import tasks
-from config import app_config
 from redis import Redis
 from rq import Connection, Worker  # type: ignore
 
+from .util import setup_logging
+from . import tasks
+from .config import app_config
 
 def start_worker(args: argparse.Namespace, process_index: int) -> None:
     setup_logging()

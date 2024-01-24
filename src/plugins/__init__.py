@@ -1,8 +1,9 @@
 from typing import List, Type, Optional
-from metadata import MetadataPlugin
 from importlib import import_module
-from db import Database
 import logging
+
+from ..metadata import MetadataPlugin
+from ..db import Database
 
 
 def parse_plugin_list(plugins: str) -> List[str]:

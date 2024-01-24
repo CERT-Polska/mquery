@@ -7,3 +7,6 @@ samples/
 index/
 .env
 mquery.ini
+mquery.egg-info/
+package-lock.json
+build/
