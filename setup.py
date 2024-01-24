@@ -5,6 +5,20 @@ try:
 except ImportError:
     from distutils.core import setup
 
+from pathlib import Path
+
+include_front = (Path(__file__).parent / "src/mqueryfront/build").is_dir()
+front_packages = [
+    "mquery.mqueryfront.build",
+    "mquery.mqueryfront.build.monaco-vs",
+    "mquery.mqueryfront.build.monaco-vs.editor",
+    "mquery.mqueryfront.build.monaco-vs.base.worker",
+    "mquery.mqueryfront.build.monaco-vs.base.browser.ui.codicons.codicon",
+    "mquery.mqueryfront.build.static.css",
+    "mquery.mqueryfront.build.static.js",
+    "mquery.mqueryfront.build.static.media",
+]
+
 setup(
     name="mquery",
     version="1.4.0",
@@ -15,15 +29,7 @@ setup(
         "mquery.plugins",
         "mquery.lib",
         "mquery.utils",
-        "mquery.mqueryfront.build",
-        "mquery.mqueryfront.build.monaco-vs",
-        "mquery.mqueryfront.build.monaco-vs.editor",
-        "mquery.mqueryfront.build.monaco-vs.base.worker",
-        "mquery.mqueryfront.build.monaco-vs.base.browser.ui.codicons.codicon",
-        "mquery.mqueryfront.build.static.css",
-        "mquery.mqueryfront.build.static.js",
-        "mquery.mqueryfront.build.static.media",
-    ],
+    ] + (front_packages if include_front else []),
     package_data={'': ['./**']},
     # include_package_data=True,
     install_requires=open("requirements.txt").read().splitlines(),
