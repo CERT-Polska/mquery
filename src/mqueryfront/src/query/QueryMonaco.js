@@ -1,9 +1,9 @@
 import React, { Component } from "react";
-import * as monaco from "monaco-editor/esm/vs/editor/edcore.main"
+import * as monaco from "monaco-editor/esm/vs/editor/edcore.main";
 import Editor, { loader } from "@monaco-editor/react";
 import YARA from "./yara-lang";
 
-loader.config({monaco});
+loader.config({ monaco });
 
 class QueryMonaco extends Component {
     constructor(props) {
