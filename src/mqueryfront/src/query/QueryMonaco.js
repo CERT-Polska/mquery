@@ -1,8 +1,9 @@
 import React, { Component } from "react";
-import Editor, { monaco } from "@monaco-editor/react";
+import * as monaco from "monaco-editor/esm/vs/editor/edcore.main"
+import Editor, { loader } from "@monaco-editor/react";
 import YARA from "./yara-lang";
 
-monaco.config({ paths: { vs: "/monaco-vs" } });
+loader.config({monaco});
 
 class QueryMonaco extends Component {
     constructor(props) {
@@ -17,7 +18,7 @@ class QueryMonaco extends Component {
             return;
         }
 
-        monaco.init().then((monaco) => {
+        loader.init().then((monaco) => {
             this.decorations = this.editor.getModel().deltaDecorations(
                 [],
                 [
@@ -42,7 +43,7 @@ class QueryMonaco extends Component {
     handleEditorDidMount(_, editor) {
         this.editor = editor;
 
-        monaco
+        loader
             .init()
             .then((monaco) => {
                 editor.onDidChangeModelContent((ev) => {
@@ -122,7 +123,7 @@ class QueryMonaco extends Component {
  * Monaco editor initialization
  */
 
-monaco.init().then((monaco) => {
+loader.init().then((monaco) => {
     // Register a new yara language
     monaco.languages.register({ id: "yara" });
 
