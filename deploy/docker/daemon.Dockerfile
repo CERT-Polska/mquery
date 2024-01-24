@@ -6,7 +6,7 @@ RUN apt update; apt install -y cmake
 COPY requirements.txt src/plugins/requirements-*.txt /tmp/
 RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 
-COPY "src/" "/app"
-RUN chmod +x "/app/daemon.py"
+COPY "." "/app"
+RUN pip install /app
 
-ENTRYPOINT ["/app/daemon.py"]
+ENTRYPOINT ["mquery-daemon"]
