@@ -8,5 +8,4 @@ RUN apt update; apt install -y cmake
 COPY requirements.txt src/plugins/requirements-*.txt /tmp/
 RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 
-# ./src is expected to be mounted with a docker volume
-CMD ["./autoreload", "python3", "daemon.py"]
+CMD pip install -e /usr/src/app && mquery-daemon

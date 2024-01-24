@@ -22,7 +22,7 @@ services:
     - redis
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
-    - ./src:/usr/src/app/src
+    - .:/usr/src/app
     depends_on:
       - "redis"
       - "ursadb"
@@ -38,7 +38,7 @@ services:
     - ursadb
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
-    - ./src:/usr/src/app/src
+    - .:/usr/src/app
     depends_on:
       - "redis"
       - "ursadb"
