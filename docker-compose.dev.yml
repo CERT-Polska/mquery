@@ -62,3 +62,10 @@ services:
     - KEYCLOAK_PASSWORD=admin
   redis:
     image: redis
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - ${POSTGRES_DIR}:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
