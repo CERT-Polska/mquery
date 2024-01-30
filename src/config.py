@@ -14,7 +14,7 @@ class RedisConfig(Config):
 @section("database")
 class DatabaseConfig(Config):
     # URL of a configured sql database.
-    url = key(cast=str, required=False, default="postgres://localhost:5432/mquery")
+    url = key(cast=str, required=False, default="postgresql://localhost:5432/mquery")
 
 
 @section("rq")
