@@ -71,3 +71,4 @@ services:
       - ${POSTGRES_DIR}:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mquery

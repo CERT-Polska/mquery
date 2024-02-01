@@ -107,6 +107,8 @@ jobs:
         run: docker build -t mquery_tests:latest -f src/e2etests/Dockerfile .
       - name: run docker compose
         run: docker-compose up --scale daemon=1 --build -d
+      - name: init db
+        run: docker-compose exec daemon python3 -m mquery.db
       - name: run e2e tests
         run: docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
       - name: get run logs

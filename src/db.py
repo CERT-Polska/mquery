@@ -10,7 +10,6 @@ from rq import Queue  # type: ignore
 from sqlmodel import Session, SQLModel, create_engine, select, and_
 
 from .models.configentry import ConfigEntry
-from .models.job import Job
 from .schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
 from .config import app_config
 
@@ -309,27 +308,30 @@ class Database:
 
     def get_plugin_config(self, plugin_name: str) -> Dict[str, str]:
         with Session(self.engine) as session:
-            entries = session.exec(select(ConfigEntry).where(
-                ConfigEntry.plugin == plugin_name
-            )).all()
+            entries = session.exec(
+                select(ConfigEntry).where(ConfigEntry.plugin == plugin_name)
+            ).all()
             return {e.key: e.value for e in entries}
 
     def get_mquery_config_key(self, key: str) -> Optional[str]:
         with Session(self.engine) as session:
-            statement = select(ConfigEntry).where(and_(
-                ConfigEntry.plugin == MQUERY_PLUGIN_NAME,
-                ConfigEntry.key == key,
-            ))
+            statement = select(ConfigEntry).where(
+                and_(
+                    ConfigEntry.plugin == MQUERY_PLUGIN_NAME,
+                    ConfigEntry.key == key,
+                )
+            )
             entry = session.exec(statement).one_or_none()
-            if entry:
-                return entry.value
+            return entry.value if entry else None
 
     def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
         with Session(self.engine) as session:
-            entry = session.exec(select(ConfigEntry).where(
-                ConfigEntry.plugin == plugin_name,
-                ConfigEntry.key == key,
-            )).one_or_none()
+            entry = session.exec(
+                select(ConfigEntry).where(
+                    ConfigEntry.plugin == plugin_name,
+                    ConfigEntry.key == key,
+                )
+            ).one_or_none()
             if not entry:
                 entry = ConfigEntry(plugin=plugin_name, key=key)
             entry.value = value

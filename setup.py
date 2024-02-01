@@ -10,6 +10,7 @@ setup(
         "mquery",
         "mquery.lib",
         "mquery.plugins",
+        "mquery.models",
     ],
     package_dir={"mquery": "src"},
     include_package_data=True,

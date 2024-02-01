@@ -2,7 +2,7 @@ from typing import Iterator
 
 from sqlmodel import Session, SQLModel, create_engine
 
-from config import app_config
+from .config import app_config
 
 
 engine = create_engine(app_config.database, echo=False)
