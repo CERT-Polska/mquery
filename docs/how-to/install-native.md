@@ -25,7 +25,8 @@ and index files
 This depends on your package manager. For Ubuntu:
 
 ```shell
-sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm redis-server python3-dev python3.10-venv
+sudo apt install libzmq3-dev cmake gcc g++ make python3 git npm \
+    redis-server python3-dev python3.10-venv postgresql
 ```
 
 ### 2. Get the sources
@@ -108,6 +109,16 @@ something, you can create and edit a configuratoin file:
 
 ```shell
 vim /etc/mquery/mquery.ini  # other option is ~/.config/mquery/mquery.ini
+```
+
+### Configure the database
+
+Now you need to create and configure a database
+
+```shell
+psql -c "CREATE DATABASE mquery"
+source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
+python3 -m mquery.db  # initialize the mquery database
 ```
 
 ### Start everything

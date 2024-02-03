@@ -29,6 +29,7 @@ services:
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
+      - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
   dev-daemon:
     build:
       context: .
@@ -45,6 +46,7 @@ services:
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
+      - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
   ursadb:
     image: mqueryci/ursadb:v1.5.1
     ports:
@@ -62,3 +64,11 @@ services:
     - KEYCLOAK_PASSWORD=admin
   redis:
     image: redis
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - ${POSTGRES_DIR}:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mquery

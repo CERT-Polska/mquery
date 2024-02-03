@@ -7,7 +7,9 @@ import string
 from redis import StrictRedis
 from enum import Enum
 from rq import Queue  # type: ignore
+from sqlmodel import Session, SQLModel, create_engine, select, and_
 
+from .models.configentry import ConfigEntry
 from .schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
 from .config import app_config
 
@@ -55,6 +57,7 @@ class Database:
         self.redis: Any = StrictRedis(
             host=redis_host, port=redis_port, decode_responses=True
         )
+        self.engine = create_engine(app_config.database.url)
 
     def __schedule(self, agent: str, task: Any, *args: Any) -> None:
         """Schedules the task to agent group `agent` using rq."""
@@ -304,13 +307,36 @@ class Database:
         ]
 
     def get_plugin_config(self, plugin_name: str) -> Dict[str, str]:
-        return self.redis.hgetall(f"plugin:{plugin_name}")
+        with Session(self.engine) as session:
+            entries = session.exec(
+                select(ConfigEntry).where(ConfigEntry.plugin == plugin_name)
+            ).all()
+            return {e.key: e.value for e in entries}
 
     def get_mquery_config_key(self, key: str) -> Optional[str]:
-        return self.redis.hget(f"plugin:{MQUERY_PLUGIN_NAME}", key)
+        with Session(self.engine) as session:
+            statement = select(ConfigEntry).where(
+                and_(
+                    ConfigEntry.plugin == MQUERY_PLUGIN_NAME,
+                    ConfigEntry.key == key,
+                )
+            )
+            entry = session.exec(statement).one_or_none()
+            return entry.value if entry else None
 
     def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
-        self.redis.hset(f"plugin:{plugin_name}", key, value)
+        with Session(self.engine) as session:
+            entry = session.exec(
+                select(ConfigEntry).where(
+                    ConfigEntry.plugin == plugin_name,
+                    ConfigEntry.key == key,
+                )
+            ).one_or_none()
+            if not entry:
+                entry = ConfigEntry(plugin=plugin_name, key=key)
+            entry.value = value
+            session.add(entry)
+            session.commit()
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")
@@ -320,3 +346,12 @@ class Database:
 
     def cache_store(self, key: str, value: str, expire: int) -> None:
         self.redis.setex(f"cached:{key}", expire, value)
+
+
+def init_db() -> None:
+    engine = create_engine(app_config.database.url, echo=True)
+    SQLModel.metadata.create_all(engine)
+
+
+if __name__ == "__main__":
+    init_db()

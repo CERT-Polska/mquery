@@ -10,3 +10,4 @@ mquery.ini
 mquery.egg-info/
 package-lock.json
 build/
+postgres/

@@ -11,6 +11,14 @@ class RedisConfig(Config):
     port = key(cast=int, required=False, default=6379)
 
 
+@section("database")
+class DatabaseConfig(Config):
+    # URL of a configured sql database.
+    url = key(
+        cast=str, required=False, default="postgresql://localhost:5432/mquery"
+    )
+
+
 @section("rq")
 class RqConfig(Config):
     # Timeout value for rq jobs.
@@ -32,6 +40,7 @@ class MqueryConfig(Config):
 
 class AppConfig(Config):
     redis = group_key(RedisConfig)
+    database = group_key(DatabaseConfig)
     rq = group_key(RqConfig)
     mquery = group_key(MqueryConfig)
 
