@@ -348,7 +348,7 @@ class Database:
         self.redis.setex(f"cached:{key}", expire, value)
 
 
-def init_db():
+def init_db() -> None:
     engine = create_engine(app_config.database.url, echo=True)
     SQLModel.metadata.create_all(engine)
 
