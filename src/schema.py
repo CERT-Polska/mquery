@@ -4,6 +4,10 @@ from pydantic import BaseModel, Field  # type: ignore
 from .models.job import Job
 
 
+class JobsSchema(BaseModel):
+    jobs: List[Job]
+
+
 class ConfigSchema(BaseModel):
     plugin: str
     key: str
