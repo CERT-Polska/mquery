@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field  # type: ignore
+from .models.job import Job
 
 
 class JobSchema(BaseModel):
@@ -80,7 +81,7 @@ class ParseResponseSchema(BaseModel):
 
 
 class MatchesSchema(BaseModel):
-    job: Dict
+    job: Job
     matches: List[Dict]
 
 

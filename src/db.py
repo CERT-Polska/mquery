@@ -11,7 +11,7 @@ from sqlmodel import Session, SQLModel, create_engine, select, and_, update
 
 from .models.configentry import ConfigEntry
 from .models.job import Job
-from .schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
+from .schema import MatchesSchema, AgentSpecSchema, ConfigSchema
 from .config import app_config
 
 
@@ -75,7 +75,7 @@ class Database:
     def cancel_job(self, job: JobId, error=None) -> None:
         """Sets the job status to cancelled, with optional error message"""
         with Session(self.engine) as session:
-            session.exec(
+            session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(status="cancelled", finished=int(time()))
@@ -94,7 +94,7 @@ class Database:
     def remove_query(self, job: JobId) -> None:
         """Sets the job status to removed"""
         with Session(self.engine) as session:
-            session.exec(
+            session.execute(
                 update(Job).where(Job.id == job).values(status="removed")
             )
             session.commit()
@@ -113,7 +113,7 @@ class Database:
         :param in_progress: Number of files in the current work unit.
         """
         with Session(self.engine) as session:
-            session.exec(
+            session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(files_in_progress=Job.files_in_progress + in_progress)
@@ -124,14 +124,14 @@ class Database:
         """Decrements the number of active agents in the given job. If there
         are no more agents, job status is changed to done."""
         with Session(self.engine) as session:
-            (agents_left,) = session.exec(
+            (agents_left,) = session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(agents_left=Job.agents_left - 1)
                 .returning(Job.agents_left)
             ).one()
             if agents_left == 0:
-                session.exec(
+                session.execute(
                     update(Job)
                     .where(Job.id == job)
                     .values(finished=int(time()), status="done")
@@ -157,7 +157,7 @@ class Database:
         inprogress, errored and matched files.
         Returns the number of processed files after the operation."""
         with Session(self.engine) as session:
-            (files_processed,) = session.exec(
+            (files_processed,) = session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(
@@ -167,14 +167,14 @@ class Database:
                     files_errored=Job.files_errored + errored,
                 )
                 .returning(Job.files_processed)
-            )
+            ).one()
             session.commit()
             return files_processed
 
     def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
         """Sets total_datasets and datasets_left, and status to processing"""
         with Session(self.engine) as session:
-            session.exec(
+            session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(
@@ -188,7 +188,7 @@ class Database:
     def dataset_query_done(self, job: JobId):
         """Decrements the number of datasets left by one."""
         with Session(self.engine) as session:
-            session.exec(
+            session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(datasets_left=Job.datasets_left - 1)
@@ -260,7 +260,7 @@ class Database:
     def update_job_files(self, job: JobId, total_files: int) -> int:
         """Add total_files to the specified job, and return a new total."""
         with Session(self.engine) as session:
-            (total_files,) = session.exec(
+            (total_files,) = session.execute(
                 update(Job)
                 .where(Job.id == job)
                 .values(total_files=Job.total_files + total_files)
