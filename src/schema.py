@@ -4,32 +4,6 @@ from pydantic import BaseModel, Field  # type: ignore
 from .models.job import Job
 
 
-class JobSchema(BaseModel):
-    id: str
-    status: str
-    error: Optional[str]
-    rule_name: str
-    rule_author: str
-    raw_yara: str
-    submitted: int
-    finished: Optional[int]
-    files_limit: int
-    reference: str
-    files_processed: int
-    files_matched: int
-    files_in_progress: int
-    total_files: int
-    files_errored: int
-    taints: List[str]
-    datasets_left: int
-    total_datasets: int
-    agents_left: int
-
-
-class JobsSchema(BaseModel):
-    jobs: List[JobSchema]
-
-
 class ConfigSchema(BaseModel):
     plugin: str
     key: str
