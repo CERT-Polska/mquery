@@ -368,6 +368,7 @@ class Database:
                 entry = ConfigEntry(plugin=plugin_name, key=key)
             entry.value = value
             session.add(entry)
+            session.commit()
 
     def cache_get(self, key: str, expire: int) -> Optional[str]:
         value = self.redis.get(f"cached:{key}")
