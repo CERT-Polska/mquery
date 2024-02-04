@@ -265,7 +265,7 @@ class Database:
                 .where(Job.id == job)
                 .values(total_files=Job.total_files + total_files)
                 .returning(Job.total_files)
-            )
+            ).one()
             session.commit()
         return total_files
 
