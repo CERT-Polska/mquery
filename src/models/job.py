@@ -4,7 +4,7 @@ from typing import Optional, List, Union
 
 class Job(SQLModel, table=True):
     internal_id: Union[int, None] = Field(default=None, primary_key=True)
-    id: Union[str, None]
+    id: str
     status: str
     error: Optional[str]
     rule_name: str
