@@ -3,6 +3,8 @@
 Please note that all this is 100% internal, and shouldn't be relied on.
 Data format in redis can and does change between mquery releases.
 
+Right now mquery is in the process of migrating internal storage to Postgres.
+
 ### Why redis?
 
 Because very early daemon was a trivial piece of code, and Redis as a job
@@ -22,9 +24,9 @@ To connect to redis use `redis-cli`. For docker-compose use
 
 Redis command documentation is pretty good and available at https://redis.io/commands/.
 
-### Job objects (`job:*`)
+### Job table (`job`)
 
-Job object is a Hash represented by schema.JobSchema class.
+Jobs are stored in a Job table.
 
 Every job has ID, which is a random 12 character string like 2OV8UP4DUOWK (the
 same string that is visible in urls like http://mquery.net/query/2OV8UP4DUOWK).
@@ -75,9 +77,9 @@ Cache objects are arbitrary strings.
 Right now they are only optionally used by metadata plugins, to
 cache expensive computation in redis.
 
-### Plugin objects (`plugin:*`)
+### Configuration table (`configentry`)
 
-Represented by schema.ConfigSchema class, they store plugin configuration.
+Represented by models.configentry.ConfigEntry class.
 
 For example, `plugin:TestPlugin` will store configuration for `TestPlugin` as a
 dictionary. All plugins can expose their own arbitrary config options.
