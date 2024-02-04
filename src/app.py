@@ -30,7 +30,6 @@ from .lib.ursadb import UrsaDb
 from .models.job import Job
 from .schema import (
     JobsSchema,
-    JobSchema,
     RequestConfigEdit,
     RequestQueryMethod,
     QueryRequestSchema,
