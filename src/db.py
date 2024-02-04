@@ -86,18 +86,10 @@ class Database:
         """Sets the job status to cancelled with provided error message."""
         self.cancel_job(job, message)
 
-    def __get_job(self, session: Session, job: JobId) -> Job:
-        """Internal helper - gets a job using the provided session"""
-        return session.exec(
-            select(Job).where(
-                Job.id == job,
-            )
-        ).one()
-
     def get_job(self, job: JobId) -> Job:
         """Retrieves a job from the database. Tries to fix corrupted objects"""
-        with Session(self.engine) as sess:
-            return self.__get_job(sess, job)
+        with Session(self.engine) as session:
+            return session.exec(select(Job).where(Job.id == job)).one()
 
     def remove_query(self, job: JobId) -> None:
         """Sets the job status to removed"""
@@ -132,20 +124,18 @@ class Database:
         """Decrements the number of active agents in the given job. If there
         are no more agents, job status is changed to done."""
         with Session(self.engine) as session:
-            session.exec(
+            (agents_left,) = session.exec(
                 update(Job)
                 .where(Job.id == job)
                 .values(agents_left=Job.agents_left - 1)
-            )
-            session.commit()
-        with Session(self.engine) as session:
-            if self.__get_job(session, job).agents_left > 0:
-                return
-            session.exec(
-                update(Job)
-                .where(Job.id == job)
-                .values(finished=int(time()), status="done")
-            )
+                .returning(Job.agents_left)
+            ).one()
+            if agents_left == 0:
+                session.exec(
+                    update(Job)
+                    .where(Job.id == job)
+                    .values(finished=int(time()), status="done")
+                )
             session.commit()
 
     def agent_add_tasks_in_progress(
@@ -167,7 +157,7 @@ class Database:
         inprogress, errored and matched files.
         Returns the number of processed files after the operation."""
         with Session(self.engine) as session:
-            session.exec(
+            (files_processed,) = session.exec(
                 update(Job)
                 .where(Job.id == job)
                 .values(
@@ -176,11 +166,10 @@ class Database:
                     files_matched=Job.files_matched + matched,
                     files_errored=Job.files_errored + errored,
                 )
+                .returning(Job.files_processed)
             )
             session.commit()
-        # This is a race condition but I think it's a "safe" one - it may return
-        # a bit higher value than the result of this update. To be fixed?
-        return self.get_job(job).files_processed
+            return files_processed
 
     def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
         """Sets total_datasets and datasets_left, and status to processing"""
@@ -271,15 +260,14 @@ class Database:
     def update_job_files(self, job: JobId, total_files: int) -> int:
         """Add total_files to the specified job, and return a new total."""
         with Session(self.engine) as session:
-            session.exec(
+            (total_files,) = session.exec(
                 update(Job)
                 .where(Job.id == job)
                 .values(total_files=Job.total_files + total_files)
+                .returning(Job.total_files)
             )
             session.commit()
-        # This is a race condition but I think it's a "safe" one - it may return
-        # a bit higher value than the result of this update. To be fixed?
-        return self.get_job(job).total_files
+        return total_files
 
     def register_active_agent(
         self,
