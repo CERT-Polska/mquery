@@ -4,6 +4,7 @@ from typing import Optional, List, Union
 
 class JobBase(SQLModel):
     """Base class for entities related to mquery jobs"""
+
     id: str
     status: str
     error: Optional[str]
@@ -27,9 +28,11 @@ class JobBase(SQLModel):
 
 class Job(JobBase, table=True):
     """Job object in the database. Internal ID is an implementation detail"""
+
     internal_id: Union[int, None] = Field(default=None, primary_key=True)
 
 
 class JobView(JobBase):
     """Pydantic model used in the public API"""
+
     pass
