@@ -1,32 +1,11 @@
 from enum import Enum
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field  # type: ignore
-
-
-class JobSchema(BaseModel):
-    id: str
-    status: str
-    error: Optional[str]
-    rule_name: str
-    rule_author: str
-    raw_yara: str
-    submitted: int
-    finished: Optional[int]
-    files_limit: int
-    reference: str
-    files_processed: int
-    files_matched: int
-    files_in_progress: int
-    total_files: int
-    files_errored: int
-    taints: List[str]
-    datasets_left: int
-    total_datasets: int
-    agents_left: int
+from .models.job import JobView
 
 
 class JobsSchema(BaseModel):
-    jobs: List[JobSchema]
+    jobs: List[JobView]
 
 
 class ConfigSchema(BaseModel):
@@ -80,7 +59,7 @@ class ParseResponseSchema(BaseModel):
 
 
 class MatchesSchema(BaseModel):
-    job: Dict
+    job: JobView
     matches: List[Dict]
 
 

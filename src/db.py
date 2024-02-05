@@ -7,10 +7,11 @@ import string
 from redis import StrictRedis
 from enum import Enum
 from rq import Queue  # type: ignore
-from sqlmodel import Session, SQLModel, create_engine, select, and_
+from sqlmodel import Session, SQLModel, create_engine, select, and_, update
 
 from .models.configentry import ConfigEntry
-from .schema import JobSchema, MatchesSchema, AgentSpecSchema, ConfigSchema
+from .models.job import Job
+from .schema import MatchesSchema, AgentSpecSchema, ConfigSchema
 from .config import app_config
 
 
@@ -67,55 +68,36 @@ class Database:
 
     def get_job_ids(self) -> List[JobId]:
         """Gets IDs of all jobs in the database"""
-        return [key[4:] for key in self.redis.keys("job:*")]
+        with Session(self.engine) as session:
+            jobs = session.exec(select(Job)).all()
+            return [j.id for j in jobs]
 
-    def cancel_job(self, job: JobId) -> None:
-        """Sets the job status to cancelled"""
-        self.redis.hmset(
-            f"job:{job}",
-            {"status": "cancelled", "finished": int(time())},
-        )
+    def cancel_job(self, job: JobId, error=None) -> None:
+        """Sets the job status to cancelled, with optional error message"""
+        with Session(self.engine) as session:
+            session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(status="cancelled", finished=int(time()), error=error)
+            )
+            session.commit()
 
     def fail_job(self, job: JobId, message: str) -> None:
         """Sets the job status to cancelled with provided error message."""
-        self.redis.hmset(
-            f"job:{job}",
-            {"status": "cancelled", "error": message, "finished": int(time())},
-        )
+        self.cancel_job(job, message)
 
-    def get_job(self, job: JobId) -> JobSchema:
-        """Retrieves a job from the database. Tries to fix corrupted objects"""
-        data = self.redis.hgetall(f"job:{job}")
-        if data.get("status") in ["expired", "failed"]:
-            # There is no support for migrations in Redis "databases".
-            # These are old statuses, not used in the new versions anymore.
-            data["status"] = "cancelled"
-
-        return JobSchema(
-            id=job,
-            status=data.get("status", "ERROR"),
-            error=data.get("error", None),
-            rule_name=data.get("rule_name", "ERROR"),
-            rule_author=data.get("rule_author", "unknown"),
-            raw_yara=data.get("raw_yara", "ERROR"),
-            submitted=data.get("submitted", 0),
-            finished=data.get("finished", None),
-            files_limit=data.get("files_limit", 0),
-            files_processed=int(data.get("files_processed", 0)),
-            files_matched=int(data.get("files_matched", 0)),
-            files_in_progress=int(data.get("files_in_progress", 0)),
-            total_files=int(data.get("total_files", 0)),
-            files_errored=int(data.get("files_errored", 0)),
-            reference=data.get("reference", ""),
-            taints=json.loads(data.get("taints", "[]")),
-            total_datasets=data.get("total_datasets", 0),
-            datasets_left=data.get("datasets_left", 0),
-            agents_left=data.get("agents_left", 0),
-        )
+    def get_job(self, job: JobId) -> Job:
+        """Retrieves a job from the database"""
+        with Session(self.engine) as session:
+            return session.exec(select(Job).where(Job.id == job)).one()
 
     def remove_query(self, job: JobId) -> None:
         """Sets the job status to removed"""
-        self.redis.hmset(f"job:{job}", {"status": "removed"})
+        with Session(self.engine) as session:
+            session.execute(
+                update(Job).where(Job.id == job).values(status="removed")
+            )
+            session.commit()
 
     def add_match(self, job: JobId, match: MatchInfo) -> None:
         self.redis.rpush(f"meta:{job}", match.to_json())
@@ -130,16 +112,31 @@ class Database:
         :param job: ID of the job being updated.
         :param in_progress: Number of files in the current work unit.
         """
-        self.redis.hincrby(f"job:{job}", "files_in_progress", in_progress)
+        with Session(self.engine) as session:
+            session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(files_in_progress=Job.files_in_progress + in_progress)
+            )
+            session.commit()
 
     def agent_finish_job(self, job: JobId) -> None:
         """Decrements the number of active agents in the given job. If there
         are no more agents, job status is changed to done."""
-        new_agents = self.redis.hincrby(f"job:{job}", "agents_left", -1)
-        if new_agents <= 0:
-            self.redis.hmset(
-                f"job:{job}", {"status": "done", "finished": int(time())}
-            )
+        with Session(self.engine) as session:
+            (agents_left,) = session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(agents_left=Job.agents_left - 1)
+                .returning(Job.agents_left)
+            ).one()
+            if agents_left == 0:
+                session.execute(
+                    update(Job)
+                    .where(Job.id == job)
+                    .values(finished=int(time()), status="done")
+                )
+            session.commit()
 
     def agent_add_tasks_in_progress(
         self, job: JobId, agent: str, tasks: int
@@ -159,21 +156,44 @@ class Database:
         """Updates progress for the job. This will increment numbers processed,
         inprogress, errored and matched files.
         Returns the number of processed files after the operation."""
-        files = self.redis.hincrby(f"job:{job}", "files_processed", processed)
-        self.redis.hincrby(f"job:{job}", "files_in_progress", -processed)
-        self.redis.hincrby(f"job:{job}", "files_matched", matched)
-        self.redis.hincrby(f"job:{job}", "files_errored", errored)
-        return files
+        with Session(self.engine) as session:
+            (files_processed,) = session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(
+                    files_processed=Job.files_processed + processed,
+                    files_in_progress=Job.files_in_progress - processed,
+                    files_matched=Job.files_matched + matched,
+                    files_errored=Job.files_errored + errored,
+                )
+                .returning(Job.files_processed)
+            ).one()
+            session.commit()
+            return files_processed
 
     def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
         """Sets total_datasets and datasets_left, and status to processing"""
-        self.redis.hincrby(f"job:{job}", "total_datasets", num_datasets)
-        self.redis.hincrby(f"job:{job}", "datasets_left", num_datasets)
-        self.redis.hset(f"job:{job}", "status", "processing")
+        with Session(self.engine) as session:
+            session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(
+                    total_datasets=num_datasets,
+                    datasets_left=num_datasets,
+                    status="processing",
+                )
+            )
+            session.commit()
 
     def dataset_query_done(self, job: JobId):
         """Decrements the number of datasets left by one."""
-        self.redis.hincrby(f"job:{job}", "datasets_left", -1)
+        with Session(self.engine) as session:
+            session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(datasets_left=Job.datasets_left - 1)
+            )
+            session.commit()
 
     def create_search_task(
         self,
@@ -190,26 +210,29 @@ class Database:
             random.choice(string.ascii_uppercase + string.digits)
             for _ in range(12)
         )
-        job_obj = {
-            "status": "new",
-            "rule_name": rule_name,
-            "rule_author": rule_author,
-            "raw_yara": raw_yara,
-            "submitted": int(time()),
-            "files_limit": files_limit,
-            "reference": reference,
-            "files_in_progress": 0,
-            "files_processed": 0,
-            "files_matched": 0,
-            "files_errored": 0,
-            "total_files": 0,
-            "agents_left": len(agents),
-            "datasets_left": 0,
-            "total_datasets": 0,
-            "taints": json.dumps(taints),
-        }
+        with Session(self.engine) as session:
+            obj = Job(
+                id=job,
+                status="new",
+                rule_name=rule_name,
+                rule_author=rule_author,
+                raw_yara=raw_yara,
+                submitted=int(time()),
+                files_limit=files_limit,
+                reference=reference,
+                files_in_progress=0,
+                files_processed=0,
+                files_matched=0,
+                files_errored=0,
+                total_files=0,
+                agents_left=len(agents),
+                datasets_left=0,
+                total_datasets=0,
+                taints=taints,
+            )
+            session.add(obj)
+            session.commit()
 
-        self.redis.hmset(f"job:{job}", job_obj)
         from . import tasks
 
         for agent in agents:
@@ -235,7 +258,16 @@ class Database:
         return MatchesSchema(job=self.get_job(job), matches=matches)
 
     def update_job_files(self, job: JobId, total_files: int) -> int:
-        return self.redis.hincrby(f"job:{job}", "total_files", total_files)
+        """Add total_files to the specified job, and return a new total."""
+        with Session(self.engine) as session:
+            (total_files,) = session.execute(
+                update(Job)
+                .where(Job.id == job)
+                .values(total_files=Job.total_files + total_files)
+                .returning(Job.total_files)
+            ).one()
+            session.commit()
+        return total_files
 
     def register_active_agent(
         self,

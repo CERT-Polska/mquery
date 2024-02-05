@@ -27,9 +27,9 @@ from .db import Database
 from .lib.yaraparse import parse_yara
 from .plugins import PluginManager
 from .lib.ursadb import UrsaDb
+from .models.job import Job, JobView
 from .schema import (
     JobsSchema,
-    JobSchema,
     RequestConfigEdit,
     RequestQueryMethod,
     QueryRequestSchema,
@@ -492,11 +492,11 @@ def matches(
 
 @app.get(
     "/api/job/{job_id}",
-    response_model=JobSchema,
+    response_model=JobView,
     tags=["stable"],
     dependencies=[Depends(can_view_queries)],
 )
-def job_info(job_id: str) -> JobSchema:
+def job_info(job_id: str) -> Job:
     """
     Returns a metadata for a single job. May be useful for monitoring
     a job progress.

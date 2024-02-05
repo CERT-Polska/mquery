@@ -9,7 +9,7 @@ from .db import Database, JobId, MatchInfo
 from .util import make_sha256_tag
 from .config import app_config
 from .plugins import PluginManager
-from .schema import JobSchema
+from .models.job import Job
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
 from .metadata import Metadata
@@ -85,7 +85,7 @@ class Agent:
         match = MatchInfo(orig_name, metadata, matches)
         self.db.add_match(job, match)
 
-    def execute_yara(self, job: JobSchema, files: List[str]) -> None:
+    def execute_yara(self, job: Job, files: List[str]) -> None:
         rule = yara.compile(source=job.raw_yara)
         num_matches = 0
         num_errors = 0
@@ -129,7 +129,7 @@ class Agent:
                 f"in {scanned_datasets}/{job.total_datasets} ({dataset_percent:.0%}) of datasets.",
             )
 
-    def add_tasks_in_progress(self, job: JobSchema, tasks: int) -> None:
+    def add_tasks_in_progress(self, job: Job, tasks: int) -> None:
         """See documentation of db.agent_add_tasks_in_progress"""
         self.db.agent_add_tasks_in_progress(job.id, self.group_id, tasks)
 
