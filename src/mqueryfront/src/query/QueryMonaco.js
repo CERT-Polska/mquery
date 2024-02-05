@@ -10,6 +10,7 @@ class QueryMonaco extends Component {
         super(props);
         this.editor = null;
         this.handleEditorDidMount = this.handleEditorDidMount.bind(this);
+        this.handleEditorChange = this.handleEditorChange.bind(this);
         this.decorations = null;
     }
 
@@ -18,61 +19,48 @@ class QueryMonaco extends Component {
             return;
         }
 
-        loader.init().then((monaco) => {
-            this.decorations = this.editor.getModel().deltaDecorations(
-                [],
-                [
-                    {
-                        range: new monaco.Range(
-                            startLine,
-                            startColumn,
-                            startLine,
-                            Number(endColumn) + 1 // Increase by one because it excludes end column
-                        ),
-                        options: {
-                            isWholeLine: endColumn === undefined,
-                            className: "contentError",
-                            glyphMarginClassName: "glyphMargin",
-                        },
+        this.decorations = this.monacoEditor.deltaDecorations(
+            [],
+            [
+                {
+                    range: new monaco.Range(
+                        Number(startLine),
+                        Number(startColumn),
+                        Number(startLine),
+                        Number(endColumn) + 1 // Increase by one because it excludes end column
+                    ),
+                    options: {
+                        isWholeLine: endColumn === undefined,
+                        className: "contentError",
+                        glyphMarginClassName: "glyphMargin",
                     },
-                ]
-            );
-        });
+                },
+            ]
+        );
     }
 
-    handleEditorDidMount(_, editor) {
-        this.editor = editor;
+    handleEditorChange(value, event) {
+        this.props.onValueChanged(value);
 
-        loader
-            .init()
-            .then((monaco) => {
-                editor.onDidChangeModelContent((ev) => {
-                    this.props.onValueChanged(editor.getValue());
+        // A dirty hack to clear all decorations when the user
+        // started typing after the error has showed
+        if (this.decorations) {
+            this.monacoEditor.deltaDecorations(this.decorations, []);
+        }
+    }
 
-                    // A dirty hack to clear all decorations when the user
-                    // started typing after the error has showed
-                    if (this.decorations) {
-                        editor.deltaDecorations(this.decorations, [
-                            {
-                                range: new monaco.Range(1, 1, 1, 1),
-                                options: {},
-                            },
-                        ]);
-                    }
-                });
-                editor.addCommand(
-                    [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
-                    () => {
-                        this.props.onSubmitQuery("medium");
-                    }
-                );
-            })
-            .catch((error) =>
-                console.error(
-                    "An error occurred during initialization of Monaco: ",
-                    error
-                )
-            );
+    handleEditorDidMount(editor, monaco) {
+        this.monacoEditor = editor;
+        this.editor = monaco.editor;
+
+        this.editor.addEditorAction({
+            id: "submit",
+            label: "Submit",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+            run: () => {
+                this.props.onSubmitQuery("medium");
+            },
+        });
     }
 
     componentWillUnmount() {
@@ -103,7 +91,8 @@ class QueryMonaco extends Component {
                 language="yara"
                 theme={this.props.readOnly ? "readOnlyTheme" : "light"}
                 value={this.props.rawYara}
-                editorDidMount={this.handleEditorDidMount}
+                onMount={this.handleEditorDidMount}
+                onChange={this.handleEditorChange}
                 options={{
                     selectOnLineNumber: true,
                     lineNumbersMinChars: 0,
