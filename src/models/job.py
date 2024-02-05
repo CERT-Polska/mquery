@@ -2,8 +2,8 @@ from sqlmodel import SQLModel, Field, ARRAY, String, Column
 from typing import Optional, List, Union
 
 
-class Job(SQLModel, table=True):
-    internal_id: Union[int, None] = Field(default=None, primary_key=True)
+class JobBase(SQLModel):
+    """Base class for entities related to mquery jobs"""
     id: str
     status: str
     error: Optional[str]
@@ -23,3 +23,13 @@ class Job(SQLModel, table=True):
     datasets_left: int
     total_datasets: int
     agents_left: int
+
+
+class Job(JobBase, table=True):
+    """Job object in the database. Internal ID is an implementation detail"""
+    internal_id: Union[int, None] = Field(default=None, primary_key=True)
+
+
+class JobView(JobBase):
+    """Pydantic model used in the public API"""
+    pass
