@@ -78,7 +78,7 @@ class Database:
             session.execute(
                 update(Job)
                 .where(Job.id == job)
-                .values(status="cancelled", finished=int(time()))
+                .values(status="cancelled", finished=int(time()), error=error)
             )
             session.commit()
 
@@ -87,7 +87,7 @@ class Database:
         self.cancel_job(job, message)
 
     def get_job(self, job: JobId) -> Job:
-        """Retrieves a job from the database. Tries to fix corrupted objects"""
+        """Retrieves a job from the database"""
         with Session(self.engine) as session:
             return session.exec(select(Job).where(Job.id == job)).one()
 
