@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, ARRAY, String, Column, JSON, Relationship
-from typing import Optional, List, Union, Dict, Any
+from typing import List, Union, Dict, Any
 
 from ..models.job import Job
 
