@@ -27,7 +27,7 @@ from .db import Database
 from .lib.yaraparse import parse_yara
 from .plugins import PluginManager
 from .lib.ursadb import UrsaDb
-from .models.job import Job
+from .models.job import Job, JobView
 from .schema import (
     JobsSchema,
     RequestConfigEdit,
@@ -492,7 +492,7 @@ def matches(
 
 @app.get(
     "/api/job/{job_id}",
-    response_model=Job,
+    response_model=JobView,
     tags=["stable"],
     dependencies=[Depends(can_view_queries)],
 )
