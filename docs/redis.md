@@ -26,7 +26,7 @@ Redis command documentation is pretty good and available at https://redis.io/com
 
 ### Job table (`job`)
 
-Jobs are stored in a Job table.
+Jobs are stored in the `job` table.
 
 Every job has ID, which is a random 12 character string like 2OV8UP4DUOWK (the
 same string that is visible in urls like http://mquery.net/query/2OV8UP4DUOWK).
