@@ -39,15 +39,12 @@ Possible job statuses are:
 * "cancelled" - Job was cancelled by the user or failed
 * "removed" - Job is hidden in the UI (TODO: remove this status in the future)
 
-### Meta objects (`meta:*`)
+### Match table (`match`)
 
-Meta object is a List represented by db.MatchInfo class.
+Matches represent files matched to a job.
 
-It's a list of JSONs that reprent matches for a given job. Every list element
-represents a single yara match (along with optional attributes from plugins).
-
-Each job has exactly one related meta object. For example, job with key
-`job:123456123456` will have corresponding meta object at `meta:123456123456`.
+Every match represents a single yara rule match (along with optional attributes
+from plugins).
 
 ### Agentjob objects (`agentjob:*`)
 

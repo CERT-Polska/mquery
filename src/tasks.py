@@ -5,11 +5,12 @@ from redis import Redis
 from contextlib import contextmanager
 import yara  # type: ignore
 
-from .db import Database, JobId, MatchInfo
+from .db import Database, JobId
 from .util import make_sha256_tag
 from .config import app_config
 from .plugins import PluginManager
 from .models.job import Job
+from .models.match import Match
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
 from .metadata import Metadata
@@ -82,7 +83,7 @@ class Agent:
         del metadata["path"]
 
         # Update the database.
-        match = MatchInfo(orig_name, metadata, matches)
+        match = Match(file=orig_name, meta=metadata, matches=matches)
         self.db.add_match(job, match)
 
     def execute_yara(self, job: Job, files: List[str]) -> None:

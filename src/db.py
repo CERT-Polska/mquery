@@ -11,6 +11,7 @@ from sqlmodel import Session, SQLModel, create_engine, select, and_, update
 
 from .models.configentry import ConfigEntry
 from .models.job import Job
+from .models.match import Match
 from .schema import MatchesSchema, AgentSpecSchema, ConfigSchema
 from .config import app_config
 
@@ -34,23 +35,6 @@ class AgentTask:
 
 # Type alias for Job ids
 JobId = str
-
-
-class MatchInfo:
-    """Represents information about a single match"""
-
-    def __init__(
-        self, file: str, meta: Dict[str, Any], matches: List[str]
-    ) -> None:
-        self.file = file
-        self.meta = meta
-        self.matches = matches
-
-    def to_json(self) -> str:
-        """Converts match info to json"""
-        return json.dumps(
-            {"file": self.file, "meta": self.meta, "matches": self.matches}
-        )
 
 
 class Database:
@@ -86,10 +70,14 @@ class Database:
         """Sets the job status to cancelled with provided error message."""
         self.cancel_job(job, message)
 
+    def __get_job(self, session: Session, job: JobId) -> Job:
+        """Internal helper to get a job from the database"""
+        return session.exec(select(Job).where(Job.id == job)).one()
+
     def get_job(self, job: JobId) -> Job:
         """Retrieves a job from the database"""
         with Session(self.engine) as session:
-            return session.exec(select(Job).where(Job.id == job)).one()
+            return self.__get_job(session, job)
 
     def remove_query(self, job: JobId) -> None:
         """Sets the job status to removed"""
@@ -99,13 +87,22 @@ class Database:
             )
             session.commit()
 
-    def add_match(self, job: JobId, match: MatchInfo) -> None:
-        self.redis.rpush(f"meta:{job}", match.to_json())
+    def add_match(self, job: JobId, match: Match) -> None:
+        with Session(self.engine) as session:
+            job_object = self.__get_job(session, job)
+            match.job = job_object
+            session.add(match)
+            session.commit()
 
     def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
         """Make sure that the file path is in the job results"""
-        file_list = self.redis.lrange(f"meta:{job}", ordinal, ordinal)
-        return file_list and file_path == json.loads(file_list[0])["file"]
+        with Session(self.engine) as session:
+            job_object = self.__get_job(session, job)
+            statement = select(Match).where(
+                and_(Match.job == job_object, Match.file == file_path)
+            )
+            entry = session.exec(statement).one_or_none()
+            return entry is not None
 
     def job_start_work(self, job: JobId, in_progress: int) -> None:
         """Updates the number of files being processed right now.
@@ -240,22 +237,15 @@ class Database:
         return job
 
     def get_job_matches(
-        self, job: JobId, offset: int = 0, limit: Optional[int] = None
+        self, job_id: JobId, offset: int = 0, limit: Optional[int] = None
     ) -> MatchesSchema:
-        if limit is None:
-            end = -1
-        else:
-            end = offset + limit - 1
-        meta = self.redis.lrange(f"meta:{job}", offset, end)
-        matches = [json.loads(m) for m in meta]
-        for match in matches:
-            # Compatibility fix for old jobs, without sha256 metadata key.
-            if "sha256" not in match["meta"]:
-                match["meta"]["sha256"] = {
-                    "display_text": "0" * 64,
-                    "hidden": True,
-                }
-        return MatchesSchema(job=self.get_job(job), matches=matches)
+        with Session(self.engine) as session:
+            job = self.__get_job(session, job_id)
+            if limit is None:
+                matches = job.matches[offset:]
+            else:
+                matches = job.matches[offset : offset + limit]
+            return MatchesSchema(job=job, matches=matches)
 
     def update_job_files(self, job: JobId, total_files: int) -> int:
         """Add total_files to the specified job, and return a new total."""
