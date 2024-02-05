@@ -1,11 +1,11 @@
 from enum import Enum
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field  # type: ignore
-from .models.job import Job
+from .models.job import JobView
 
 
 class JobsSchema(BaseModel):
-    jobs: List[Job]
+    jobs: List[JobView]
 
 
 class ConfigSchema(BaseModel):
@@ -59,7 +59,7 @@ class ParseResponseSchema(BaseModel):
 
 
 class MatchesSchema(BaseModel):
-    job: Job
+    job: JobView
     matches: List[Dict]
 
 
