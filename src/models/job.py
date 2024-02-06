@@ -1,5 +1,8 @@
-from sqlmodel import SQLModel, Field, ARRAY, String, Column
-from typing import Optional, List, Union
+from sqlmodel import SQLModel, Field, ARRAY, String, Column, Relationship
+from typing import Optional, List, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..models.match import Match  # noqa TODO(bump flake8)
 
 
 class JobBase(SQLModel):
@@ -30,6 +33,8 @@ class Job(JobBase, table=True):
     """Job object in the database. Internal ID is an implementation detail"""
 
     internal_id: Union[int, None] = Field(default=None, primary_key=True)
+
+    matches: List["Match"] = Relationship(back_populates="job")
 
 
 class JobView(JobBase):
