@@ -9,7 +9,7 @@ class AgentGroupBase(SQLModel):
     active_plugins: List[str] = Field(sa_column=Column(ARRAY(String)))
 
 
-class AgentGroup(SQLModel, table=True):
+class AgentGroup(AgentGroupBase, table=True):
     """Agent group is a group of processes working on a single
     file group, with a shared storage, and a single backing ursadb."""
 
