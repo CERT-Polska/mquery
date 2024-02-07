@@ -2,6 +2,7 @@ from enum import Enum
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field  # type: ignore
 from .models.job import JobView
+from .models.agentgroup import AgentGroupView
 
 
 class JobsSchema(BaseModel):
@@ -82,17 +83,11 @@ class UserAuthSchema(BaseModel):
     password: str
 
 
-class AgentSpecSchema(BaseModel):
-    ursadb_url: str
-    plugins_spec: Dict[str, Dict[str, str]]
-    active_plugins: List[str]
-
-
 class AgentSchema(BaseModel):
     name: str
     alive: bool
     tasks: List
-    spec: AgentSpecSchema
+    spec: AgentGroupView
 
 
 class BackendStatusSchema(BaseModel):
