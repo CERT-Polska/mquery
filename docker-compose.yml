@@ -9,11 +9,12 @@ services:
     - "80:5000"
     links:
     - redis
+    - postgres
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     depends_on:
       - "redis"
-      - "ursadb"
+      - "postgres"
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
@@ -26,11 +27,13 @@ services:
     links:
     - redis
     - ursadb
+    - postgres
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     depends_on:
       - "redis"
       - "ursadb"
+      - "postgres"
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
