@@ -8,10 +8,11 @@ from enum import Enum
 from rq import Queue  # type: ignore
 from sqlmodel import Session, SQLModel, create_engine, select, and_, update
 
+from .models.agentgroup import AgentGroup
 from .models.configentry import ConfigEntry
 from .models.job import Job
 from .models.match import Match
-from .schema import MatchesSchema, AgentSpecSchema, ConfigSchema
+from .schema import MatchesSchema, ConfigSchema
 from .config import app_config
 
 
@@ -265,21 +266,27 @@ class Database:
         plugins_spec: Dict[str, Dict[str, str]],
         active_plugins: List[str],
     ) -> None:
-        self.redis.hset(
-            "agents",
-            group_id,
-            AgentSpecSchema(
-                ursadb_url=ursadb_url,
-                plugins_spec=plugins_spec,
-                active_plugins=active_plugins,
-            ).json(),
-        )
+        """Update or create a Agent information row in the database."""
+        # Currently this is done by workers when starting. In the future,
+        # this should be configured by the admin, and workers should just read
+        # their configuration from the database.
+        with Session(self.engine) as session:
+            entry = session.exec(
+                select(AgentGroup).where(AgentGroup.name == group_id)
+            ).one_or_none()
+            if not entry:
+                entry = AgentGroup(name=group_id)
+            entry.ursadb_url = ursadb_url
+            entry.plugins_spec = plugins_spec
+            entry.active_plugins = active_plugins
+            session.add(entry)
+            session.commit()
 
-    def get_active_agents(self) -> Dict[str, AgentSpecSchema]:
-        return {
-            name: AgentSpecSchema.parse_raw(spec)
-            for name, spec in self.redis.hgetall("agents").items()
-        }
+    def get_active_agents(self) -> Dict[str, AgentGroup]:
+        with Session(self.engine) as session:
+            agents = session.exec(select(AgentGroup)).all()
+
+        return {agent.name: agent for agent in agents}
 
     def get_core_config(self) -> Dict[str, str]:
         """Gets a list of configuration fields for the mquery core."""

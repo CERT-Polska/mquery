@@ -57,15 +57,11 @@ using agentjob key. For example, for job `123456123456` and agent `default`, red
 
 This only matters during the task execution and can be discarded after task is done.
 
-### Agents key (`agents`)
+### AgentGroup table (`agentgroup`)
 
-Agents is a unique List of active agent groups. It's stored in the key `agents`.  
-
-Agent spec is represented by schema.AgentSpecSchema class.
-
-When scheduling jobs, mquery needs to know how many agent groups are currently
+When scheduling jobs, mquery needs to know how many agent groups are
 waiting for tasks. In most cases there is only one, but in distributed environment
-it may not be true.
+there may be more.
 
 ### Cache objects (`cache:*`)
 
