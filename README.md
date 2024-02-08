@@ -124,5 +124,7 @@ Learn how the project has changed by reading our
 If you have any problems, bugs or feature requests related to mquery, you're
 encouraged to create a GitHub issue.
 
-If you have questions unsuitable for github, you can email CERT.PL
+You can also contact us on CERT.PL's Discord: https://discord.gg/3FcP6GQNzd.
+
+If you have questions unsuitable for Github or discord, you can email CERT.PL
 (info@cert.pl) directly.
