@@ -31,9 +31,12 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     depends_on:
-      - "redis"
-      - "ursadb"
-      - "postgres"
+      redis:
+        condition: service_started
+      ursadb:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
@@ -58,3 +61,8 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=mquery
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
