@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from alembic import context
 from sqlmodel import SQLModel
+from logging.config import fileConfig
 
 from mquery.config import app_config  # type: ignore
 from mquery.models.agentgroup import AgentGroup  # type: ignore # noqa
@@ -10,6 +11,10 @@ from mquery.models.match import Match  # type: ignore # noqa
 
 
 target_metadata = SQLModel.metadata
+
+
+if context.config.config_file_name is not None:
+    fileConfig(context.config.config_file_name)
 
 
 def run_migrations_online() -> None:
