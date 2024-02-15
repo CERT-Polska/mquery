@@ -68,11 +68,11 @@ together and depend on each other for optimal performance.
 Mquery currently does not allow you to configure UrsaDB nicely.
 You have to do it "manually", by connecting with `ursacli` program to the
 TCP port exposed by UrsaDB. This program is built together with UrsaDB, and
-available in all official docker images. You can execute it in docker-compose
+available in all official docker images. You can execute it in docker compose
 like this:
 
 ```
-sudo docker-compose -f docker-compose.dev.yml exec ursadb ursacli
+sudo docker compose -f docker-compose.dev.yml exec ursadb ursacli
 ```
 
 Or you can download the latest ursadb release and run a client from there.
@@ -107,7 +107,7 @@ Mquery does not use it in any way, but it's read by Docker.
 
 ```bash
 $ cat .env
-# This file is only relevant for docker-compose deployments.
+# This file is only relevant for docker compose deployments.
 
 # Directory where your samples are stored. By default you have to copy them
 # to ./samples subdirectory in this repository.
@@ -117,7 +117,7 @@ SAMPLES_DIR=./samples
 INDEX_DIR=./index
 ```
 
-If you use docker-compose to start mquery, you can use this file to specify
+If you use docker compose to start mquery, you can use this file to specify
 a location on the host for your samples_dir and index_dir. These variables are
 then used when creating containers. See for example ursadb container spec:
 
@@ -134,5 +134,5 @@ then used when creating containers. See for example ursadb container spec:
 ```
 
 As you can see, variables from `.env` are used to specify mount point for
-the data volumes. You can also ignore this file, and edit docker-compose
+the data volumes. You can also ignore this file, and edit docker compose
 directly to your liking.

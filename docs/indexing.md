@@ -6,11 +6,11 @@ There are many ways to do it, unfortunately not all are equally good.
 
 ## Method 1: ursacli
 
-Run the `ursacli` executable. For docker-compose deployment, go to the mquery
-directory and run `sudo docker-compose exec ursadb ursacli`:
+Run the `ursacli` executable. For docker compose deployment, go to the mquery
+directory and run `sudo docker compose exec ursadb ursacli`:
 
 ```
-sudo docker-compose exec ursadb ursacli
+sudo docker compose exec ursadb ursacli
 [2020-05-10 05:23:27.216] [info] Connecting to tcp://localhost:9281
 [2020-05-10 05:23:27.219] [info] Connected to UrsaDB v1.3.2+be20951 (connection id: 006B8B45B4)
 ursadb>

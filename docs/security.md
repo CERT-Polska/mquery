@@ -32,7 +32,7 @@ Similarly to Redis, it's best to restrict network access to the UrsaDB instance.
 unauthenticated users can, for example, remove indexed data from the database,
 or cause a denial of service.
 
-In the provided docker-compose files, the UrsaDB user is overridden to root by
+In the provided docker compose files, the UrsaDB user is overridden to root by
 default. This is for
 backwards compatibility, and to simplify deployment. For production instances
 consider running ursadb with the default user (`ursa`, UID 1000). This means

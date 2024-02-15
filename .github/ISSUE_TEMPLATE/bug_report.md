@@ -8,8 +8,8 @@ about: Create a report to help us improve
 * Mquery version (from the /status page):
 * Ursadb version (from the /status page):
 * Installation method:
-  - [ ] Generic docker-compose
-  - [ ] Dev docker-compose
+  - [ ] Generic docker compose
+  - [ ] Dev docker compose
   - [ ] Native (from source)
   - [ ] Other (please explain)
 

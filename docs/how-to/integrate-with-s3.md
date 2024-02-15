@@ -12,7 +12,7 @@ Mquery with existing S3 deployment.
 * Linux system with at least 4GB RAM and enough disk space for your samples
 and index
 * Sudo access
-* Mquery is installed natively (not from docker-compose). We will have to
+* Mquery is installed natively (not from docker compose). We will have to
 install additional dependencies, and it's not trivial with existing images.
 To make things simpler, we assume you installed mquery natively (see
 [Install mquery natively (without docker)](./install-native.md) if you want to

@@ -18,7 +18,7 @@ Public instance will be created soon, stay tuned...
 
 ### 1. Install and start
 
-The easiest way to do this is with `docker-compose`:
+The easiest way to do this is with `docker compose`:
 
 ```
 git clone https://github.com/CERT-Polska/mquery.git
@@ -44,7 +44,7 @@ configurable with variable in the `.env` file).
 Launch ursacli in docker:
 
 ```shell
-sudo docker-compose exec ursadb ursacli
+sudo docker compose exec ursadb ursacli
 [2023-06-14 17:20:24.940] [info] Connecting to tcp://localhost:9281
 [2023-06-14 17:20:24.942] [info] Connected to UrsaDB v1.5.1+98421d7 (connection id: 006B8B46B6)
 ursadb>
