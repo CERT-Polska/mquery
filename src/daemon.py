@@ -5,6 +5,7 @@ import logging
 from redis import Redis
 from rq import Connection, Worker  # type: ignore
 
+from .db import init_db
 from .util import setup_logging
 from . import tasks
 from .config import app_config
@@ -41,6 +42,9 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    # Initialize db - temporary measure, migrations are currently not implemented.
+    init_db()
 
     # Initial registration of the worker group.
     # The goal is to make the web UI aware of this worker and its configuration.
