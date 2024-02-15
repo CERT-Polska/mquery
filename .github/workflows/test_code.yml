@@ -108,7 +108,7 @@ jobs:
       - name: run web with docker-compose
         run: docker-compose up --build -d web
       - name: init the database
-        run: docker-compose exec -it web alembic upgrade head
+        run: docker-compose exec -it -w /usr/src/app/src/ web alembic upgrade head
       - name: run the rest of the code
         run: docker-compose up -d
       - name: run e2e tests
