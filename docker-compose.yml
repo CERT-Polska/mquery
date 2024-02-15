@@ -14,9 +14,6 @@ services:
         condition: service_healthy
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
-    depends_on:
-      - "redis"
-      - "postgres"
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
