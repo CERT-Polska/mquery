@@ -1,7 +1,7 @@
 """init
 
 Revision ID: cbbba858deb0
-Revises: 
+Revises:
 Create Date: 2024-02-15 16:52:45.261139
 
 """
