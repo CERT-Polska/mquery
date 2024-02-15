@@ -3,10 +3,10 @@ from alembic import context
 from sqlmodel import SQLModel
 
 from mquery.config import app_config
-from mquery.models.agentgroup import AgentGroup  # noqa
-from mquery.models.configentry import ConfigEntry  # noqa
-from mquery.models.job import Job  # noqa
-from mquery.models.match import Match  # noqa
+from mquery.models.agentgroup import AgentGroup  # noqa type: ignore
+from mquery.models.configentry import ConfigEntry  # noqa type: ignore
+from mquery.models.job import Job  # noqa type: ignore
+from mquery.models.match import Match  # noqa type: ignore
 
 
 target_metadata = SQLModel.metadata
