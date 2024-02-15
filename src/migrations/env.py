@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from alembic import context
 from sqlmodel import SQLModel
 
-from mquery.config import app_config
+from mquery.config import app_config  # type: ignore
 from mquery.models.agentgroup import AgentGroup  # type: ignore # noqa
 from mquery.models.configentry import ConfigEntry  # type: ignore # noqa
 from mquery.models.job import Job  # type: ignore # noqa
