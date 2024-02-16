@@ -1,9 +1,7 @@
 """init
-
 Revision ID: cbbba858deb0
 Revises:
 Create Date: 2024-02-15 16:52:45.261139
-
 """
 from alembic import op
 import sqlalchemy as sa
