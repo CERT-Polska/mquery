@@ -105,13 +105,17 @@ jobs:
           submodules: recursive
       - name: build test image
         run: docker build -t mquery_tests:latest -f src/e2etests/Dockerfile .
-      - name: run docker compose
-        run: docker-compose up --scale daemon=1 --build -d
+      - name: run web with docker-compose
+        run: docker compose up --build -d web --wait
+      - name: init the database
+        run: docker compose exec -it -w /usr/src/app/src/ web alembic upgrade head
+      - name: run the rest of the code
+        run: docker compose up -d
       - name: run e2e tests
         run: docker run --net mquery_default -v $(readlink -f ./samples):/mnt/samples mquery_tests
       - name: get run logs
         if: always()
-        run: docker-compose logs
+        run: docker compose logs
       - name: stop docker compose
         if: always()
-        run: docker-compose down
+        run: docker compose down
