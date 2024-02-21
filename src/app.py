@@ -28,6 +28,7 @@ from .lib.yaraparse import parse_yara
 from .plugins import PluginManager
 from .lib.ursadb import UrsaDb
 from .models.job import Job, JobView
+from .models.match import Match
 from .schema import (
     JobsSchema,
     RequestConfigEdit,
@@ -350,13 +351,13 @@ def download_hashes(job_id: str) -> Response:
 
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
-        for d in db.get_job_matches(job_id).matches
+        for d in db.get_job(job_id).matches
     )
     return Response(hashes + "\n")
 
 
 def zip_files(
-    plugins: PluginManager, matches: List[Dict[str, Any]]
+    plugins: PluginManager, matches: List[Match]
 ) -> Iterable[bytes]:
     """Adds all the samples to a zip archive (replacing original filename
     with sha256) and returns it as a stream of bytes."""
@@ -383,8 +384,8 @@ def zip_files(
 async def download_files(
     job_id: str, plugins: PluginManager = Depends(with_plugins)
 ) -> StreamingResponse:
-    matches = db.get_job_matches(job_id).matches
-    return StreamingResponse(zip_files(plugins, matches))
+    job = db.get_job(job_id)
+    return StreamingResponse(zip_files(plugins, job.matches))
 
 
 @app.post(
@@ -487,6 +488,7 @@ def matches(
     useful information. Results from this query can be used to download files
     using the `/download` endpoint.
     """
+    job = db.get_job(job_id)
     return db.get_job_matches(job_id, offset, limit)
 
 
