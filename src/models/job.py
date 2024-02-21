@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, Field, ARRAY, String, Column, Relationship
 from typing import Optional, List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..models.match import Match  # noqa TODO(bump flake8)
+    from ..models.match import Match
 
 
 class JobBase(SQLModel):

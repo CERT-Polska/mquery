@@ -57,7 +57,7 @@ $ mypy src
 - Find other style issues with [flake8](https://flake8.pycqa.org):
 
 ```bash
-$ pip install flake8==3.7.9
+$ pip install flake8==6.0.0
 $ flake8 src
 ```
 
