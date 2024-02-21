@@ -366,15 +366,6 @@ class Database:
             session.add(entry)
             session.commit()
 
-    def cache_get(self, key: str, expire: int) -> Optional[str]:
-        value = self.redis.get(f"cached:{key}")
-        if value is not None:
-            self.redis.expire(f"cached:{key}", expire)
-        return value
-
-    def cache_store(self, key: str, value: str, expire: int) -> None:
-        self.redis.setex(f"cached:{key}", expire, value)
-
 
 def init_db() -> None:
     engine = create_engine(app_config.database.url, echo=True)
