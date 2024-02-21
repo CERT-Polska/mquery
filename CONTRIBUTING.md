@@ -63,6 +63,13 @@ $ flake8 src
 
 (Lifehack: you can also plug them into your editor as on-save action).
 
+You don't have to do this for every PR, but docstrings in this projects
+were also formatted using:
+
+```bash
+pydocstringformatter --summary-quotes-same-line --max-summary-lines 10 --max-line-length=79 --no-split-summary-body -w src/
+```
+
 6. When you feel like you're done, commit the files:
 
 ```bash

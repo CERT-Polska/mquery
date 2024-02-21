@@ -1,6 +1,4 @@
-"""
-Unit-tests for the ursadb library
-"""
+"""Unit-tests for the ursadb library."""
 
 import sys
 import pytest  # type: ignore

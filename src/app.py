@@ -178,7 +178,8 @@ def get_user_roles(user: User) -> List[str]:
 
 def expand_role(role: str) -> List[str]:
     """Some roles imply other roles or permissions. For example, admin role
-    also gives permissions for all user permissions."""
+    also gives permissions for all user permissions.
+    """
     role_implications = {
         "admin": [
             "user",
@@ -211,8 +212,7 @@ def expand_role(role: str) -> List[str]:
     dependencies=[Depends(is_admin)],
 )
 def config_list() -> List[ConfigSchema]:
-    """
-    Returns the current database configuration.
+    """Returns the current database configuration.
 
     This endpoint is not stable and may be subject to change in the future.
     """
@@ -226,8 +226,7 @@ def config_list() -> List[ConfigSchema]:
     dependencies=[Depends(is_admin)],
 )
 def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
-    """
-    Change a given configuration key to a specified value.
+    """Change a given configuration key to a specified value.
 
     This endpoint is not stable and may be subject to change in the future.
     """
@@ -242,8 +241,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
     dependencies=[Depends(is_admin)],
 )
 def backend_status() -> BackendStatusSchema:
-    """
-    Gets the current status of backend services, and returns it. Intended to
+    """Gets the current status of backend services, and returns it. Intended to
     be used by the webpage.
 
     This endpoint is not stable and may be subject to change in the future.
@@ -283,8 +281,7 @@ def backend_status() -> BackendStatusSchema:
     dependencies=[Depends(can_view_queries)],
 )
 def backend_status_datasets() -> BackendStatusDatasetsSchema:
-    """
-    Returns a combined list of datasets from all agents.
+    """Returns a combined list of datasets from all agents.
 
     Caveat: In case of collision of dataset ids when there are multiple agents,
     this API will only return one dataset per colliding ID. Collision is
@@ -318,8 +315,7 @@ def download(
     file_path: str,
     plugins: PluginManager = Depends(with_plugins),
 ) -> Response:
-    """
-    Sends a file from given `file_path`. This path should come from
+    """Sends a file from given `file_path`. This path should come from
     results of one of the previous searches.
 
     This endpoint needs `job_id` that found the specified file, and `ordinal`
@@ -346,7 +342,7 @@ def download(
     "/api/download/hashes/{job_id}", dependencies=[Depends(can_view_queries)]
 )
 def download_hashes(job_id: str) -> Response:
-    """Returns a list of job matches as a sha256 strings joined with newlines"""
+    """Returns a list of job matches as a sha256 strings joined with newlines."""
 
     hashes = "\n".join(
         d["meta"]["sha256"]["display_text"]
@@ -359,7 +355,8 @@ def zip_files(
     plugins: PluginManager, matches: List[Dict[str, Any]]
 ) -> Iterable[bytes]:
     """Adds all the samples to a zip archive (replacing original filename
-    with sha256) and returns it as a stream of bytes."""
+    with sha256) and returns it as a stream of bytes.
+    """
     plugins = PluginManager(app_config.mquery.plugins, db)
 
     with tempfile.NamedTemporaryFile() as writer:
@@ -396,8 +393,7 @@ async def download_files(
 def query(
     data: QueryRequestSchema = Body(...), user: User = Depends(current_user)
 ) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
-    """
-    Starts a new search. Response will contain a new job ID that can be used
+    """Starts a new search. Response will contain a new job ID that can be used
     to check the job status and download matched files.
     """
     try:
@@ -482,8 +478,7 @@ def query(
 def matches(
     job_id: str, offset: int = Query(...), limit: int = Query(...)
 ) -> MatchesSchema:
-    """
-    Returns a list of matched files, along with metadata tags and other
+    """Returns a list of matched files, along with metadata tags and other
     useful information. Results from this query can be used to download files
     using the `/download` endpoint.
     """
@@ -497,8 +492,7 @@ def matches(
     dependencies=[Depends(can_view_queries)],
 )
 def job_info(job_id: str) -> Job:
-    """
-    Returns a metadata for a single job. May be useful for monitoring
+    """Returns a metadata for a single job. May be useful for monitoring
     a job progress.
     """
     return db.get_job(job_id)
@@ -513,9 +507,7 @@ def job_info(job_id: str) -> Job:
 def job_cancel(
     job_id: str, user: User = Depends(current_user)
 ) -> StatusSchema:
-    """
-    Cancels the job with a provided `job_id`.
-    """
+    """Cancels the job with a provided `job_id`."""
     if "can_manage_all_queries" not in get_user_roles(user):
         job = db.get_job(job_id)
         if job.rule_author != user.name:
@@ -535,8 +527,7 @@ def job_cancel(
     dependencies=[Depends(can_list_queries)],
 )
 def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
-    """
-    Returns statuses of all the jobs in the system. May take some time (> 1s)
+    """Returns statuses of all the jobs in the system. May take some time (> 1s)
     when there are a lot of them.
     """
     jobs = [db.get_job(job) for job in db.get_job_ids()]

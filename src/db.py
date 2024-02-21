@@ -51,13 +51,13 @@ class Database:
         )
 
     def get_job_ids(self) -> List[JobId]:
-        """Gets IDs of all jobs in the database"""
+        """Gets IDs of all jobs in the database."""
         with Session(self.engine) as session:
             jobs = session.exec(select(Job)).all()
             return [j.id for j in jobs]
 
     def cancel_job(self, job: JobId, error=None) -> None:
-        """Sets the job status to cancelled, with optional error message"""
+        """Sets the job status to cancelled, with optional error message."""
         with Session(self.engine) as session:
             session.execute(
                 update(Job)
@@ -71,16 +71,16 @@ class Database:
         self.cancel_job(job, message)
 
     def __get_job(self, session: Session, job: JobId) -> Job:
-        """Internal helper to get a job from the database"""
+        """Internal helper to get a job from the database."""
         return session.exec(select(Job).where(Job.id == job)).one()
 
     def get_job(self, job: JobId) -> Job:
-        """Retrieves a job from the database"""
+        """Retrieves a job from the database."""
         with Session(self.engine) as session:
             return self.__get_job(session, job)
 
     def remove_query(self, job: JobId) -> None:
-        """Sets the job status to removed"""
+        """Sets the job status to removed."""
         with Session(self.engine) as session:
             session.execute(
                 update(Job).where(Job.id == job).values(status="removed")
@@ -95,7 +95,7 @@ class Database:
             session.commit()
 
     def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
-        """Make sure that the file path is in the job results"""
+        """Make sure that the file path is in the job results."""
         with Session(self.engine) as session:
             job_object = self.__get_job(session, job)
             statement = select(Match).where(
@@ -119,7 +119,8 @@ class Database:
 
     def agent_finish_job(self, job: JobId) -> None:
         """Decrements the number of active agents in the given job. If there
-        are no more agents, job status is changed to done."""
+        are no more agents, job status is changed to done.
+        """
         with Session(self.engine) as session:
             (agents_left,) = session.execute(
                 update(Job)
@@ -141,7 +142,8 @@ class Database:
         """Increments (or decrements, for negative tasks) the number of tasks
         that are in progress for agent. This number should always be positive
         for jobs in status inprogress. This function will automatically call
-        agent_finish_job if the agent has no more tasks left"""
+        agent_finish_job if the agent has no more tasks left.
+        """
         new_tasks = self.redis.incrby(f"agentjob:{agent}:{job}", tasks)
         assert new_tasks >= 0
         if new_tasks == 0:
@@ -152,7 +154,8 @@ class Database:
     ) -> int:
         """Updates progress for the job. This will increment numbers processed,
         inprogress, errored and matched files.
-        Returns the number of processed files after the operation."""
+        Returns the number of processed files after the operation.
+        """
         with Session(self.engine) as session:
             (files_processed,) = session.execute(
                 update(Job)
@@ -169,7 +172,7 @@ class Database:
             return files_processed
 
     def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
-        """Sets total_datasets and datasets_left, and status to processing"""
+        """Sets total_datasets and datasets_left, and status to processing."""
         with Session(self.engine) as session:
             session.execute(
                 update(Job)

@@ -1,6 +1,4 @@
-"""
-End-to-end tests for the whole infrastructure
-"""
+"""End-to-end tests for the whole infrastructure."""
 
 import json
 import logging

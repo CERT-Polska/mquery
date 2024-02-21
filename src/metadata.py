@@ -54,16 +54,14 @@ class MetadataPlugin(ABC):
         )
 
     def identify(self, matched_fname: str) -> Optional[str]:
-        """
-        Returns file unique identifier based on matched path.
+        """Returns file unique identifier based on matched path.
 
         Intended to be overridden by plugin.
         """
         return matched_fname
 
     def run(self, matched_fname: str, current_meta: Metadata) -> Metadata:
-        """
-        Extracts metadata and updates cache. This method can only be run if
+        """Extracts metadata and updates cache. This method can only be run if
         the plugin sets `is_extractor` to True.
 
         :param matched_fname: Filename of the processed file
@@ -86,8 +84,7 @@ class MetadataPlugin(ABC):
         return result
 
     def filter(self, matched_fname: str, file_path: str) -> Optional[str]:
-        """
-        Checks if the file is a good candidate for further processing,
+        """Checks if the file is a good candidate for further processing,
         and fix the file path if necessary.
         :param matched_fname: Original file path coming from ursadb
         :param file_path: Current path to the file contents
@@ -97,8 +94,7 @@ class MetadataPlugin(ABC):
         raise NotImplementedError
 
     def cleanup(self) -> None:
-        """
-        Optionally, clean up after the plugin, for example remove any
+        """Optionally, clean up after the plugin, for example remove any
         temporary files. Called after processing a single batch of files.
         """
         pass
@@ -106,8 +102,7 @@ class MetadataPlugin(ABC):
     def extract(
         self, identifier: str, matched_fname: str, current_meta: Metadata
     ) -> Metadata:
-        """
-        Extracts metadata for matched path
+        """Extracts metadata for matched path.
 
         Intended to be overridden by plugin, if is_extractor is True.
 

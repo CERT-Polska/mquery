@@ -1,6 +1,4 @@
-"""
-Yara rule test corpus
-"""
+"""Yara rule test corpus."""
 
 import unittest
 from pathlib import Path
