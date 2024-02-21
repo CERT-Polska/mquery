@@ -63,13 +63,6 @@ When scheduling jobs, mquery needs to know how many agent groups are
 waiting for tasks. In most cases there is only one, but in distributed environment
 there may be more.
 
-### Cache objects (`cache:*`)
-
-Cache objects are arbitrary strings.
-
-Right now they are only optionally used by metadata plugins, to
-cache expensive computation in redis.
-
 ### Configuration table (`configentry`)
 
 Represented by models.configentry.ConfigEntry class.
