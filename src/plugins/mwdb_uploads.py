@@ -50,7 +50,7 @@ class MalwarecageUploadsMetadata(MetadataPlugin):
                 }
 
             # Add metadata with link to sample in Malwarecage instance
-            metadata[f"mwdb_analysis"] = {
+            metadata["mwdb_analysis"] = {
                 "display_text": "mwdb",
                 "url": f"{self.mwdb_url}sample/{identifier}",
             }

@@ -181,7 +181,7 @@ def index(
         index_files, indexing_jobs, chunksize=1
     ):
         done += 1
-        logging.info(f"Index.4: Batch %s done [%s/%s].", batchid, done, total)
+        logging.info("Index.4: Batch %s done [%s/%s].", batchid, done, total)
 
     if list(workdir.iterdir()):
         logging.info("Index.5: Workdir not removed, because it's not empty.")
