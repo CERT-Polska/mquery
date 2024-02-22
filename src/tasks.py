@@ -21,7 +21,8 @@ class Agent:
         """Creates a new agent instance. Every agents belongs to some group
         (identified by the group_id). There may be multiple agent workers in a
         single group, but they must all work on the same ursadb instance.
-        Reads connection parameters and plugins from the global config."""
+        Reads connection parameters and plugins from the global config.
+        """
         self.group_id = group_id
         self.ursa_url = app_config.mquery.backend
         self.db = Database(app_config.redis.host, app_config.redis.port)
@@ -34,7 +35,8 @@ class Agent:
 
     def register(self) -> None:
         """Register the plugin in the database. Should happen when starting
-        the worker process."""
+        the worker process.
+        """
         plugins_spec = {
             plugin_class.get_name(): plugin_class.config_fields
             for plugin_class in self.plugins.plugin_classes
@@ -62,7 +64,8 @@ class Agent:
         self, job: JobId, orig_name: str, path: str, matches: List[str]
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
-        plugins."""
+        plugins.
+        """
 
         # Initialise default values in the metadata.
         metadata: Metadata = {
@@ -131,7 +134,7 @@ class Agent:
             )
 
     def add_tasks_in_progress(self, job: Job, tasks: int) -> None:
-        """See documentation of db.agent_add_tasks_in_progress"""
+        """See documentation of db.agent_add_tasks_in_progress."""
         self.db.agent_add_tasks_in_progress(job.id, self.group_id, tasks)
 
 
@@ -165,7 +168,8 @@ def ursadb_command(command: str) -> Json:
 
 def start_search(job_id: JobId) -> None:
     """Initialises a search task - checks available datasets and schedules smaller
-    units of work."""
+    units of work.
+    """
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":
@@ -201,7 +205,8 @@ def start_search(job_id: JobId) -> None:
 def __get_batch_sizes(file_count: int) -> List[int]:
     """Returns a list of integers that sums to file_count. The idea is to split
     the work between all workers into units that are not too small and not
-    too big. Currently just creates equally sized batches."""
+    too big. Currently just creates equally sized batches.
+    """
     result = []
     BATCH_SIZE = 50
     while file_count > BATCH_SIZE:
@@ -213,7 +218,7 @@ def __get_batch_sizes(file_count: int) -> List[int]:
 
 
 def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
-    """Queries ursadb and creates yara scans tasks with file batches"""
+    """Queries ursadb and creates yara scans tasks with file batches."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":
@@ -252,7 +257,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
 
 
 def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
-    """Actually scans files, and updates a database with the results"""
+    """Actually scans files, and updates a database with the results."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":

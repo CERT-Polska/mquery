@@ -1,5 +1,6 @@
 """Plugin that serves as an example how to use existing typed-config
-machinery to configure your own plugins"""
+machinery to configure your own plugins.
+"""
 
 from typedconfig import Config, key, section
 
@@ -10,7 +11,7 @@ from ..config import app_config
 
 @section("plugin.example")
 class ExamplePluginConfig(Config):
-    """Plugin configuration"""
+    """Plugin configuration."""
 
     tag = key(cast=str)
     tag_url = key(cast=str)
@@ -26,7 +27,8 @@ class ExamplePluginConfig(Config):
 class ExamplePluginWithTypedConfig(MetadataPlugin):
     """This plugin serves as an example how to use typed-config and
     mquery config file to configure your own plugins. It's equivalent
-    to ExamplePlugin in all except the configuration method"""
+    to ExamplePlugin in all except the configuration method.
+    """
 
     is_extractor = True
 

@@ -23,7 +23,7 @@ def start_worker(args: argparse.Namespace, process_index: int) -> None:
 
 def main() -> None:
     """Spawns a new agent process. Use argv if you want to use a different
-    group_id (it's `default` by default)
+    group_id (it's `default` by default).
     """
 
     parser = argparse.ArgumentParser(description="Start mquery daemon.")

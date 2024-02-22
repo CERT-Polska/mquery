@@ -11,12 +11,13 @@ class AgentGroupBase(SQLModel):
 
 class AgentGroup(AgentGroupBase, table=True):
     """Agent group is a group of processes working on a single
-    file group, with a shared storage, and a single backing ursadb."""
+    file group, with a shared storage, and a single backing ursadb.
+    """
 
     id: Union[int, None] = Field(default=None, primary_key=True)
 
 
 class AgentGroupView(AgentGroupBase):
-    """Pydantic model used in the public API"""
+    """Pydantic model used in the public API."""
 
     pass

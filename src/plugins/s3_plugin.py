@@ -11,7 +11,8 @@ from ..metadata import MetadataPlugin, MetadataPluginConfig
 class S3Plugin(MetadataPlugin):
     """Can be used to download files from minio prior to running yara.
     Names of the files in configured bucket must be equal to basenames
-    (filenames without paths) of matched files."""
+    (filenames without paths) of matched files.
+    """
 
     is_filter = True
     config_fields = {

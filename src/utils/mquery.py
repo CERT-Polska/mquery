@@ -15,7 +15,7 @@ class OutputSettings:
 
 
 def query(mquery_server: str, yara_rule: str) -> str:
-    """Queries mquery server and returns a new job ID"""
+    """Queries mquery server and returns a new job ID."""
     res = requests.post(
         f"{mquery_server}/api/query",
         json={
