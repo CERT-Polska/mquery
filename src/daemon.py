@@ -44,7 +44,7 @@ def main() -> None:
 
     # Initial registration of the worker group.
     # The goal is to make the web UI aware of this worker and its configuration.
-    tasks.make_agent(args.group_id).register()
+    tasks.initial_registration(args.group_id)
 
     if args.scale > 1:
         children = [

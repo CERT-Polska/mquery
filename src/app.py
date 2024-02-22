@@ -20,6 +20,7 @@ import zipfile
 import jwt
 import base64
 from cryptography.hazmat.primitives import serialization
+from sqlmodel import Session, create_engine
 
 from .config import app_config
 from .util import mquery_version
@@ -28,6 +29,7 @@ from .lib.yaraparse import parse_yara
 from .plugins import PluginManager
 from .lib.ursadb import UrsaDb
 from .models.job import Job, JobView
+from .redisdb import RedisDB
 from .schema import (
     JobsSchema,
     RequestConfigEdit,
@@ -44,11 +46,16 @@ from .schema import (
     ServerSchema,
 )
 
-db = Database(app_config.redis.host, app_config.redis.port)
+engine = create_engine(app_config.database.url)
 app = FastAPI()
 
 
-def with_plugins() -> Iterable[PluginManager]:
+def get_db():
+    with Session(engine) as session:
+        yield Database(session)
+
+
+def with_plugins(db: Database = Depends(get_db)) -> Iterable[PluginManager]:
     """Cleans up plugins after processing."""
 
     plugins = PluginManager(app_config.mquery.plugins, db)
@@ -81,7 +88,7 @@ class User:
             return []
 
 
-async def current_user(authorization: Optional[str] = Header(None)) -> User:
+async def current_user(authorization: Optional[str] = Header(None), db: Database = Depends(get_db)) -> User:
     auth_enabled = db.get_mquery_config_key("auth_enabled")
     if not auth_enabled or auth_enabled == "false":
         return User(None)
@@ -136,7 +143,7 @@ class RoleChecker:
     def __init__(self, need_permissions: List[str]) -> None:
         self.need_permissions = need_permissions
 
-    def __call__(self, user: User = Depends(current_user)):
+    def __call__(self, user: User = Depends(current_user), db: Database = Depends(get_db)):
         auth_enabled = db.get_mquery_config_key("auth_enabled")
         if not auth_enabled or auth_enabled == "false":
             return
@@ -165,7 +172,7 @@ can_list_queries = RoleChecker(["can_list_queries"])
 can_download_files = RoleChecker(["can_download_files"])
 
 
-def get_user_roles(user: User) -> List[str]:
+def get_user_roles(user: User, db: Database = Depends(get_db)) -> List[str]:
     client_id = db.get_mquery_config_key("openid_client_id")
     user_roles = user.roles(client_id)
     auth_default_roles = db.get_mquery_config_key("auth_default_roles")
@@ -211,7 +218,7 @@ def expand_role(role: str) -> List[str]:
     tags=["internal"],
     dependencies=[Depends(is_admin)],
 )
-def config_list() -> List[ConfigSchema]:
+def config_list(db: Database = Depends(get_db)) -> List[ConfigSchema]:
     """Returns the current database configuration.
 
     This endpoint is not stable and may be subject to change in the future.
@@ -225,7 +232,7 @@ def config_list() -> List[ConfigSchema]:
     tags=["internal"],
     dependencies=[Depends(is_admin)],
 )
-def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
+def config_edit(data: RequestConfigEdit = Body(...), db: Database = Depends(get_db)) -> StatusSchema:
     """Change a given configuration key to a specified value.
 
     This endpoint is not stable and may be subject to change in the future.
@@ -240,7 +247,7 @@ def config_edit(data: RequestConfigEdit = Body(...)) -> StatusSchema:
     tags=["internal"],
     dependencies=[Depends(is_admin)],
 )
-def backend_status() -> BackendStatusSchema:
+def backend_status(db: Database = Depends(get_db)) -> BackendStatusSchema:
     """Gets the current status of backend services, and returns it. Intended to
     be used by the webpage.
 
@@ -280,7 +287,7 @@ def backend_status() -> BackendStatusSchema:
     tags=["internal"],
     dependencies=[Depends(can_view_queries)],
 )
-def backend_status_datasets() -> BackendStatusDatasetsSchema:
+def backend_status_datasets(db: Database = Depends(get_db)) -> BackendStatusDatasetsSchema:
     """Returns a combined list of datasets from all agents.
 
     Caveat: In case of collision of dataset ids when there are multiple agents,
@@ -314,6 +321,7 @@ def download(
     ordinal: int,
     file_path: str,
     plugins: PluginManager = Depends(with_plugins),
+    db: Database = Depends(get_db),
 ) -> Response:
     """Sends a file from given `file_path`. This path should come from
     results of one of the previous searches.
@@ -341,7 +349,7 @@ def download(
 @app.get(
     "/api/download/hashes/{job_id}", dependencies=[Depends(can_view_queries)]
 )
-def download_hashes(job_id: str) -> Response:
+def download_hashes(job_id: str, db: Database = Depends(get_db)) -> Response:
     """Returns a list of job matches as a sha256 strings joined with newlines."""
 
     hashes = "\n".join(
@@ -352,7 +360,7 @@ def download_hashes(job_id: str) -> Response:
 
 
 def zip_files(
-    plugins: PluginManager, matches: List[Dict[str, Any]]
+    plugins: PluginManager, matches: List[Dict[str, Any]], db: Database = Depends(get_db)
 ) -> Iterable[bytes]:
     """Adds all the samples to a zip archive (replacing original filename
     with sha256) and returns it as a stream of bytes.
@@ -378,7 +386,7 @@ def zip_files(
     dependencies=[Depends(is_user), Depends(can_download_files)],
 )
 async def download_files(
-    job_id: str, plugins: PluginManager = Depends(with_plugins)
+    job_id: str, plugins: PluginManager = Depends(with_plugins), db: Database = Depends(get_db)
 ) -> StreamingResponse:
     matches = db.get_job_matches(job_id).matches
     return StreamingResponse(zip_files(plugins, matches))
@@ -391,7 +399,7 @@ async def download_files(
     dependencies=[Depends(can_manage_queries)],
 )
 def query(
-    data: QueryRequestSchema = Body(...), user: User = Depends(current_user)
+    data: QueryRequestSchema = Body(...), user: User = Depends(current_user), db: Database = Depends(get_db)
 ) -> Union[QueryResponseSchema, List[ParseResponseSchema]]:
     """Starts a new search. Response will contain a new job ID that can be used
     to check the job status and download matched files.
@@ -457,6 +465,7 @@ def query(
     if not data.taints:
         data.taints = []
 
+    redisdb = RedisDB(app_config.redis.host, app_config.redis.port)
     job = db.create_search_task(
         rules[-1].name,
         user.name,
@@ -465,6 +474,7 @@ def query(
         data.reference or "",
         data.taints,
         list(active_agents.keys()),
+        redisdb,
     )
     return QueryResponseSchema(query_hash=job)
 
@@ -476,7 +486,7 @@ def query(
     dependencies=[Depends(can_view_queries)],
 )
 def matches(
-    job_id: str, offset: int = Query(...), limit: int = Query(...)
+    job_id: str, offset: int = Query(...), limit: int = Query(...), db: Database = Depends(get_db)
 ) -> MatchesSchema:
     """Returns a list of matched files, along with metadata tags and other
     useful information. Results from this query can be used to download files
@@ -491,7 +501,7 @@ def matches(
     tags=["stable"],
     dependencies=[Depends(can_view_queries)],
 )
-def job_info(job_id: str) -> Job:
+def job_info(job_id: str, db: Database = Depends(get_db)) -> Job:
     """Returns a metadata for a single job. May be useful for monitoring
     a job progress.
     """
@@ -505,7 +515,7 @@ def job_info(job_id: str) -> Job:
     dependencies=[Depends(can_manage_queries)],
 )
 def job_cancel(
-    job_id: str, user: User = Depends(current_user)
+    job_id: str, user: User = Depends(current_user), db: Database = Depends(get_db)
 ) -> StatusSchema:
     """Cancels the job with a provided `job_id`."""
     if "can_manage_all_queries" not in get_user_roles(user):
@@ -526,7 +536,7 @@ def job_cancel(
     tags=["stable"],
     dependencies=[Depends(can_list_queries)],
 )
-def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
+def job_statuses(user: User = Depends(current_user), db: Database = Depends(get_db)) -> JobsSchema:
     """Returns statuses of all the jobs in the system. May take some time (> 1s)
     when there are a lot of them.
     """
@@ -545,7 +555,7 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     dependencies=[Depends(can_manage_queries)],
 )
 def query_remove(
-    job_id: str, user: User = Depends(current_user)
+    job_id: str, user: User = Depends(current_user), db: Database = Depends(get_db)
 ) -> StatusSchema:
     if "can_manage_all_queries" not in get_user_roles(user):
         job = db.get_job(job_id)
@@ -565,7 +575,7 @@ def query_remove(
 
 
 @app.get("/api/server", response_model=ServerSchema, tags=["stable"])
-def server() -> ServerSchema:
+def server(db: Database = Depends(get_db)) -> ServerSchema:
     return ServerSchema(
         version=mquery_version(),
         auth_enabled=db.get_mquery_config_key("auth_enabled"),

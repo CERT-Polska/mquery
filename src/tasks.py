@@ -2,6 +2,7 @@ from typing import List, Optional
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
+from sqlmodel import create_engine, Session
 from contextlib import contextmanager
 import yara  # type: ignore
 
@@ -14,10 +15,14 @@ from .models.match import Match
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
 from .metadata import Metadata
+from .redisdb import RedisDB
+
+
+engine = create_engine(app_config.database.url)
 
 
 class Agent:
-    def __init__(self, group_id: str) -> None:
+    def __init__(self, session: Session, group_id: str) -> None:
         """Creates a new agent instance. Every agents belongs to some group
         (identified by the group_id). There may be multiple agent workers in a
         single group, but they must all work on the same ursadb instance.
@@ -25,9 +30,10 @@ class Agent:
         """
         self.group_id = group_id
         self.ursa_url = app_config.mquery.backend
-        self.db = Database(app_config.redis.host, app_config.redis.port)
+        self.db = Database(session)
         self.ursa = UrsaDb(self.ursa_url)
         self.plugins = PluginManager(app_config.mquery.plugins, self.db)
+        self.redisdb = RedisDB(app_config.redis.host, app_config.redis.port)
         self.queue = Queue(
             group_id,
             connection=Redis(app_config.redis.host, app_config.redis.port),
@@ -135,35 +141,40 @@ class Agent:
 
     def add_tasks_in_progress(self, job: Job, tasks: int) -> None:
         """See documentation of db.agent_add_tasks_in_progress."""
-        self.db.agent_add_tasks_in_progress(job.id, self.group_id, tasks)
+        self.db.agent_add_tasks_in_progress(
+            job.id,
+            self.group_id,
+            tasks,
+            self.redisdb
+        )
+
+
+def initial_registration(group_id: str):
+    """Performs the initial registration of the agent."""
+    with Session(engine) as session:
+        make_agent(session, group_id).register()
 
 
 @contextmanager
 def job_context(job_id: JobId):
     """Small error-handling context manager. Fails the job on exception."""
-    agent = make_agent()
-    try:
-        yield agent
-    except Exception as e:
-        logging.exception("Failed to execute %s.", job_id)
-        agent.db.fail_job(job_id, str(e))
-        raise
+    with Session(engine) as session:
+        agent = make_agent(session)
+        try:
+            yield agent
+        except Exception as e:
+            logging.exception("Failed to execute %s.", job_id)
+            agent.db.fail_job(job_id, str(e))
+            raise
 
 
-def make_agent(group_override: Optional[str] = None):
+def make_agent(session: Session, group_override: Optional[str] = None):
     """Creates a new agent using the default settings from config."""
     if group_override is not None:
         group_id = group_override
     else:
         group_id = get_current_job().origin
-    return Agent(group_id)
-
-
-def ursadb_command(command: str) -> Json:
-    """Executes a raw ursadb command using this backend."""
-    agent = make_agent()
-    json = agent.ursa.execute_command(command)
-    return json
+    return Agent(session, group_id)
 
 
 def start_search(job_id: JobId) -> None:
