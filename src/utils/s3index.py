@@ -98,10 +98,10 @@ def main() -> None:
 
     args = parser.parse_args()
     types = list(set(args.types))
-    
+
     if not args.types:
         types = ["gram3", "text4", "wide8", "hash4"]
-        
+
     if args.workdir is None:
         logging.error("--workdir is a required parameter")
         return
