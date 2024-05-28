@@ -77,7 +77,7 @@ def main() -> None:
     parser.add_argument(
         "--type",
         dest="types",
-        help="Index types. By default [gram3, text4, wide8, hash4]",
+        help="Index types. At least one type is required.",
         action="append",
         default=[],
         choices=["gram3", "text4", "hash4", "wide8"],
@@ -100,7 +100,9 @@ def main() -> None:
     types = list(set(args.types))
 
     if not args.types:
-        raise RuntimeError("You must pick at least one index type (see --type)")
+        raise RuntimeError(
+            "You must pick at least one index type (see --type)"
+        )
 
     if args.workdir is None:
         logging.error("--workdir is a required parameter")
