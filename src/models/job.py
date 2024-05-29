@@ -38,6 +38,7 @@ class Job(JobBase, table=True):
     matches: List["Match"] = Relationship(back_populates="job")
     agents: List["JobAgent"] = Relationship(back_populates="job")
 
+
 class JobView(JobBase):
     """Pydantic model used in the public API."""
 

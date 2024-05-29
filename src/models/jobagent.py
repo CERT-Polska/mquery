@@ -17,4 +17,3 @@ class JobAgent(SQLModel, table=True):
 
     agent_id: int = Field(foreign_key="agentgroup.id")
     agent: "AgentGroup" = Relationship(back_populates="jobs")
-
