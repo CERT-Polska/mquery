@@ -11,6 +11,7 @@ from sqlmodel import Session, SQLModel, create_engine, select, and_, update
 from .models.agentgroup import AgentGroup
 from .models.configentry import ConfigEntry
 from .models.job import Job
+from .models.jobagent import JobAgent
 from .models.match import Match
 from .schema import MatchesSchema, ConfigSchema
 from .config import app_config
@@ -117,36 +118,58 @@ class Database:
             )
             session.commit()
 
-    def agent_finish_job(self, job: JobId) -> None:
+    def agent_finish_job(self, job: Job) -> None:
         """Decrements the number of active agents in the given job. If there
         are no more agents, job status is changed to done.
         """
         with Session(self.engine) as session:
             (agents_left,) = session.execute(
                 update(Job)
-                .where(Job.id == job)
+                .where(Job.internal_id == job.internal_id)
                 .values(agents_left=Job.agents_left - 1)
                 .returning(Job.agents_left)
             ).one()
             if agents_left == 0:
                 session.execute(
                     update(Job)
-                    .where(Job.id == job)
+                    .where(Job.internal_id == job.internal_id)
                     .values(finished=int(time()), status="done")
                 )
             session.commit()
 
+    def init_jobagent(self, job: Job, agent_id: int, tasks: int) -> None:
+        """Creates a new JobAgent object.
+        If tasks==0 then finishes job immediately"""
+        with Session(self.engine) as session:
+            obj = JobAgent(
+                task_in_progress=tasks,
+                job_id=job.internal_id,
+                agent_id=agent_id,
+            )
+            session.add(obj)
+            session.commit()
+        if tasks == 0:
+            self.agent_finish_job(job)
+
     def agent_add_tasks_in_progress(
-        self, job: JobId, agent: str, tasks: int
+        self, job: Job, agent_id: int, tasks: int
     ) -> None:
-        """Increments (or decrements, for negative tasks) the number of tasks
-        that are in progress for agent. This number should always be positive
-        for jobs in status inprogress. This function will automatically call
-        agent_finish_job if the agent has no more tasks left.
+        """Increments (or decrements, for negative values) the number of tasks
+        that are in progress for agent. The number of tasks in progress should
+        always stay positive for jobs in status inprogress. This function will
+        automatically call agent_finish_job if the agent has no more tasks left.
         """
-        new_tasks = self.redis.incrby(f"agentjob:{agent}:{job}", tasks)
-        assert new_tasks >= 0
-        if new_tasks == 0:
+        with Session(self.engine) as session:
+            (tasks_left,) = session.execute(
+                update(JobAgent)
+                .where(JobAgent.job_id == job.internal_id)
+                .where(JobAgent.agent_id == agent_id)
+                .values(task_in_progress=JobAgent.task_in_progress + tasks)
+                .returning(JobAgent.task_in_progress)
+            ).one()
+            session.commit()
+        assert tasks_left >= 0
+        if tasks_left == 0:
             self.agent_finish_job(job)
 
     def job_update_work(
@@ -269,7 +292,8 @@ class Database:
         plugins_spec: Dict[str, Dict[str, str]],
         active_plugins: List[str],
     ) -> None:
-        """Update or create a Agent information row in the database."""
+        """Update or create a Agent information row in the database.
+        Returns the new or existing agent ID."""
         # Currently this is done by workers when starting. In the future,
         # this should be configured by the admin, and workers should just read
         # their configuration from the database.

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
@@ -25,6 +25,7 @@ class Agent:
         """
         self.group_id = group_id
         self.ursa_url = app_config.mquery.backend
+        self.__db_object = None  # set before starting first task
         self.db = Database(app_config.redis.host, app_config.redis.port)
         self.ursa = UrsaDb(self.ursa_url)
         self.plugins = PluginManager(app_config.mquery.plugins, self.db)
@@ -33,8 +34,14 @@ class Agent:
             connection=Redis(app_config.redis.host, app_config.redis.port),
         )
 
+    @property
+    def db_id(self):
+        if self.__db_object is None:
+            self.__db_object = self.db.get_active_agents()[self.group_id]
+        return cast(int, self.__db_object.id)
+
     def register(self) -> None:
-        """Register the plugin in the database. Should happen when starting
+        """Register the agent in the database. Should happen when starting
         the worker process.
         """
         plugins_spec = {
@@ -133,9 +140,12 @@ class Agent:
                 f"in {scanned_datasets}/{job.total_datasets} ({dataset_percent:.0%}) of datasets.",
             )
 
+    def init_search(self, job: Job, tasks: int) -> None:
+        self.db.init_jobagent(job, self.db_id, tasks)
+
     def add_tasks_in_progress(self, job: Job, tasks: int) -> None:
         """See documentation of db.agent_add_tasks_in_progress."""
-        self.db.agent_add_tasks_in_progress(job.id, self.group_id, tasks)
+        self.db.agent_add_tasks_in_progress(job, self.db_id, tasks)
 
 
 @contextmanager
@@ -179,9 +189,10 @@ def start_search(job_id: JobId) -> None:
         datasets = agent.get_datasets()
         agent.db.init_job_datasets(job_id, len(datasets))
 
+        # Sets the number of datasets in progress.
         # Caveat: if no datasets, this call is still important, because it
         # will let the db know that this agent has nothing more to do.
-        agent.add_tasks_in_progress(job, len(datasets))
+        agent.init_search(job, len(datasets))
 
         rules = parse_yara(job.raw_yara)
         parsed = combine_rules(rules)

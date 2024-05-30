@@ -1,5 +1,6 @@
-from sqlmodel import SQLModel, Field, Column, ARRAY, String, JSON
+from sqlmodel import SQLModel, Field, Column, ARRAY, String, JSON, Relationship
 from typing import Union, List, Dict
+from ..models.jobagent import JobAgent
 
 
 class AgentGroupBase(SQLModel):
@@ -15,6 +16,7 @@ class AgentGroup(AgentGroupBase, table=True):
     """
 
     id: Union[int, None] = Field(default=None, primary_key=True)
+    jobs: List["JobAgent"] = Relationship(back_populates="agent")
 
 
 class AgentGroupView(AgentGroupBase):

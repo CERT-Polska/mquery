@@ -65,6 +65,7 @@ services:
     environment:
     - KEYCLOAK_USER=admin
     - KEYCLOAK_PASSWORD=admin
+    - DB_VENDOR=h2
   redis:
     image: redis
   postgres:

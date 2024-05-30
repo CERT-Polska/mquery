@@ -3,6 +3,7 @@ from typing import Optional, List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ..models.match import Match
+    from ..models.jobagent import JobAgent
 
 
 class JobBase(SQLModel):
@@ -35,6 +36,7 @@ class Job(JobBase, table=True):
     internal_id: Union[int, None] = Field(default=None, primary_key=True)
 
     matches: List["Match"] = Relationship(back_populates="job")
+    agents: List["JobAgent"] = Relationship(back_populates="job")
 
 
 class JobView(JobBase):
