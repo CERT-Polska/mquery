@@ -56,176 +56,164 @@ class Database:
     def session(self):
         with Session(self.engine) as session:
             yield session
-
-    def get_job_ids(self) -> List[JobId]:
-        """Gets IDs of all jobs in the database."""
-        with self.session() as session:
-            jobs = session.exec(select(Job)).all()
-            return [j.id for j in jobs]
-
-    def cancel_job(self, job: JobId, error=None) -> None:
-        """Sets the job status to cancelled, with optional error message."""
-        with self.session() as session:
-            session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(status="cancelled", finished=int(time()), error=error)
-            )
             session.commit()
 
-    def fail_job(self, job: JobId, message: str) -> None:
-        """Sets the job status to cancelled with provided error message."""
-        self.cancel_job(job, message)
+    def get_job_ids(self, session: Session) -> List[JobId]:
+        """Gets IDs of all jobs in the database."""
+        jobs = session.exec(select(Job)).all()
+        return [j.id for j in jobs]
 
-    def __get_job(self, session: Session, job: JobId) -> Job:
-        """Internal helper to get a job from the database."""
+    def cancel_job(self, session: Session, job: JobId, error=None) -> None:
+        """Sets the job status to cancelled, with optional error message."""
+        session.execute(
+            update(Job)
+            .where(Job.id == job)
+            .values(status="cancelled", finished=int(time()), error=error)
+        )
+
+    def fail_job(self, session: Session, job: JobId, message: str) -> None:
+        """Sets the job status to cancelled with provided error message."""
+        self.cancel_job(session, job, message)
+
+    def get_job(self, session: Session, job: JobId) -> Job:
+        """Retrieves a job from the database."""
         return session.exec(select(Job).where(Job.id == job)).one()
 
-    def get_job(self, job: JobId) -> Job:
-        """Retrieves a job from the database."""
-        with self.session() as session:
-            return self.__get_job(session, job)
-
-    def remove_query(self, job: JobId) -> None:
+    def remove_query(self, session: Session, job: JobId) -> None:
         """Sets the job status to removed."""
-        with self.session() as session:
-            session.execute(
-                update(Job).where(Job.id == job).values(status="removed")
-            )
-            session.commit()
+        session.execute(
+            update(Job).where(Job.id == job).values(status="removed")
+        )
 
-    def add_match(self, job: JobId, match: Match) -> None:
-        with self.session() as session:
-            job_object = self.__get_job(session, job)
-            match.job = job_object
-            session.add(match)
-            session.commit()
+    def add_match(self, session: Session, job: JobId, match: Match) -> None:
+        job_object = self.get_job(session, job)
+        match.job = job_object
+        session.add(match)
 
-    def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
+    def job_contains(
+        self, session: Session, job: JobId, ordinal: int, file_path: str
+    ) -> bool:
         """Make sure that the file path is in the job results."""
-        with self.session() as session:
-            job_object = self.__get_job(session, job)
-            statement = select(Match).where(
-                and_(Match.job == job_object, Match.file == file_path)
-            )
-            entry = session.exec(statement).one_or_none()
-            return entry is not None
+        job_object = self.get_job(session, job)
+        statement = select(Match).where(
+            and_(Match.job == job_object, Match.file == file_path)
+        )
+        entry = session.exec(statement).one_or_none()
+        return entry is not None
 
-    def job_start_work(self, job: JobId, in_progress: int) -> None:
+    def job_start_work(
+        self, session: Session, job: JobId, in_progress: int
+    ) -> None:
         """Updates the number of files being processed right now.
         :param job: ID of the job being updated.
         :param in_progress: Number of files in the current work unit.
         """
-        with self.session() as session:
-            session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(files_in_progress=Job.files_in_progress + in_progress)
-            )
-            session.commit()
+        session.execute(
+            update(Job)
+            .where(Job.id == job)
+            .values(files_in_progress=Job.files_in_progress + in_progress)
+        )
 
-    def agent_finish_job(self, job: Job) -> None:
+    def agent_finish_job(self, session: Session, job: Job) -> None:
         """Decrements the number of active agents in the given job. If there
         are no more agents, job status is changed to done.
         """
-        with self.session() as session:
-            (agents_left,) = session.execute(
+        (agents_left,) = session.execute(
+            update(Job)
+            .where(Job.internal_id == job.internal_id)
+            .values(agents_left=Job.agents_left - 1)
+            .returning(Job.agents_left)
+        ).one()
+        if agents_left == 0:
+            session.execute(
                 update(Job)
                 .where(Job.internal_id == job.internal_id)
-                .values(agents_left=Job.agents_left - 1)
-                .returning(Job.agents_left)
-            ).one()
-            if agents_left == 0:
-                session.execute(
-                    update(Job)
-                    .where(Job.internal_id == job.internal_id)
-                    .values(finished=int(time()), status="done")
-                )
-            session.commit()
+                .values(finished=int(time()), status="done")
+            )
 
-    def init_jobagent(self, job: Job, agent_id: int, tasks: int) -> None:
+    def init_jobagent(
+        self, session: Session, job: Job, agent_id: int, tasks: int
+    ) -> None:
         """Creates a new JobAgent object.
         If tasks==0 then finishes job immediately"""
-        with self.session() as session:
-            obj = JobAgent(
-                task_in_progress=tasks,
-                job_id=job.internal_id,
-                agent_id=agent_id,
-            )
-            session.add(obj)
-            session.commit()
+        obj = JobAgent(
+            task_in_progress=tasks,
+            job_id=job.internal_id,
+            agent_id=agent_id,
+        )
+        session.add(obj)
         if tasks == 0:
-            self.agent_finish_job(job)
+            self.agent_finish_job(session, job)
 
-    def agent_add_tasks_in_progress(
-        self, job: Job, agent_id: int, tasks: int
+    def add_tasks_in_progress(
+        self, session: Session, job: Job, agent_id: int, tasks: int
     ) -> None:
         """Increments (or decrements, for negative values) the number of tasks
         that are in progress for agent. The number of tasks in progress should
         always stay positive for jobs in status inprogress. This function will
         automatically call agent_finish_job if the agent has no more tasks left.
         """
-        with self.session() as session:
-            (tasks_left,) = session.execute(
-                update(JobAgent)
-                .where(JobAgent.job_id == job.internal_id)
-                .where(JobAgent.agent_id == agent_id)
-                .values(task_in_progress=JobAgent.task_in_progress + tasks)
-                .returning(JobAgent.task_in_progress)
-            ).one()
-            session.commit()
+        (tasks_left,) = session.execute(
+            update(JobAgent)
+            .where(JobAgent.job_id == job.internal_id)
+            .where(JobAgent.agent_id == agent_id)
+            .values(task_in_progress=JobAgent.task_in_progress + tasks)
+            .returning(JobAgent.task_in_progress)
+        ).one()
         assert tasks_left >= 0
         if tasks_left == 0:
-            self.agent_finish_job(job)
+            self.agent_finish_job(session, job)
 
     def job_update_work(
-        self, job: JobId, processed: int, matched: int, errored: int
+        self,
+        session: Session,
+        job: JobId,
+        processed: int,
+        matched: int,
+        errored: int,
     ) -> int:
         """Updates progress for the job. This will increment numbers processed,
         inprogress, errored and matched files.
         Returns the number of processed files after the operation.
         """
-        with self.session() as session:
-            (files_processed,) = session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(
-                    files_processed=Job.files_processed + processed,
-                    files_in_progress=Job.files_in_progress - processed,
-                    files_matched=Job.files_matched + matched,
-                    files_errored=Job.files_errored + errored,
-                )
-                .returning(Job.files_processed)
-            ).one()
-            session.commit()
-            return files_processed
+        (files_processed,) = session.execute(
+            update(Job)
+            .where(Job.id == job)
+            .values(
+                files_processed=Job.files_processed + processed,
+                files_in_progress=Job.files_in_progress - processed,
+                files_matched=Job.files_matched + matched,
+                files_errored=Job.files_errored + errored,
+            )
+            .returning(Job.files_processed)
+        ).one()
+        return files_processed
 
-    def init_job_datasets(self, job: JobId, num_datasets: int) -> None:
+    def init_job_datasets(
+        self, session: Session, job: JobId, num_datasets: int
+    ) -> None:
         """Sets total_datasets and datasets_left, and status to processing."""
-        with self.session() as session:
-            session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(
-                    total_datasets=num_datasets,
-                    datasets_left=num_datasets,
-                    status="processing",
-                )
+        session.execute(
+            update(Job)
+            .where(Job.id == job)
+            .values(
+                total_datasets=num_datasets,
+                datasets_left=num_datasets,
+                status="processing",
             )
-            session.commit()
+        )
 
-    def dataset_query_done(self, job: JobId):
+    def dataset_query_done(self, session: Session, job: JobId):
         """Decrements the number of datasets left by one."""
-        with self.session() as session:
-            session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(datasets_left=Job.datasets_left - 1)
-            )
-            session.commit()
+        session.execute(
+            update(Job)
+            .where(Job.id == job)
+            .values(datasets_left=Job.datasets_left - 1)
+        )
 
     def create_search_task(
         self,
+        session: Session,
         rule_name: str,
         rule_author: str,
         raw_yara: str,
@@ -239,28 +227,27 @@ class Database:
             random.choice(string.ascii_uppercase + string.digits)
             for _ in range(12)
         )
-        with self.session() as session:
-            obj = Job(
-                id=job,
-                status="new",
-                rule_name=rule_name,
-                rule_author=rule_author,
-                raw_yara=raw_yara,
-                submitted=int(time()),
-                files_limit=files_limit,
-                reference=reference,
-                files_in_progress=0,
-                files_processed=0,
-                files_matched=0,
-                files_errored=0,
-                total_files=0,
-                agents_left=len(agents),
-                datasets_left=0,
-                total_datasets=0,
-                taints=taints,
-            )
-            session.add(obj)
-            session.commit()
+        obj = Job(
+            id=job,
+            status="new",
+            rule_name=rule_name,
+            rule_author=rule_author,
+            raw_yara=raw_yara,
+            submitted=int(time()),
+            files_limit=files_limit,
+            reference=reference,
+            files_in_progress=0,
+            files_processed=0,
+            files_matched=0,
+            files_errored=0,
+            total_files=0,
+            agents_left=len(agents),
+            datasets_left=0,
+            total_datasets=0,
+            taints=taints,
+        )
+        session.add(obj)
+        session.commit()
 
         from . import tasks
 
@@ -269,30 +256,34 @@ class Database:
         return job
 
     def get_job_matches(
-        self, job_id: JobId, offset: int = 0, limit: Optional[int] = None
+        self,
+        session: Session,
+        job_id: JobId,
+        offset: int = 0,
+        limit: Optional[int] = None,
     ) -> MatchesSchema:
-        with self.session() as session:
-            job = self.__get_job(session, job_id)
-            if limit is None:
-                matches = job.matches[offset:]
-            else:
-                matches = job.matches[offset : offset + limit]
-            return MatchesSchema(job=job, matches=matches)
+        job = self.get_job(session, job_id)
+        if limit is None:
+            matches = job.matches[offset:]
+        else:
+            matches = job.matches[offset : offset + limit]
+        return MatchesSchema(job=job, matches=matches)
 
-    def update_job_files(self, job: JobId, total_files: int) -> int:
+    def update_job_files(
+        self, session: Session, job: JobId, total_files: int
+    ) -> int:
         """Add total_files to the specified job, and return a new total."""
-        with self.session() as session:
-            (total_files,) = session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(total_files=Job.total_files + total_files)
-                .returning(Job.total_files)
-            ).one()
-            session.commit()
+        (total_files,) = session.execute(
+            update(Job)
+            .where(Job.id == job)
+            .values(total_files=Job.total_files + total_files)
+            .returning(Job.total_files)
+        ).one()
         return total_files
 
     def register_active_agent(
         self,
+        session: Session,
         group_id: str,
         ursadb_url: str,
         plugins_spec: Dict[str, Dict[str, str]],
@@ -303,22 +294,18 @@ class Database:
         # Currently this is done by workers when starting. In the future,
         # this should be configured by the admin, and workers should just read
         # their configuration from the database.
-        with self.session() as session:
-            entry = session.exec(
-                select(AgentGroup).where(AgentGroup.name == group_id)
-            ).one_or_none()
-            if not entry:
-                entry = AgentGroup(name=group_id)
-            entry.ursadb_url = ursadb_url
-            entry.plugins_spec = plugins_spec
-            entry.active_plugins = active_plugins
-            session.add(entry)
-            session.commit()
+        entry = session.exec(
+            select(AgentGroup).where(AgentGroup.name == group_id)
+        ).one_or_none()
+        if not entry:
+            entry = AgentGroup(name=group_id)
+        entry.ursadb_url = ursadb_url
+        entry.plugins_spec = plugins_spec
+        entry.active_plugins = active_plugins
+        session.add(entry)
 
-    def get_active_agents(self) -> Dict[str, AgentGroup]:
-        with self.session() as session:
-            agents = session.exec(select(AgentGroup)).all()
-
+    def get_active_agents(self, session: Session) -> Dict[str, AgentGroup]:
+        agents = session.exec(select(AgentGroup)).all()
         return {agent.name: agent for agent in agents}
 
     def get_core_config(self) -> Dict[str, str]:
@@ -335,12 +322,12 @@ class Database:
             "query_allow_slow": "Allow users to run queries that will end up scanning the whole malware collection",
         }
 
-    def get_config(self) -> List[ConfigSchema]:
+    def get_config(self, session: Session) -> List[ConfigSchema]:
         # { plugin_name: { field: description } }
         config_fields: Dict[str, Dict[str, str]] = defaultdict(dict)
         config_fields[MQUERY_PLUGIN_NAME] = self.get_core_config()
         # Merge all config fields
-        for agent_spec in self.get_active_agents().values():
+        for agent_spec in self.get_active_agents(session).values():
             for plugin, fields in agent_spec.plugins_spec.items():
                 config_fields[plugin].update(fields)
         # Transform fields into ConfigSchema
@@ -356,7 +343,7 @@ class Database:
         }
         # Get configuration values for each plugin
         for plugin, spec in plugin_configs.items():
-            config = self.get_plugin_config(plugin)
+            config = self.get_plugin_config(session, plugin)
             for key, value in config.items():
                 if key in plugin_configs[plugin]:
                     plugin_configs[plugin][key].value = value
@@ -367,37 +354,39 @@ class Database:
             for key in sorted(plugin_configs[plugin].keys())
         ]
 
-    def get_plugin_config(self, plugin_name: str) -> Dict[str, str]:
-        with self.session() as session:
-            entries = session.exec(
-                select(ConfigEntry).where(ConfigEntry.plugin == plugin_name)
-            ).all()
-            return {e.key: e.value for e in entries}
+    def get_plugin_config(
+        self, session: Session, plugin_name: str
+    ) -> Dict[str, str]:
+        entries = session.exec(
+            select(ConfigEntry).where(ConfigEntry.plugin == plugin_name)
+        ).all()
+        return {e.key: e.value for e in entries}
 
-    def get_mquery_config_key(self, key: str) -> Optional[str]:
-        with self.session() as session:
-            statement = select(ConfigEntry).where(
-                and_(
-                    ConfigEntry.plugin == MQUERY_PLUGIN_NAME,
-                    ConfigEntry.key == key,
-                )
+    def get_mquery_config_key(
+        self, session: Session, key: str
+    ) -> Optional[str]:
+        statement = select(ConfigEntry).where(
+            and_(
+                ConfigEntry.plugin == MQUERY_PLUGIN_NAME,
+                ConfigEntry.key == key,
             )
-            entry = session.exec(statement).one_or_none()
-            return entry.value if entry else None
+        )
+        entry = session.exec(statement).one_or_none()
+        return entry.value if entry else None
 
-    def set_config_key(self, plugin_name: str, key: str, value: str) -> None:
-        with self.session() as session:
-            entry = session.exec(
-                select(ConfigEntry).where(
-                    ConfigEntry.plugin == plugin_name,
-                    ConfigEntry.key == key,
-                )
-            ).one_or_none()
-            if not entry:
-                entry = ConfigEntry(plugin=plugin_name, key=key)
-            entry.value = value
-            session.add(entry)
-            session.commit()
+    def set_config_key(
+        self, session: Session, plugin_name: str, key: str, value: str
+    ) -> None:
+        entry = session.exec(
+            select(ConfigEntry).where(
+                ConfigEntry.plugin == plugin_name,
+                ConfigEntry.key == key,
+            )
+        ).one_or_none()
+        if not entry:
+            entry = ConfigEntry(plugin=plugin_name, key=key)
+        entry.value = value
+        session.add(entry)
 
 
 def init_db() -> None:
