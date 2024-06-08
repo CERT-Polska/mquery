@@ -82,7 +82,7 @@ You can also compile it yourself:
 
 ```shell
 cd /opt
-git clone --recurse-submodules https://github.com/CERT-Polska/ursadb.git
+git clone https://github.com/CERT-Polska/ursadb.git
 cd /opt/ursadb
 mkdir build; cd build
 cmake -D CMAKE_BUILD_TYPE=Release ..  # requires gcc 7+
