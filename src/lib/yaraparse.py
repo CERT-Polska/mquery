@@ -126,10 +126,52 @@ class YaraRuleData:
     def is_private(self) -> bool:
         return self.rule.is_private
 
+def remove_unnecessary_brackets(hex_str: str) -> str:    
+    # Function to check if brackets are necessary
+    def is_bracket_necessary(content: str) -> bool:
+        return '|' in content
+
+    # Process the string
+    result = []
+    bracket_content = ""
+    in_bracket = False
+    
+    for char in hex_str:
+        if char == '(':
+            if in_bracket:
+                bracket_content += char
+            else:
+                in_bracket = True
+        elif char == ')':
+            if in_bracket:
+                if is_bracket_necessary(bracket_content):
+                    result.append(f"({bracket_content})")
+                else:
+                    result.append(bracket_content)
+                bracket_content = ""
+                in_bracket = False
+            else:
+                result.append(char)
+        else:
+            if in_bracket:
+                bracket_content += char
+            else:
+                result.append(char)
+    
+    # Handle any remaining bracket content
+    if bracket_content:
+        if is_bracket_necessary(bracket_content):
+            result.append(f"({bracket_content})")
+        else:
+            result.append(bracket_content)
+    
+    return ''.join(result)
 
 def ursify_hex(hex_str: str) -> UrsaExpression:
     # easier to manage
     hex_str = hex_str.replace(" ", "")
+
+    hex_str = remove_unnecessary_brackets(hex_str)
 
     # alternatives, are nested alternatives a thing?
     hex_parts = re.split(r"\(.*?\)", hex_str)
