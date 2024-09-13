@@ -21,10 +21,11 @@ Public instance will be created soon, stay tuned...
 The easiest way to do this is with `docker-compose`:
 
 ```
-git clone --recurse-submodules https://github.com/CERT-Polska/mquery.git
+git clone https://github.com/CERT-Polska/mquery.git
 cd mquery
 vim .env  # optional - change samples and index directory locations
 docker-compose up --scale daemon=3  # building the images will take a while
+docker-compose exec web python3 -m mquery.db
 ```
 
 The web interface should be available at `http://localhost`.
