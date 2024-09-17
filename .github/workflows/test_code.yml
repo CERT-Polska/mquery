@@ -105,7 +105,7 @@ jobs:
           submodules: recursive
       - name: build test image
         run: docker build -t mquery_tests:latest -f src/e2etests/Dockerfile .
-      - name: run web with docker-compose
+      - name: run web with docker compose
         run: docker compose up --build -d web --wait
       - name: init the database
         run: docker compose exec -it -w /usr/src/app/src/ web alembic upgrade head

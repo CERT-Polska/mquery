@@ -72,7 +72,7 @@ available in all official docker images. You can execute it in docker compose
 like this:
 
 ```
-sudo docker compose -f docker-compose.dev.yml exec ursadb ursacli
+docker compose exec ursadb ursacli
 ```
 
 Or you can download the latest ursadb release and run a client from there.
