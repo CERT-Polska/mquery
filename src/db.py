@@ -29,12 +29,6 @@ class TaskType(Enum):
     COMMAND = "command"
 
 
-class AgentTask:
-    def __init__(self, type: TaskType, data: str):
-        self.type = type
-        self.data = data
-
-
 # Type alias for Job ids
 JobId = str
 
