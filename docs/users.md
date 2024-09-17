@@ -97,7 +97,7 @@ as necessary for your deployment.
 **Warning** the proces is tricky, and right now it's missing a proper validation.
 It's possible to lock yourself out (by enabling auth before configuring it
 correctly). If you do this, you have to disable auth manually, by running
-`redis-cli` (`sudo docker-compose exec redis redis-cli` for docker) and
+`redis-cli` (`sudo docker compose exec redis redis-cli` for docker) and
 executing `HMSET plugin:Mquery auth_enabled ""`.
 
 **Step 0 (optional): enable auth in non-enforcing mode**

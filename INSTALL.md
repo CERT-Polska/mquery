@@ -19,8 +19,8 @@ mkdir samples
 # empty directory for database files to live in. By default database will
 # expect files in ./samples directory, and keep index in ./index.
 vim .env
-docker-compose up --scale daemon=3  # this will take a while
-docker-compose exec web python3 -m mquery.db
+docker compose up --scale daemon=3  # this will take a while
+docker compose exec web python3 -m mquery.db
 ```
 
 - Good for testing mquery and production deployments on a single server
@@ -37,8 +37,8 @@ cd mquery
 # empty directory for database files to live in. By default database will
 # expect files in ./samples directory, and keep index in ./index.
 vim .env
-docker-compose -f docker-compose.dev.yml up  # this will take a while
-docker-compose exec dev-web python3 -m mquery.db
+docker compose -f docker-compose.dev.yml up  # this will take a while
+docker compose exec dev-web python3 -m mquery.db
 ```
 
 - Good for development - all file changes will be picked up automatically.

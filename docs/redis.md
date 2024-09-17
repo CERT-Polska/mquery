@@ -19,8 +19,8 @@ to another database. What we can do is to document the current data format.
 
 ### Redis quickstart
 
-To connect to redis use `redis-cli`. For docker-compose use
-`docker-compose -f docker-compose.dev.yml exec redis redis-cli`.
+To connect to redis use `redis-cli`. For docker compose use
+`docker compose exec redis redis-cli`.
 
 Redis command documentation is pretty good and available at https://redis.io/commands/.
 
