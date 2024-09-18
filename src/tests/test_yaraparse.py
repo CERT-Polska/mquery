@@ -11,6 +11,20 @@ def test_literal():
     assert result.query == "({3f2504e0})"
 
 
+def test_literal_wildcard():
+    hex_str = "3F25??04E0"
+    result = ursify_hex(hex_str)
+
+    assert result.query == "({3f25} & {04e0})"
+
+
+def test_literal_alternative():
+    hex_str = "11(22|33)44"
+    result = ursify_hex(hex_str)
+
+    assert result.query == "({11} & {44})"
+
+
 def test_literal_to_hex():
     rule = yaramod.YaraRuleBuilder().with_plain_string("$str", "abc").get()
 
