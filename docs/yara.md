@@ -246,18 +246,16 @@ queries, but it'll ask for confirmation first.
 
 ## Caveats and advanced topics
 
-There are some things that could be parsed better, but currently aren't.
+Mquery ignores alternatives in hex strings:
 
-**Mquery ignores alternatives in hex strings**
-
-``
-rule alternative_edge_case {
+```
+rule hex_alternatives {
     strings:
-        $test1 = { 11 (22 | 33) 44 } 
-        $test2 = { ( 11 11 11 | 22 22 22 ) }
+        $test2 = { ( 11 11 11 | 22 22 22 ) 33 33 33 }
     condition:
         all of them
 }
 ```
 
-The first string could be parsed as `{11 22 44} | {11 33 44}`, and the second as `{11 11 11} | {22 22 22}`, but as of mquery v1.4 everything that's a part of alternative is ignored.
+Everything in the brackets will be ignored, and this is equivalent to just { 33 33 33 }. Handling this correctly is non-trivial,
+and tests on a real-world yara rule collection have shown that in most cases it's impossible for mquery to optimize alternatives in hex string anyway.
