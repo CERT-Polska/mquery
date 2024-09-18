@@ -132,7 +132,7 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
     hex_str = hex_str.replace(" ", "")
 
     # alternatives, are nested alternatives a thing?
-    hex_parts = re.split(r"\(.*?\)", hex_str)
+    hex_parts = re.split(r"\(.*\)", hex_str)
     hex_parts = [x for y in hex_parts for x in re.split(r"\[[\d-]+\]", y)]
 
     output: List[bytes] = []

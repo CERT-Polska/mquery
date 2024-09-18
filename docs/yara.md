@@ -231,9 +231,31 @@ rule UnluckyExample
 }
 ```
 
-This is not necessarily a bad rule, but there's not a single full 3gram that can
+This is not necessarily a bad rule, but it will generate a following ursadb query:
+
+```
+{}
+```
+
+In other words, we ask for every file in the malware collection. That's because there's not a single full 3gram that can
 be used to narrow the set of suspected files. Due to how mquery works, this will
-yara scan every malware file in the dataset, and will be very slow. Becaue of this,
-such queries are by defauly disasllowed. They can be enabled by setting
+cause a yara scan of every file in the dataset, and will be usually very slow. Becaue of this,
+such queries are disallowed by default. They can be enabled by setting
 `query_allow_slow` config key to true. In this case mquery will allow such
 queries, but it'll ask for confirmation first.
+
+## Caveats and advanced topics
+
+Mquery ignores alternatives in hex strings:
+
+```
+rule hex_alternatives {
+    strings:
+        $test2 = { ( 11 11 11 | 22 22 22 ) 33 33 33 }
+    condition:
+        all of them
+}
+```
+
+Everything in the brackets will be ignored, and this is equivalent to just { 33 33 33 }. Handling this correctly is non-trivial,
+and tests on a real-world yara rule collection have shown that in most cases it's impossible for mquery to optimize alternatives in hex string anyway.
