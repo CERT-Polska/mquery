@@ -268,7 +268,7 @@ class Database:
         with self.session() as session:
             job = self.__get_job(session, job_id)
             query = select(Match).where(Match.job == job).offset(offset)
-            if limit is None:
+            if limit:
                 query = query.limit(limit)
 
             matches = session.exec(query).all()
