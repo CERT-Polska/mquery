@@ -530,12 +530,10 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     """Returns statuses of all the jobs in the system. May take some time (> 1s)
     when there are a lot of them.
     """
-    jobs = [db.get_job(job) for job in db.get_job_ids()]
-    jobs = sorted(jobs, key=lambda j: j.submitted, reverse=True)
-    jobs = [j for j in jobs if j.status != "removed"]
-    if "can_list_all_queries" not in get_user_roles(user):
-        jobs = [j for j in jobs if j.rule_author == user.name]
-
+    username_filter: Optional[str] = user.name
+    if "can_list_all_queries" in get_user_roles(user):
+        username_filter = None
+    jobs = db.get_valid_jobs(username_filter)
     return JobsSchema(jobs=jobs)
 
 

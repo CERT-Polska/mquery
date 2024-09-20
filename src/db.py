@@ -7,7 +7,15 @@ import string
 from redis import StrictRedis
 from enum import Enum
 from rq import Queue  # type: ignore
-from sqlmodel import Session, SQLModel, create_engine, select, and_, update
+from sqlmodel import (
+    Session,
+    SQLModel,
+    create_engine,
+    select,
+    and_,
+    update,
+    col,
+)
 
 from .models.agentgroup import AgentGroup
 from .models.configentry import ConfigEntry
@@ -51,12 +59,6 @@ class Database:
         with Session(self.engine) as session:
             yield session
 
-    def get_job_ids(self) -> List[JobId]:
-        """Gets IDs of all jobs in the database."""
-        with self.session() as session:
-            jobs = session.exec(select(Job)).all()
-            return [j.id for j in jobs]
-
     def cancel_job(self, job: JobId, error=None) -> None:
         """Sets the job status to cancelled, with optional error message."""
         with self.session() as session:
@@ -79,6 +81,18 @@ class Database:
         """Retrieves a job from the database."""
         with self.session() as session:
             return self.__get_job(session, job)
+
+    def get_valid_jobs(self, username_filter: Optional[str]) -> List[Job]:
+        """Retrieves valid (accessible and not removed) jobs from the database."""
+        with self.session() as session:
+            query = (
+                select(Job)
+                .where(Job.status != "removed")
+                .order_by(col(Job.submitted).desc())
+            )
+            if username_filter:
+                query = query.where(Job.rule_author == username_filter)
+            return session.exec(query).all()
 
     def remove_query(self, job: JobId) -> None:
         """Sets the job status to removed."""
@@ -139,7 +153,8 @@ class Database:
 
     def init_jobagent(self, job: Job, agent_id: int, tasks: int) -> None:
         """Creates a new JobAgent object.
-        If tasks==0 then finishes job immediately"""
+        If tasks==0 then finishes job immediately.
+        """
         with self.session() as session:
             obj = JobAgent(
                 task_in_progress=tasks,
@@ -293,7 +308,8 @@ class Database:
         active_plugins: List[str],
     ) -> None:
         """Update or create a Agent information row in the database.
-        Returns the new or existing agent ID."""
+        Returns the new or existing agent ID.
+        """
         # Currently this is done by workers when starting. In the future,
         # this should be configured by the admin, and workers should just read
         # their configuration from the database.
