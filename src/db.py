@@ -282,10 +282,11 @@ class Database:
     ) -> MatchesSchema:
         with self.session() as session:
             job = self.__get_job(session, job_id)
-            if limit is None:
-                matches = job.matches[offset:]
-            else:
-                matches = job.matches[offset : offset + limit]
+            query = select(Match).where(Match.job == job).offset(offset)
+            if limit:
+                query = query.limit(limit)
+
+            matches = session.exec(query).all()
             return MatchesSchema(job=job, matches=matches)
 
     def update_job_files(self, job: JobId, total_files: int) -> int:
