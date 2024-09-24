@@ -1,11 +1,14 @@
+alembic==1.11.1
 annotated-types==0.7.0
 anyio==4.6.0
+asgiref==3.4.1
 cachetools==5.5.0
 certifi==2024.8.30
 cffi==1.17.1
 charset-normalizer==3.3.2
 click==8.1.7
 cryptography==43.0.1
+Deprecated==1.2.13
 fastapi==0.115.0
 h11==0.14.0
 idna==3.10
@@ -13,7 +16,7 @@ psycopg2==2.9.9
 pycparser==2.22
 pydantic==1.10.18
 pydantic_core==2.23.4
-PyJWT==2.9.0
+PyJWT[crypto]==2.9.0
 pyzmq==26.2.0
 redis==5.0.8
 requests==2.32.3
@@ -25,5 +28,6 @@ typed-config==2.0.3
 typing_extensions==4.12.2
 urllib3==2.2.3
 uvicorn==0.30.6
+wrapt==1.16.0
 yara-python==4.5.1
 yaramod==3.23.0
