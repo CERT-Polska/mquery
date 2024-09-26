@@ -575,7 +575,7 @@ def server() -> ServerSchema:
 
 @app.get("/query/{path}", include_in_schema=False)
 def serve_index(path: str) -> FileResponse:
-    return FileResponse(Path(__file__).parent / "mqueryfront/build/index.html")
+    return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
 
 
 @app.get("/recent", include_in_schema=False)
@@ -586,14 +586,14 @@ def serve_index(path: str) -> FileResponse:
 @app.get("/about", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     # Static routes are always publicly accessible without authorisation.
-    return FileResponse(Path(__file__).parent / "mqueryfront/build/index.html")
+    return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
 
 
 app.mount(
     "/",
     StaticFiles(
         directory=os.path.join(
-            os.path.dirname(__file__), "mqueryfront", "build"
+            os.path.dirname(__file__), "mqueryfront", "dist"
         ),
         html=True,
     ),

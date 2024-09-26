@@ -1,4 +1,4 @@
-FROM node:16 AS build
+FROM node:18 AS build
 
 RUN npm install -g serve
 COPY src/mqueryfront /app
@@ -15,6 +15,6 @@ RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 
 COPY requirements.txt setup.py MANIFEST.in /usr/src/app/
 COPY src /usr/src/app/src/
-COPY --from=build "/app/build" "/usr/src/app/src/mqueryfront/build"
+COPY --from=build "/app/dist" "/usr/src/app/src/mqueryfront/dist"
 RUN pip3 install /usr/src/app
 CMD ["uvicorn", "mquery.app:app", "--host", "0.0.0.0", "--port", "5000"]
