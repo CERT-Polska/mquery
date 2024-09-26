@@ -1,4 +1,5 @@
 import React from "react";
+import path from "path-browserify";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
 
@@ -6,7 +7,6 @@ const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
     const { matches, meta, file } = match;
 
-    const path = require("path-browserify");
     const fileBasename = path.basename(file);
 
     const metadataBadges = Object.values(meta)

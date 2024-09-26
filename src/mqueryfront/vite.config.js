@@ -8,6 +8,11 @@ export default defineConfig({
     plugins: [react(), svgr({svgrOptions: {}})],
     server: {
         port: 80, 
+        proxy: {
+            "/api" : { target: "http://dev-web:5000/" },
+            "/docs" : { target: "http://dev-web:5000/" },
+            "/openapi.json" : { target: "http://dev-web:5000/" }
+        }
     },
     esbuild: {
         loader: "jsx",
