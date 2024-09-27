@@ -34,7 +34,6 @@
   "scripts": {
     "start": "vite --host",
     "build": "vite build",
-    "test": "echo 'dupa'",
     "preview": "vite preview"
   },
   "prettier": {
