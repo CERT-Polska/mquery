@@ -1,54 +1,54 @@
 {
-  "name": "mqueryfront",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "@babel/runtime": "^7.25.6",
-    "@fortawesome/fontawesome-svg-core": "^6.6.0",
-    "@fortawesome/free-solid-svg-icons": "^6.6.0",
-    "@fortawesome/react-fontawesome": "^0.2.2",
-    "@monaco-editor/react": "^4.6.0",
-    "@popperjs/core": "^2.11.8",
-    "@vitejs/plugin-react": "^4.3.1",
-    "axios": "^1.7.7",
-    "bootstrap": "^5.3.3",
-    "filesize": "^10.1.6",
-    "font-awesome": "^4.7.0",
-    "http-proxy-middleware": "^3.0.2",
-    "jquery": "^3.7.1",
-    "monaco-editor": "^0.52.0",
-    "path-browserify": "^1.0.1",
-    "prettier": "^3.3.3",
-    "prop-types": "^15.8.1",
-    "react": "^18.3.1",
-    "react-copy-to-clipboard": "^5.1.0",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.2",
-    "react-select": "^5.8.1",
-    "replace-js-pagination": "^1.0.5",
-    "vite": "4.5.5",
-    "vite-plugin-svgr": "3.3.0",
-    "webpack-dev-server": "^5.1.0"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "start": "vite --host",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "prettier": {
-    "tabWidth": 4
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
-  }
+    "name": "mqueryfront",
+    "version": "0.1.0",
+    "private": true,
+    "dependencies": {
+        "@babel/runtime": "^7.25.6",
+        "@fortawesome/fontawesome-svg-core": "^6.6.0",
+        "@fortawesome/free-solid-svg-icons": "^6.6.0",
+        "@fortawesome/react-fontawesome": "^0.2.2",
+        "@monaco-editor/react": "^4.6.0",
+        "@popperjs/core": "^2.11.8",
+        "@vitejs/plugin-react": "^4.3.1",
+        "axios": "^1.7.7",
+        "bootstrap": "^5.3.3",
+        "filesize": "^10.1.6",
+        "font-awesome": "^4.7.0",
+        "http-proxy-middleware": "^3.0.2",
+        "jquery": "^3.7.1",
+        "monaco-editor": "^0.52.0",
+        "path-browserify": "^1.0.1",
+        "prettier": "^3.3.3",
+        "prop-types": "^15.8.1",
+        "react": "^18.3.1",
+        "react-copy-to-clipboard": "^5.1.0",
+        "react-dom": "^18.3.1",
+        "react-router-dom": "^6.26.2",
+        "react-select": "^5.8.1",
+        "replace-js-pagination": "^1.0.5",
+        "vite": "4.5.5",
+        "vite-plugin-svgr": "3.3.0",
+        "webpack-dev-server": "^5.1.0"
+    },
+    "devDependencies": {},
+    "scripts": {
+        "start": "vite --host",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "prettier": {
+        "tabWidth": 4
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
 }
