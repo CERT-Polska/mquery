@@ -2,8 +2,8 @@
 
 import unittest
 from pathlib import Path
-from lib.yaraparse import combine_rules  # type: ignore
-from lib.yaraparse import parse_yara  # type: ignore
+from lib.yaraparse import combine_rules
+from lib.yaraparse import parse_yara
 
 testdir = Path(__file__).parent / "testdata"
 

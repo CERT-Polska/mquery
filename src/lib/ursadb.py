@@ -48,12 +48,12 @@ class UrsaDb:
             socket.send_string(command)
             return json.loads(socket.recv_string())
         finally:
-            socket.close()  # type: ignore
+            socket.close()
 
     def query(
         self,
         query: str,
-        taints: List[str] = None,  # type: ignore
+        taints: List[str] = None,
         dataset: Optional[str] = None,
     ) -> Json:
         command = "select "

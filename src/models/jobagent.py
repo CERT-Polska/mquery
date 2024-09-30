@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from ..models.agentgroup import AgentGroup
 
 
-class JobAgent(SQLModel, table=True):  # type: ignore
+class JobAgent(SQLModel, table=True):
     """Information about job relating to a specific agent group."""
 
     id: Union[int, None] = Field(default=None, primary_key=True)

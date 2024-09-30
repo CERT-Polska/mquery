@@ -4,7 +4,7 @@ from typing import List, Union, Dict, Any
 from ..models.job import Job
 
 
-class Match(SQLModel, table=True):  # type: ignore
+class Match(SQLModel, table=True):
     """Represents a file matched to a job, along with a related metadata."""
 
     id: Union[int, None] = Field(default=None, primary_key=True)

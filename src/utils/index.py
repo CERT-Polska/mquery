@@ -4,7 +4,7 @@ import argparse
 import json
 from typing import Set, Iterator, Tuple, List, Optional
 from pathlib import Path
-from lib.ursadb import UrsaDb  # type: ignore
+from lib.ursadb import UrsaDb
 from multiprocessing import Pool
 
 

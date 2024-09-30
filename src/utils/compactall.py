@@ -1,5 +1,5 @@
 import logging
-from lib.ursadb import UrsaDb  # type: ignore
+from lib.ursadb import UrsaDb
 import time
 import argparse
 

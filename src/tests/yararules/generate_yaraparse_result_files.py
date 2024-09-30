@@ -1,7 +1,7 @@
 import argparse
 import os
-from lib.yaraparse import parse_yara  # type: ignore
-from lib.yaraparse import combine_rules  # type: ignore
+from lib.yaraparse import parse_yara
+from lib.yaraparse import combine_rules
 
 current_path = os.path.abspath(os.path.dirname(__file__))
 testdir = current_path + "/testdata/"

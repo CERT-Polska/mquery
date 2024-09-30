@@ -4,7 +4,7 @@ import argparse
 import shutil
 from typing import Set, List
 from pathlib import Path
-from lib.ursadb import UrsaDb  # type: ignore
+from lib.ursadb import UrsaDb
 from minio import Minio  # type: ignore
 
 

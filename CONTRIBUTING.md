@@ -50,7 +50,7 @@ $ prettier --write src/mqueryfront/
 - Verify that there are no type errors with [mypy](http://mypy-lang.org/):
 
 ```bash
-$ pip install mypy==0.981
+$ pip install mypy==0.790
 $ mypy src
 ```
 

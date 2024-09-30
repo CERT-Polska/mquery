@@ -30,7 +30,7 @@ class JobBase(SQLModel):
     agents_left: int
 
 
-class Job(JobBase, table=True):  # type: ignore
+class Job(JobBase, table=True):
     """Job object in the database. Internal ID is an implementation detail."""
 
     internal_id: Union[int, None] = Field(default=None, primary_key=True)
