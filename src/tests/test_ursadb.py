@@ -8,8 +8,7 @@ import threading
 from typing import Dict, Any
 
 sys.path = [".."] + sys.path
-from lib.ursadb import UrsaDb  # noqa
-
+from lib.ursadb import UrsaDb  # type: ignore
 
 class UrsadbTestContext:
     def __init__(self, socket: zmq.Socket, ursadb: UrsaDb):

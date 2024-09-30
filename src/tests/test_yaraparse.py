@@ -1,6 +1,6 @@
 """Unit tests for yaraparse."""
 
-from lib.yaraparse import ursify_hex, ursify_plain_string, parse_yara
+from lib.yaraparse import ursify_hex, ursify_plain_string, parse_yara  # type: ignore
 import yaramod
 
 
