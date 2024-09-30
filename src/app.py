@@ -122,7 +122,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
 async def add_headers(request: Request, call_next: Callable) -> Response:
     response = await call_next(request)
     response.headers["X-Frame-Options"] = "deny"
-    response.headers["Access-Control-Allow-Origin"] = request.client.host
+    response.headers["Access-Control-Allow-Origin"] = request.client.host  # type: ignore
     response.headers[
         "Access-Control-Allow-Headers"
     ] = "cache-control,x-requested-with,content-type,authorization"
@@ -258,13 +258,13 @@ def backend_status() -> BackendStatusSchema:
             ursadb_version = status["result"]["ursadb_version"]
             agents.append(
                 AgentSchema(
-                    name=name, alive=True, tasks=tasks, spec=agent_spec
+                    name=name, alive=True, tasks=tasks, spec=agent_spec  # type: ignore
                 )
             )
             components[f"ursadb ({name})"] = ursadb_version
         except Again:
             agents.append(
-                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)
+                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)  # type: ignore
             )
             components[f"ursadb ({name})"] = "unknown"
 
@@ -534,7 +534,7 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     if "can_list_all_queries" in get_user_roles(user):
         username_filter = None
     jobs = db.get_valid_jobs(username_filter)
-    return JobsSchema(jobs=jobs)
+    return JobsSchema(jobs=jobs)  # type: ignore
 
 
 @app.delete(

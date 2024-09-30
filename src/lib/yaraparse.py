@@ -377,7 +377,7 @@ def ursify_xor_string(string: PlainString) -> UrsaExpression:
 
 def ursify_string(string: String) -> Optional[UrsaExpression]:
     if string.is_xor:
-        return ursify_xor_string(string)
+        return ursify_xor_string(string)  # type: ignore
     elif string.is_plain:
         return ursify_plain_string(
             string.pure_text,
@@ -389,7 +389,7 @@ def ursify_string(string: String) -> Optional[UrsaExpression]:
         value_safe = string.pure_text.decode()
         return ursify_hex(value_safe)
     elif string.is_regexp:
-        return ursify_regex_string(string)
+        return ursify_regex_string(string)  # type: ignore
 
     return None
 
@@ -429,7 +429,7 @@ class RuleParseEngine:
     def str_expr(
         self, condition: StringExpression
     ) -> Optional[UrsaExpression]:
-        return ursify_string(self.strings[condition.id])
+        return ursify_string(self.strings[condition.id])  # type: ignore
 
     def expand_string_wildcard(
         self, condition: StringWildcardExpression
@@ -440,7 +440,7 @@ class RuleParseEngine:
             v for k, v in self.strings.items() if re.match(condition_regex, k)
         ]
 
-        ursa_strings = [ursify_string(x) for x in filtered_strings]
+        ursa_strings = [ursify_string(x) for x in filtered_strings]  # type: ignore
         return [s for s in ursa_strings if s is not None]
 
     def expand_set_expression(
@@ -463,7 +463,7 @@ class RuleParseEngine:
         if type(children) is SetExpression:
             all_elements = self.expand_set_expression(children)
         elif type(children) is ThemExpression:
-            all_elements = [ursify_string(k) for k in self.strings.values()]
+            all_elements = [ursify_string(k) for k in self.strings.values()]  # type: ignore
         else:
             raise YaraParseError(f"Unsupported of_expr type: {type(children)}")
 
@@ -524,7 +524,7 @@ class RuleParseEngine:
         self, condition: StringCountExpression
     ) -> Optional[UrsaExpression]:
         fixed_id = "$" + condition.id[1:]
-        return ursify_string(self.strings[fixed_id])
+        return ursify_string(self.strings[fixed_id])  # type: ignore
 
     def int_lit_expr(
         self, condition: IntLiteralExpression
@@ -535,7 +535,7 @@ class RuleParseEngine:
     def str_at_expr(
         self, condition: StringAtExpression
     ) -> Optional[UrsaExpression]:
-        return ursify_string(self.strings[condition.id])
+        return ursify_string(self.strings[condition.id])  # type: ignore
 
     def id_expr(self, condition: IdExpression) -> Optional[UrsaExpression]:
         return self.rules[condition.symbol.name].parse()
@@ -543,7 +543,7 @@ class RuleParseEngine:
     def str_in_expr(
         self, condition: StringInRangeExpression
     ) -> Optional[UrsaExpression]:
-        return ursify_string(self.strings[condition.id])
+        return ursify_string(self.strings[condition.id])  # type: ignore
 
     CONDITION_HANDLERS = {
         AndExpression: and_expr,
@@ -565,7 +565,7 @@ class RuleParseEngine:
 
     def traverse(self, condition) -> Optional[UrsaExpression]:
         if type(condition) in self.CONDITION_HANDLERS:
-            return self.CONDITION_HANDLERS[type(condition)](self, condition)
+            return self.CONDITION_HANDLERS[type(condition)](self, condition)  # type: ignore
         else:
             print(f"unsupported expression: {type(condition)}")
             return None

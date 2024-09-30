@@ -287,7 +287,7 @@ def main() -> None:
             path_mount = args.path
 
         path = Path(args.path)
-        if not path.exists:
+        if not path.exists():
             logging.error("Path (--path) %s does not exist.", args.path)
             return
 
