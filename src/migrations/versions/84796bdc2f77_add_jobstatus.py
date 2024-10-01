@@ -7,15 +7,22 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision = '84796bdc2f77'
-down_revision = 'dbb81bd4d47f'
+revision = "84796bdc2f77"
+down_revision = "dbb81bd4d47f"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
-    op.execute('ALTER TABLE job ALTER COLUMN status TYPE jobstatus USING status::jobstatus;')
+    op.execute(
+        "CREATE TYPE jobstatus AS ENUM ('done', 'new', 'cancelled', 'removed', 'processing');"
+    )
+    op.execute(
+        "ALTER TABLE job ALTER COLUMN status TYPE jobstatus USING status::text::jobstatus;"
+    )
 
 
 def downgrade() -> None:
-    op.execute('ALTER TABLE job ALTER COLUMN status TYPE VARCHAR USING status::text;')
+    op.execute(
+        "ALTER TABLE job ALTER COLUMN status TYPE VARCHAR USING status::text;"
+    )

@@ -65,7 +65,11 @@ class Database:
             session.execute(
                 update(Job)
                 .where(Job.id == job)
-                .values(status=JobStatus.cancelled, finished=int(time()), error=error)
+                .values(
+                    status=JobStatus.cancelled,
+                    finished=int(time()),
+                    error=error,
+                )
             )
             session.commit()
 
@@ -98,7 +102,9 @@ class Database:
         """Sets the job status to removed."""
         with self.session() as session:
             session.execute(
-                update(Job).where(Job.id == job).values(status=JobStatus.removed)
+                update(Job)
+                .where(Job.id == job)
+                .values(status=JobStatus.removed)
             )
             session.commit()
 

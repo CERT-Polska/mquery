@@ -21,7 +21,7 @@ class JobBase(SQLModel):
     """Base class for entities related to mquery jobs."""
 
     id: str
-    status: JobStatus = Field(sa_column=PgEnum(JobStatus, name="jobstatus", create_type=True))
+    status: JobStatus = Field(sa_type=PgEnum(JobStatus, name="jobstatus"))
     error: Optional[str]
     rule_name: str
     rule_author: str
