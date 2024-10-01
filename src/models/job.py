@@ -1,3 +1,6 @@
+import enum
+
+from sqlalchemy import Enum as PgEnum
 from sqlmodel import SQLModel, Field, ARRAY, String, Column, Relationship
 from typing import Optional, List, Union, TYPE_CHECKING
 
@@ -6,11 +9,19 @@ if TYPE_CHECKING:
     from ..models.jobagent import JobAgent
 
 
+class JobStatus(str, enum.Enum):
+    done = "done"
+    new = "new"
+    cancelled = "cancelled"
+    removed = "removed"
+    processing = "processing"
+
+
 class JobBase(SQLModel):
     """Base class for entities related to mquery jobs."""
 
     id: str
-    status: str
+    status: JobStatus = Field(sa_column=PgEnum(JobStatus, name="jobstatus", create_type=True))
     error: Optional[str]
     rule_name: str
     rule_author: str
@@ -28,6 +39,9 @@ class JobBase(SQLModel):
     datasets_left: int
     total_datasets: int
     agents_left: int
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class Job(JobBase, table=True):

@@ -19,7 +19,7 @@ from sqlmodel import (
 
 from .models.agentgroup import AgentGroup
 from .models.configentry import ConfigEntry
-from .models.job import Job
+from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
 from .schema import MatchesSchema, ConfigSchema
@@ -65,7 +65,7 @@ class Database:
             session.execute(
                 update(Job)
                 .where(Job.id == job)
-                .values(status="cancelled", finished=int(time()), error=error)
+                .values(status=JobStatus.cancelled, finished=int(time()), error=error)
             )
             session.commit()
 
@@ -87,7 +87,7 @@ class Database:
         with self.session() as session:
             query = (
                 select(Job)
-                .where(Job.status != "removed")
+                .where(Job.status != JobStatus.removed)
                 .order_by(col(Job.submitted).desc())
             )
             if username_filter:
@@ -98,7 +98,7 @@ class Database:
         """Sets the job status to removed."""
         with self.session() as session:
             session.execute(
-                update(Job).where(Job.id == job).values(status="removed")
+                update(Job).where(Job.id == job).values(status=JobStatus.removed)
             )
             session.commit()
 
@@ -147,7 +147,7 @@ class Database:
                 session.execute(
                     update(Job)
                     .where(Job.internal_id == job.internal_id)
-                    .values(finished=int(time()), status="done")
+                    .values(finished=int(time()), status=JobStatus.done)
                 )
             session.commit()
 
@@ -218,7 +218,7 @@ class Database:
                 .values(
                     total_datasets=num_datasets,
                     datasets_left=num_datasets,
-                    status="processing",
+                    status=JobStatus.processing,
                 )
             )
             session.commit()
@@ -251,7 +251,7 @@ class Database:
         with self.session() as session:
             obj = Job(
                 id=job,
-                status="new",
+                status=JobStatus.new,
                 rule_name=rule_name,
                 rule_author=rule_author,
                 raw_yara=raw_yara,
