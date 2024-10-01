@@ -11,3 +11,5 @@ mquery.egg-info/
 package-lock.json
 build/
 postgres/
+node_modules/
+dist/

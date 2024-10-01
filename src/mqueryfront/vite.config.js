@@ -7,7 +7,7 @@ export default defineConfig({
     base: "/",
     plugins: [react(), svgr({ svgrOptions: {} })],
     server: {
-        port: 80,
+        port: 3000,
         proxy: {
             "/api": { target: "http://dev-web:5000/" },
             "/docs": { target: "http://dev-web:5000/" },
