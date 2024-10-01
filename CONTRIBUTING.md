@@ -7,8 +7,7 @@ Great, so you want to join the development!
 First, [set up a development environment](INSTALL.md#docker-compose-dev).
 Since you're going to write new code, use the `docker-compose.dev.yml` method.
 
-If everything went right, the system should be accessible at network exposed
-by `vite` as e.g. `dev-frontend-1  |   ➜  Network: http://172.18.0.8:80/`.
+If everything went right, the system should be accessible at `http://localhost:80`.
 
 ## Development workflow
 
