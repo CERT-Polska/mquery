@@ -595,6 +595,7 @@ app.mount(
         directory=os.path.join(
             os.path.dirname(__file__), "mqueryfront", "dist"
         ),
+        check_dir=False,
         html=True,
     ),
 )
