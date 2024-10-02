@@ -165,7 +165,7 @@ def make_agent(group_override: Optional[str] = None):
     if group_override is not None:
         group_id = group_override
     else:
-        group_id = get_current_job().origin
+        group_id = get_current_job().origin  # type: ignore
     return Agent(group_id)
 
 

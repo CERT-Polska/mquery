@@ -53,7 +53,7 @@ class UrsaDb:
     def query(
         self,
         query: str,
-        taints: List[str] = None,
+        taints: List[str] | None = None,
         dataset: Optional[str] = None,
     ) -> Json:
         command = "select "

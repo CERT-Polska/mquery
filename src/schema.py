@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Sequence
 from pydantic import BaseModel, Field  # type: ignore
 from .models.job import JobView
 from .models.agentgroup import AgentGroupView
 
 
 class JobsSchema(BaseModel):
-    jobs: List[JobView]
+    jobs: Sequence[JobView]
 
 
 class ConfigSchema(BaseModel):
