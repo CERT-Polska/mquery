@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import filesize from "filesize";
+import { filesize } from "filesize";
 
 import ErrorBoundary from "../components/ErrorBoundary";
 import api from "../api";
