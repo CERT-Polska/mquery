@@ -15,6 +15,9 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute(
+        "CREATE TYPE jobstatus AS ENUM ('done', 'new', 'cancelled', 'removed', 'processing');"
+    )
+    op.execute(
         "ALTER TABLE job ALTER COLUMN status TYPE jobstatus USING status::text::jobstatus;"
     )
 
