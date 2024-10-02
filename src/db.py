@@ -267,7 +267,7 @@ class Database:
                 datasets_left=0,
                 total_datasets=0,
                 taints=taints,
-            )  # type: ignore
+            )
             session.add(obj)
             session.commit()
 
@@ -287,7 +287,7 @@ class Database:
                 query = query.limit(limit)
 
             matches = session.exec(query).all()
-            return MatchesSchema(job=job, matches=matches)  # type: ignore
+            return MatchesSchema(job=job, matches=matches)
 
     def update_job_files(self, job: JobId, total_files: int) -> int:
         """Add total_files to the specified job, and return a new total."""

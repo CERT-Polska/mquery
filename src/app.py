@@ -258,13 +258,13 @@ def backend_status() -> BackendStatusSchema:
             ursadb_version = status["result"]["ursadb_version"]
             agents.append(
                 AgentSchema(
-                    name=name, alive=True, tasks=tasks, spec=agent_spec  # type: ignore
+                    name=name, alive=True, tasks=tasks, spec=agent_spec
                 )
             )
             components[f"ursadb ({name})"] = ursadb_version
         except Again:
             agents.append(
-                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)  # type: ignore
+                AgentSchema(name=name, alive=False, tasks=[], spec=agent_spec)
             )
             components[f"ursadb ({name})"] = "unknown"
 
@@ -534,7 +534,7 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
     if "can_list_all_queries" in get_user_roles(user):
         username_filter = None
     jobs = db.get_valid_jobs(username_filter)
-    return JobsSchema(jobs=jobs)  # type: ignore
+    return JobsSchema(jobs=jobs)
 
 
 @app.delete(
