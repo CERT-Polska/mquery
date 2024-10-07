@@ -46,7 +46,7 @@ we can start a web server.
 
 ```shell
 cd /opt/mquery/src/mqueryfront
-npm install --legacy-peer-deps
+yarn install --legacy-peer-deps
 npm run build
 ```
 

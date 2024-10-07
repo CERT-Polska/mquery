@@ -86,7 +86,7 @@ jobs:
         with:
           node-version: '12.x'
       - name: install dependencies
-        run: npm install
+        run: yarn install
       - name: build
         run: npm build
   test_unit:
