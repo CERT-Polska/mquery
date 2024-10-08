@@ -3,6 +3,7 @@ import { filesize } from "filesize";
 
 import ErrorBoundary from "../components/ErrorBoundary";
 import api from "../api";
+import WarningPage from "../components/WarningPage";
 
 class DatasetRow extends Component {
     render() {
@@ -71,6 +72,19 @@ class DatabaseTopology extends Component {
             });
     }
 
+    getDatasetsCompactingWarning(datasets) {
+        var fileCountThreshold = 1000 * 1000;
+        var amountThreshhold = 20;
+        var smallDatasets = datasets.filter(
+            (dataset) => dataset.file_count < fileCountThreshold
+        );
+        if (smallDatasets.length < amountThreshhold) {
+            return null;
+        }
+        return `At least ${amountThreshhold} datasets have less \
+        than ${fileCountThreshold} samples - consider compacting them.`
+    }
+
     render() {
         const datasetRows = Object.keys(
             this.state.datasets
@@ -93,9 +107,12 @@ class DatabaseTopology extends Component {
         const totalSize = filesize(totalBytes, { standard: "iec" });
         const filesTooltip = `Total files: ${totalCount} (${totalSize})`;
 
+        const datasetsCompactingWarning = this.getDatasetsCompactingWarning(datasets);
+
         return (
             <ErrorBoundary error={this.state.error}>
                 <h2 className="text-center mq-bottom">Topology</h2>
+                {datasetsCompactingWarning && <WarningPage msg={datasetsCompactingWarning} dismissable/>}
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>
