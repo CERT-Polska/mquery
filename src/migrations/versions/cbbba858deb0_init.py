@@ -14,9 +14,6 @@ down_revision = None
 branch_labels = None
 depends_on = None
 
-DATABASE_URL = app_config.database.url
-engine = sa.create_engine(DATABASE_URL)
-
 
 def upgrade() -> None:
     op.create_table(

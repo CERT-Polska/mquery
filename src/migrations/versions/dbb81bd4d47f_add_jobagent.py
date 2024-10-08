@@ -5,19 +5,13 @@ Create Date: 2024-05-29 13:13:03.980030
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import inspect
 
-
-from config import app_config
 
 # revision identifiers, used by Alembic.
 revision = "dbb81bd4d47f"
 down_revision = "cbbba858deb0"
 branch_labels = None
 depends_on = None
-
-DATABASE_URL = app_config.database.url
-engine = sa.create_engine(DATABASE_URL)
 
 
 def upgrade() -> None:
