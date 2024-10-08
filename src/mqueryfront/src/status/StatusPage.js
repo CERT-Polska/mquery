@@ -57,7 +57,6 @@ class StatusPage extends Component {
         const noAgentsWarning = this.getNoAgentsWarning(
             this.state.backend.agents
         );
-        console.log(this.state);
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
