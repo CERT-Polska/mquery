@@ -16,8 +16,8 @@ class JobStatus(enum.Enum):
     processing = "processing"
 
 
-class JobBase(SQLModel):
-    """Base class for entities related to mquery jobs."""
+class JobView(SQLModel):
+    """Public fields of mquery jobs."""
 
     id: str
     status: JobStatus = Field(sa_type=PgEnum(JobStatus, name="jobstatus"))  # type: ignore
@@ -43,16 +43,10 @@ class JobBase(SQLModel):
         arbitrary_types_allowed = True
 
 
-class Job(JobBase, table=True):
+class Job(JobView, table=True):
     """Job object in the database. Internal ID is an implementation detail."""
 
     internal_id: Union[int, None] = Field(default=None, primary_key=True)
 
     matches: List["Match"] = Relationship(back_populates="job")
     agents: List["JobAgent"] = Relationship(back_populates="job")
-
-
-class JobView(JobBase):
-    """Pydantic model used in the public API."""
-
-    pass

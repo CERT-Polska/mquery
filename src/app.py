@@ -122,7 +122,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
 async def add_headers(request: Request, call_next: Callable) -> Response:
     response = await call_next(request)
     response.headers["X-Frame-Options"] = "deny"
-    response.headers["Access-Control-Allow-Origin"] = request.client.host
+    response.headers["Access-Control-Allow-Origin"] = request.client.host  # type: ignore
     response.headers[
         "Access-Control-Allow-Headers"
     ] = "cache-control,x-requested-with,content-type,authorization"
@@ -575,7 +575,7 @@ def server() -> ServerSchema:
 
 @app.get("/query/{path}", include_in_schema=False)
 def serve_index(path: str) -> FileResponse:
-    return FileResponse(Path(__file__).parent / "mqueryfront/build/index.html")
+    return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
 
 
 @app.get("/recent", include_in_schema=False)
@@ -586,15 +586,16 @@ def serve_index(path: str) -> FileResponse:
 @app.get("/about", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     # Static routes are always publicly accessible without authorisation.
-    return FileResponse(Path(__file__).parent / "mqueryfront/build/index.html")
+    return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
 
 
 app.mount(
     "/",
     StaticFiles(
         directory=os.path.join(
-            os.path.dirname(__file__), "mqueryfront", "build"
+            os.path.dirname(__file__), "mqueryfront", "dist"
         ),
+        check_dir=False,
         html=True,
     ),
 )

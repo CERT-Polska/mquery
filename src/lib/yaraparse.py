@@ -1,7 +1,7 @@
 import argparse
 import itertools
 import re
-from typing import Any, Dict, List, Match, Optional
+from typing import Any, Dict, List, Match, Optional, cast, Callable
 
 from yaramod import (  # type: ignore
     AllExpression,
@@ -17,7 +17,6 @@ from yaramod import (  # type: ignore
     OfExpression,
     OrExpression,
     ParenthesesExpression,
-    PlainString,
     Regexp,
     RegexpConcat,
     RegexpGroup,
@@ -358,7 +357,7 @@ def ursify_plain_string(
         return ursa_ascii
 
 
-def ursify_xor_string(string: PlainString) -> UrsaExpression:
+def ursify_xor_string(string: String) -> UrsaExpression:
     text_ascii = string.pure_text
     xored_strings: List[UrsaExpression] = []
 
@@ -389,14 +388,14 @@ def ursify_string(string: String) -> Optional[UrsaExpression]:
         value_safe = string.pure_text.decode()
         return ursify_hex(value_safe)
     elif string.is_regexp:
-        return ursify_regex_string(string)
+        return ursify_regex_string(cast(Regexp, string))
 
     return None
 
 
 class RuleParseEngine:
     def __init__(
-        self, strings: Dict[str, str], rules: Dict[str, YaraRuleData]
+        self, strings: Dict[str, String], rules: Dict[str, YaraRuleData]
     ) -> None:
         self.strings = strings
         self.rules = rules
@@ -545,7 +544,7 @@ class RuleParseEngine:
     ) -> Optional[UrsaExpression]:
         return ursify_string(self.strings[condition.id])
 
-    CONDITION_HANDLERS = {
+    CONDITION_HANDLERS: Dict[type, Callable] = {
         AndExpression: and_expr,
         OrExpression: or_expr,
         ParenthesesExpression: pare_expr,
