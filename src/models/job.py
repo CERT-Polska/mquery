@@ -9,11 +9,10 @@ if TYPE_CHECKING:
     from ..models.jobagent import JobAgent
 
 
-class JobStatus(str, enum.Enum):
+class JobStatus(enum.Enum):
     done = "done"
     new = "new"
     cancelled = "cancelled"
-    removed = "removed"
     processing = "processing"
 
 
