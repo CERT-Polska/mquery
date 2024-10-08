@@ -91,7 +91,7 @@ class Database:
         with self.session() as session:
             query = (
                 select(Job)
-                .where(Job.status != JobStatus.removed)
+                .where(Job.status != JobStatus.cancelled)
                 .order_by(col(Job.submitted).desc())
             )
             if username_filter:
@@ -104,7 +104,7 @@ class Database:
             session.execute(
                 update(Job)
                 .where(Job.id == job)
-                .values(status=JobStatus.removed)
+                .values(status=JobStatus.cancelled)
             )
             session.commit()
 

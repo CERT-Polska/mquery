@@ -1,3 +1,4 @@
+import alembic_postgresql_enum  # type: ignore
 from sqlalchemy import create_engine
 from alembic import context
 from sqlmodel import SQLModel
