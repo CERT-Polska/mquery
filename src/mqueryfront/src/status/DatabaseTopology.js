@@ -82,7 +82,7 @@ class DatabaseTopology extends Component {
             return null;
         }
         return `At least ${amountThreshhold} datasets have less \
-        than ${fileCountThreshold} samples - consider compacting them.`
+        than ${fileCountThreshold} samples - consider compacting them.`;
     }
 
     render() {
@@ -107,12 +107,16 @@ class DatabaseTopology extends Component {
         const totalSize = filesize(totalBytes, { standard: "iec" });
         const filesTooltip = `Total files: ${totalCount} (${totalSize})`;
 
-        const datasetsCompactingWarning = this.getDatasetsCompactingWarning(datasets);
+        const datasetsCompactingWarning = this.getDatasetsCompactingWarning(
+            datasets
+        );
 
         return (
             <ErrorBoundary error={this.state.error}>
                 <h2 className="text-center mq-bottom">Topology</h2>
-                {datasetsCompactingWarning && <WarningPage msg={datasetsCompactingWarning} dismissable/>}
+                {datasetsCompactingWarning && (
+                    <WarningPage msg={datasetsCompactingWarning} dismissable />
+                )}
                 <div className="table-responsive">
                     <table className="table table-bordered table-topology">
                         <thead>
