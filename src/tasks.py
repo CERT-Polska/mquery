@@ -3,6 +3,8 @@ import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
 from contextlib import contextmanager
+from sqlalchemy import delete, update
+from sqlmodel import select
 import yara  # type: ignore
 
 from .db import Database, JobId
@@ -11,6 +13,7 @@ from .config import app_config
 from .plugins import PluginManager
 from .models.job import Job
 from .models.match import Match
+from .models.queryresult import QueryResult
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
 from .metadata import Metadata
@@ -236,13 +239,13 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
             logging.info("Job was cancelled, returning...")
             return
 
-        result = agent.ursa.query(ursadb_query, job.taints, dataset_id)
+        result = agent.ursa.query(ursadb_query, job_id, job.taints, dataset_id)
         if "error" in result:
             raise RuntimeError(result["error"])
 
-        file_count = result["file_count"]
-        iterator = result["iterator"]
-        logging.info(f"Iterator {iterator} contains {file_count} files")
+        with agent.db.session() as session:
+            result = session.exec(select(QueryResult).where(QueryResult.job_id == job_id)).one()
+        file_count = len(result.files)
 
         total_files = agent.db.update_job_files(job_id, file_count)
         if job.files_limit and total_files > job.files_limit:
@@ -259,7 +262,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
             agent.queue.enqueue(
                 run_yara_batch,
                 job_id,
-                iterator,
+                result,
                 batch,
                 job_timeout=app_config.rq.job_timeout,
             )
@@ -267,7 +270,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
         agent.db.dataset_query_done(job_id)
 
 
-def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
+def run_yara_batch(job_id: JobId, result: QueryResult, batch_size: int) -> None:
     """Actually scans files, and updates a database with the results."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
@@ -275,18 +278,20 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
             logging.info("Job was cancelled, returning...")
             return
 
-        pop_result = agent.ursa.pop(iterator, batch_size)
-        logging.info("job %s: Pop successful: %s", job_id, pop_result)
-        if pop_result.was_locked:
-            # Iterator is currently locked, re-enqueue self
-            agent.queue.enqueue(
-                run_yara_batch,
-                job_id,
-                iterator,
-                batch_size,
-                job_timeout=app_config.rq.job_timeout,
-            )
-            return
+        ## 1. get batch_size first files from result
+        batch_files = result.files[0:batch_size]
 
-        agent.execute_yara(job, pop_result.files)
+        ## 2. remove batch files from result
+        with agent.db.session() as session:
+            session.execute(
+                update(QueryResult).where(QueryResult.job_id == result.job_id).values(files=result.files[batch_size+1:])
+            )
+
+            ## 3. if result has no files, delete
+            session.execute(
+                delete(QueryResult).where(QueryResult.job_id == job_id).where(QueryResult.files == [])
+            )
+            session.commit()
+
+        agent.execute_yara(job, batch_files)
         agent.add_tasks_in_progress(job, -1)

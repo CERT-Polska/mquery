@@ -3,6 +3,10 @@ import time
 import zmq  # type: ignore
 from typing import Dict, Any, List, Optional
 
+from config import app_config
+from models.queryresult import QueryResult
+from db import Database, JobId
+
 
 Json = Dict[str, Any]
 
@@ -37,6 +41,7 @@ class PopResult:
 class UrsaDb:
     def __init__(self, backend: str) -> None:
         self.backend = backend
+        self.redis_db = Database(app_config.redis.host, app_config.redis.port)
 
     def __execute(self, command: str, recv_timeout: int = 2000) -> Json:
         context = zmq.Context()
@@ -53,6 +58,7 @@ class UrsaDb:
     def query(
         self,
         query: str,
+        job_id: JobId,
         taints: List[str] | None = None,
         dataset: Optional[str] = None,
     ) -> Json:
@@ -63,7 +69,7 @@ class UrsaDb:
             command += f"with taints {taints_whole_str} "
         if dataset:
             command += f'with datasets ["{dataset}"] '
-        command += f"into iterator {query};"
+        command += f"{query};"
 
         start = time.perf_counter()
         res = self.__execute(command, recv_timeout=-1)
@@ -73,10 +79,13 @@ class UrsaDb:
             error = res.get("error", {}).get("message", "(no message)")
             return {"error": f"ursadb failed: {error}"}
 
+        with self.redis_db.session() as session:
+            obj = QueryResult(job_id=job_id, files=res['result']['files'])
+            session.add(obj)
+            session.commit()
+
         return {
             "time": (end - start),
-            "iterator": res["result"]["iterator"],
-            "file_count": res["result"]["file_count"],
         }
 
     def pop(self, iterator: str, count: int) -> PopResult:
