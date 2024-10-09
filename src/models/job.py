@@ -20,7 +20,7 @@ class JobView(SQLModel):
     """Public fields of mquery jobs."""
 
     id: str
-    status: JobStatus = Field(sa_type=PgEnum(JobStatus, name="jobstatus", create_type=True))  # type: ignore
+    status: JobStatus = Field(sa_type=PgEnum(JobStatus, name="jobstatus"))  # type: ignore
     error: Optional[str]
     rule_name: str
     rule_author: str
