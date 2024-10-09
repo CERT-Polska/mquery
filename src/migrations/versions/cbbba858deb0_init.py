@@ -18,9 +18,7 @@ def upgrade() -> None:
         "agentgroup",
         sa.Column("plugins_spec", sa.JSON(), nullable=True),
         sa.Column("active_plugins", sa.ARRAY(sa.String()), nullable=True),
-        sa.Column(
-            "name", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column(
             "ursadb_url",
             sqlmodel.sql.sqltypes.AutoString(),
@@ -35,26 +33,18 @@ def upgrade() -> None:
         sa.Column(
             "plugin", sqlmodel.sql.sqltypes.AutoString(), nullable=False
         ),
-        sa.Column(
-            "key", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
-        sa.Column(
-            "value", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("key", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
+        sa.Column("value", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
         "job",
         sa.Column("taints", sa.ARRAY(sa.String()), nullable=True),
-        sa.Column(
-            "id", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("id", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column(
             "status", sqlmodel.sql.sqltypes.AutoString(), nullable=False
         ),
-        sa.Column(
-            "error", sqlmodel.sql.sqltypes.AutoString(), nullable=True
-        ),
+        sa.Column("error", sqlmodel.sql.sqltypes.AutoString(), nullable=True),
         sa.Column(
             "rule_name", sqlmodel.sql.sqltypes.AutoString(), nullable=False
         ),
@@ -89,9 +79,7 @@ def upgrade() -> None:
         sa.Column("matches", sa.ARRAY(sa.String()), nullable=True),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("job_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "file", sqlmodel.sql.sqltypes.AutoString(), nullable=False
-        ),
+        sa.Column("file", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.ForeignKeyConstraint(
             ["job_id"],
             ["job.internal_id"],

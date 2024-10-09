@@ -15,7 +15,9 @@ depends_on = None
 
 
 def upgrade() -> None:
-    sa.Enum('done', 'new', 'cancelled', 'removed', 'processing', name='jobstatus').create(op.get_bind())
+    sa.Enum(
+        "done", "new", "cancelled", "removed", "processing", name="jobstatus"
+    ).create(op.get_bind())
     op.sync_enum_values(
         "public",
         "jobstatus",
