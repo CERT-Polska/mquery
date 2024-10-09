@@ -9,7 +9,7 @@ from .db import Database, JobId
 from .util import make_sha256_tag
 from .config import app_config
 from .plugins import PluginManager
-from .models.job import Job
+from .models.job import Job, JobStatus
 from .models.match import Match
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
@@ -182,7 +182,7 @@ def start_search(job_id: JobId) -> None:
     """
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
-        if job.status == "cancelled":
+        if job.status == JobStatus.cancelled:
             logging.info("Job was cancelled, returning...")
             return
 
@@ -232,7 +232,7 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
     """Queries ursadb and creates yara scans tasks with file batches."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
-        if job.status == "cancelled":
+        if job.status == JobStatus.cancelled:
             logging.info("Job was cancelled, returning...")
             return
 
@@ -271,7 +271,7 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
     """Actually scans files, and updates a database with the results."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
-        if job.status == "cancelled":
+        if job.status == JobStatus.cancelled:
             logging.info("Job was cancelled, returning...")
             return
 

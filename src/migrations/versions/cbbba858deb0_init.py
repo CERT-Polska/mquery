@@ -7,7 +7,6 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 
-
 revision = "cbbba858deb0"
 down_revision = None
 branch_labels = None
@@ -21,7 +20,9 @@ def upgrade() -> None:
         sa.Column("active_plugins", sa.ARRAY(sa.String()), nullable=True),
         sa.Column("name", sqlmodel.sql.sqltypes.AutoString(), nullable=False),
         sa.Column(
-            "ursadb_url", sqlmodel.sql.sqltypes.AutoString(), nullable=False
+            "ursadb_url",
+            sqlmodel.sql.sqltypes.AutoString(),
+            nullable=False,
         ),
         sa.Column("id", sa.Integer(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
@@ -48,7 +49,9 @@ def upgrade() -> None:
             "rule_name", sqlmodel.sql.sqltypes.AutoString(), nullable=False
         ),
         sa.Column(
-            "rule_author", sqlmodel.sql.sqltypes.AutoString(), nullable=False
+            "rule_author",
+            sqlmodel.sql.sqltypes.AutoString(),
+            nullable=False,
         ),
         sa.Column(
             "raw_yara", sqlmodel.sql.sqltypes.AutoString(), nullable=False
