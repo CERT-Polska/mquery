@@ -19,15 +19,19 @@ const QueryMatchesItem = (props) => {
             </a>
         ));
 
-    const matchBadges = Object.values(matches).map((v) => (
-        <span
-            key={v}
-            className="badge rounded-pill bg-primary ms-1 mt-1 cursor-pointer"
-            onClick={() => props.changeFilter(v)}
-        >
-            {v}
-        </span>
-    ));
+    const matchBadges = (
+        <div>
+            {Object.values(matches).map((v) => (
+                <span
+                    key={v}
+                    className="badge rounded-pill bg-primary ms-1 mt-1 cursor-pointer text-wrap"
+                    onClick={() => props.changeFilter(v)}
+                >
+                    {v}
+                </span>
+            ))}
+        </div>
+    );
 
     return (
         <tr>
