@@ -32,3 +32,4 @@ uvicorn==0.30.6
 wrapt==1.16.0
 yara-python==4.5.1
 yaramod==3.23.0
+alembic_postgresql_enum

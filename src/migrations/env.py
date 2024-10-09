@@ -1,3 +1,4 @@
+import alembic_postgresql_enum # noqa: ignore=F401
 from sqlalchemy import create_engine
 from alembic import context
 from sqlmodel import SQLModel
