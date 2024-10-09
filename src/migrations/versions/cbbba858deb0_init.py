@@ -7,8 +7,6 @@ from alembic import op
 import sqlalchemy as sa
 import sqlmodel
 
-from config import app_config
-
 revision = "cbbba858deb0"
 down_revision = None
 branch_labels = None

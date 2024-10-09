@@ -1,12 +1,11 @@
 export const isStatusFinished = (status) =>
-    ["done", "cancelled", "removed"].includes(status);
+    ["done", "cancelled"].includes(status);
 
 const statusClassMap = {
     done: "success",
     new: "info",
     processing: "info",
-    cancelled: "danger",
-    removed: "dark",
+    cancelled: "danger"
 };
 
 export const isAuthEnabled = (config) =>
@@ -15,7 +14,7 @@ export const isAuthEnabled = (config) =>
 export const openidLoginUrl = (config) => {
     if (config["openid_url"] === null || config["openid_client_id"] === null) {
         // Defensive programming - config keys can be null.
-        return "#";
+        return "#";gi
     }
     const login_url = new URL(config["openid_url"] + "/auth");
     login_url.searchParams.append("client_id", config["openid_client_id"]);
