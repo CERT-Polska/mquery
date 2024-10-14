@@ -1,7 +1,8 @@
 from sqlmodel import Field, SQLModel, ARRAY, Column, String
-from typing import List
+from typing import List, Union
 
 
 class QueryResult(SQLModel, table=True):
-  job_id: str = Field(foreign_key="job.internal_id", primary_key=True)
-  files: List[str] = Field(sa_column=Column(ARRAY(String)))
+    id: Union[int, None] = Field(default=None, primary_key=True)
+    job_id: Union[int, None] = Field(foreign_key="job.internal_id")
+    files: List[str] = Field(sa_column=Column(ARRAY(String)))

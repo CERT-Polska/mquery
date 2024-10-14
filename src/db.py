@@ -24,6 +24,7 @@ from .models.configentry import ConfigEntry
 from .models.job import Job
 from .models.jobagent import JobAgent
 from .models.match import Match
+from .models.queryresult import QueryResult
 from .schema import MatchesSchema, ConfigSchema
 from .config import app_config
 
@@ -109,6 +110,19 @@ class Database:
             job_object = self.__get_job(session, job)
             match.job = job_object
             session.add(match)
+            session.commit()
+
+    def add_queryresult(self, job_id: int | None, files: List[str]) -> None:
+        with self.session() as session:
+            obj = QueryResult(job_id=job_id, files=files)
+            session.add(obj)
+            session.commit()
+
+    def remove_queryresult(self, job_id: int | None) -> None:
+        with self.session() as session:
+            session.query(QueryResult).where(
+                QueryResult.job_id == job_id
+            ).delete()
             session.commit()
 
     def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:
