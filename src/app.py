@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import os
 
 import uvicorn  # type: ignore
@@ -44,8 +45,15 @@ from .schema import (
     ServerSchema,
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db.alembic_upgrade()
+    yield
+
+
 db = Database(app_config.redis.host, app_config.redis.port)
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 
 def with_plugins() -> Iterable[PluginManager]:
