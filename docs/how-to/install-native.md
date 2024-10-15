@@ -118,7 +118,6 @@ Now you need to create and configure a database
 ```shell
 psql -c "CREATE DATABASE mquery"
 source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
-python3 -m mquery.db  # initialize the mquery database
 ```
 
 ### Start everything

@@ -25,7 +25,6 @@ git clone https://github.com/CERT-Polska/mquery.git
 cd mquery
 vim .env  # optional - change samples and index directory locations
 docker compose up --scale daemon=3  # building the images will take a while
-docker compose exec web python3 -m mquery.db
 ```
 
 The web interface should be available at `http://localhost`.
