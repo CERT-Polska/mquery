@@ -11,6 +11,8 @@ setup(
         "mquery.lib",
         "mquery.plugins",
         "mquery.models",
+        "mquery.migrations",
+        "mquery.migrations.versions",
     ],
     package_dir={"mquery": "src"},
     include_package_data=True,

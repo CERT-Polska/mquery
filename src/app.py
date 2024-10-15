@@ -24,13 +24,7 @@ from cryptography.hazmat.primitives import serialization
 
 from .config import app_config
 from .util import mquery_version
-from .db import (
-    Database,
-    is_alembic_version_present,
-    is_database_initilized,
-    run_alembic_legacy_stamp,
-    run_alembic_upgrade,
-)
+from .db import Database
 from .lib.yaraparse import parse_yara
 from .plugins import PluginManager
 from .lib.ursadb import UrsaDb
@@ -54,21 +48,7 @@ from .schema import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Check if the database is initilized
-    if is_database_initilized():
-        # Check if database contains alembic_version table
-        if is_alembic_version_present():
-            # If True it means that we can run alembic upgrade head without worry.
-            pass
-        # If False database is not up-to-date
-        # but we can't just run alembic head upgrade as there is no alembic_version table
-        # so we need to run alemibc stamp dbb81bd4d47f
-        # as dbb81bd4d47f is the number of last migration before alembic head upgrade was added
-        else:
-            run_alembic_legacy_stamp()
-
-    # finally we can run alembic upgrade head to upgrade (if needed) the database
-    run_alembic_upgrade()
+    db.alembic_upgrade()
     yield
 
 

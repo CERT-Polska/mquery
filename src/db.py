@@ -1,3 +1,6 @@
+from alembic.config import Config
+from alembic import command
+from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import List, Optional, Dict, Any
@@ -9,13 +12,11 @@ from enum import Enum
 from rq import Queue  # type: ignore
 from sqlmodel import (
     Session,
-    SQLModel,
     create_engine,
     select,
     and_,
     update,
     col,
-    inspect,
 )
 
 from .models.agentgroup import AgentGroup
@@ -29,9 +30,6 @@ from .config import app_config
 
 # "Magic" plugin name, used for configuration of mquery itself
 MQUERY_PLUGIN_NAME = "Mquery"
-
-# Legacy purpose
-LAST_REVISION_BEFORE_ALEMBiC_HEAD_UPGRADE = "dbb81bd4d47f"
 
 
 class TaskType(Enum):
@@ -414,51 +412,7 @@ class Database:
             session.add(entry)
             session.commit()
 
-
-def is_alembic_version_present() -> bool:
-    engine = create_engine(app_config.database.url, echo=True)
-    with engine.connect() as connection:
-        inspector = inspect(connection)
-        table_names = inspector.get_table_names()
-        if "alembic_version" in table_names:
-            return True
-    return False
-
-
-def is_database_initilized() -> bool:
-    engine = create_engine(app_config.database.url, echo=True)
-    with engine.connect() as connection:
-        inspector = inspect(connection)
-        table_names = inspector.get_table_names()
-        if table_names:
-            return True
-    return False
-
-
-def run_alembic_legacy_stamp():
-    from alembic.config import Config
-    from alembic import command
-    from os import chdir
-
-    chdir("/usr/src/app/src/")
-    alembic_cfg = Config("alembic.ini")
-    command.stamp(alembic_cfg, LAST_REVISION_BEFORE_ALEMBiC_HEAD_UPGRADE)
-
-
-def run_alembic_upgrade() -> None:
-    from alembic.config import Config
-    from alembic import command
-    from os import chdir
-
-    chdir("/usr/src/app/src/")
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-
-
-def init_db() -> None:
-    engine = create_engine(app_config.database.url, echo=True)
-    SQLModel.metadata.create_all(engine)
-
-
-if __name__ == "__main__":
-    init_db()
+    def alembic_upgrade(self) -> None:
+        config_file = Path(__file__).parent / "alembic.ini"
+        alembic_cfg = Config(str(config_file))
+        command.upgrade(alembic_cfg, "head")
