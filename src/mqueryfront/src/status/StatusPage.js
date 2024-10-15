@@ -27,6 +27,7 @@ class StatusPage extends Component {
             .catch((error) => {
                 this.setState({ error: error });
             });
+        this._ismounted = true;
     }
 
     getAgentsUrsaURLDuplicatesWarning(agentgroups) {
@@ -60,7 +61,7 @@ class StatusPage extends Component {
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
-                    {ursaURLWarning && (
+                    {this._ismounted && ursaURLWarning && (
                         <WarningPage msg={ursaURLWarning} dismissable />
                     )}
                     <h1 className="text-center mq-bottom">Status</h1>
@@ -69,7 +70,7 @@ class StatusPage extends Component {
                             <VersionStatus
                                 components={this.state.backend.components}
                             />
-                            {noAgentsWarning ? (
+                            {this._ismounted && noAgentsWarning ? (
                                 <WarningPage msg={noAgentsWarning} />
                             ) : (
                                 <BackendStatus
