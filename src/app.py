@@ -189,6 +189,7 @@ def expand_role(role: str) -> List[str]:
     also gives permissions for all user permissions.
     """
     role_implications = {
+        "nobody": [],
         "admin": [
             "user",
             "can_list_all_queries",

@@ -9,7 +9,7 @@ Optional user management in mquery is role-based, and handled by OIDC.
 
 ## Role-based permissions
 
-There are two predefined permission sets that can be assigned to users:
+There are three predefined permission sets that can be assigned to users:
 
  - `admin`: has access to everything, including management features.
  Can change the service configuration, manage datasets, etc.
@@ -18,6 +18,8 @@ There are two predefined permission sets that can be assigned to users:
  create new search jobs, see and cancel every job, and download
  matched files. In current version, users can see and browse
  all jobs in the system.
+ - `nobody`: empty role that gives no access to anything. Useful
+ for anonymous users.
 
 Role names are considered stable, and will continue to work in the future.
 
@@ -34,6 +36,17 @@ may change in some future new version.
 
 (**Note**: in the current version there is no isolation between users, and
 users can view/stop/delete each other queries. This may change in the future)
+
+## OIDC quickstart
+
+In the `/config` section set:
+* `auth_default_roles` to "nobody" or "user" (this is a role for anonymous users)
+* `openid_client_id`, `openid_url`, `openid_secret` as required for your OIDC server
+ (secret should be a RS256 key)
+* `auth_enabled` to "true" (to this last, to avoid locking yourself out).
+
+If something goes wrong, you need to manually fix the config in the database
+(to disable auth: `delete from configentry where key='auth_enabled'`).
 
 ## OIDC integration
 
@@ -97,8 +110,8 @@ as necessary for your deployment.
 **Warning** the proces is tricky, and right now it's missing a proper validation.
 It's possible to lock yourself out (by enabling auth before configuring it
 correctly). If you do this, you have to disable auth manually, by running
-`redis-cli` (`sudo docker compose exec redis redis-cli` for docker) and
-executing `HMSET plugin:Mquery auth_enabled ""`.
+`redis-cli` (`sudo docker compose exec postgres psql -U postgres --dbname mquery` for docker) and
+executing `delete from configentry where key='auth_enabled';`.
 
 **Step 0 (optional): enable auth in non-enforcing mode**
 
@@ -146,8 +159,8 @@ Get it from `http://localhost:8080/auth/admin/master/console/#/realms/myrealm/ke
 
 **Step 3: enable auth in enforcing mode**
 
-- Go to the `config` page in mquery. Ensure `auth_default_roles` is
-an empty string.
+- Go to the `config` page in mquery. Change `auth_default_roles` to "user" or "nobody", depending on your needs.
+- **Don't leave `auth_default_roles` empty**, for compatibility reasons this gives admin permissions for every user.
 - Set `auth_enabled` to `true`
 
 Final result:
