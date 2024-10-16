@@ -339,7 +339,7 @@ class Database:
         return {
             # Autentication-related config
             "auth_enabled": "Enable and force authentication for all users ('true' or 'false')",
-            "auth_default_roles": "Comma separated list of roles available to everyone (available roles: admin, user)",
+            "auth_default_roles": "Roles assigned to everyone - including anonymous users (available roles: admin, user, nobody)",
             # OpenID Authentication config
             "openid_url": "OpenID Connect base url",
             "openid_client_id": "OpenID client ID",
