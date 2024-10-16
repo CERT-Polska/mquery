@@ -188,7 +188,7 @@ def expand_role(role: str) -> List[str]:
     """Some roles imply other roles or permissions. For example, admin role
     also gives permissions for all user permissions.
     """
-    role_implications = {
+    role_implications: Dict = {
         "nobody": [],
         "admin": [
             "user",
