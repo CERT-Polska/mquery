@@ -63,7 +63,7 @@ class UrsaDb:
             command += f"with taints {taints_whole_str} "
         if dataset:
             command += f'with datasets ["{dataset}"] '
-        command += f"into iterator {query};"
+        command += f"{query};"
 
         start = time.perf_counter()
         res = self.__execute(command, recv_timeout=-1)
@@ -75,8 +75,7 @@ class UrsaDb:
 
         return {
             "time": (end - start),
-            "iterator": res["result"]["iterator"],
-            "file_count": res["result"]["file_count"],
+            "files": res["result"]["files"],
         }
 
     def pop(self, iterator: str, count: int) -> PopResult:
