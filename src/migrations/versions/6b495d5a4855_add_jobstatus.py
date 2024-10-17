@@ -6,7 +6,7 @@ Create Date: 2024-10-15 08:17:30.036531
 from alembic import op
 import sqlalchemy as sa
 
-from mquery.models.job import JobStatus # type: ignore # noqa
+from mquery.models.job import JobStatus  # type: ignore # noqa
 
 # revision identifiers, used by Alembic.
 revision = "6b495d5a4855"
