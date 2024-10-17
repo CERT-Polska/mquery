@@ -4,7 +4,7 @@ import api from "../api";
 
 const R_BOOL = /^(|true|false)$/;
 const R_URL = /^(https?:\/\/.*)$/;
-const R_ROLES = /^((admin|user)(,(admin|user))*)?$/;
+const R_ROLES = /^((admin|user|nobody)(,(admin|user|nobody))*)?$/;
 
 const KNOWN_RULES = {
     openid_url: R_URL,

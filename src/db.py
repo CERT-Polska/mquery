@@ -1,3 +1,6 @@
+from alembic.config import Config
+from alembic import command
+from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
 from typing import List, Optional, Dict, Any
@@ -9,7 +12,6 @@ from enum import Enum
 from rq import Queue  # type: ignore
 from sqlmodel import (
     Session,
-    SQLModel,
     create_engine,
     select,
     and_,
@@ -337,7 +339,7 @@ class Database:
         return {
             # Autentication-related config
             "auth_enabled": "Enable and force authentication for all users ('true' or 'false')",
-            "auth_default_roles": "Comma separated list of roles available to everyone (available roles: admin, user)",
+            "auth_default_roles": "Roles assigned to everyone - including anonymous users (available roles: admin, user, nobody)",
             # OpenID Authentication config
             "openid_url": "OpenID Connect base url",
             "openid_client_id": "OpenID client ID",
@@ -410,11 +412,7 @@ class Database:
             session.add(entry)
             session.commit()
 
-
-def init_db() -> None:
-    engine = create_engine(app_config.database.url, echo=True)
-    SQLModel.metadata.create_all(engine)
-
-
-if __name__ == "__main__":
-    init_db()
+    def alembic_upgrade(self) -> None:
+        config_file = Path(__file__).parent / "alembic.ini"
+        alembic_cfg = Config(str(config_file))
+        command.upgrade(alembic_cfg, "head")

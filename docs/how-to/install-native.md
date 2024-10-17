@@ -46,7 +46,7 @@ we can start a web server.
 
 ```shell
 cd /opt/mquery/src/mqueryfront
-npm install --legacy-peer-deps
+yarn install --legacy-peer-deps
 npm run build
 ```
 
@@ -118,7 +118,6 @@ Now you need to create and configure a database
 ```shell
 psql -c "CREATE DATABASE mquery"
 source /opt/mquery/venv/bin/activate  # remember, we need virtualenv
-python3 -m mquery.db  # initialize the mquery database
 ```
 
 ### Start everything

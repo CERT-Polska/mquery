@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 import os
 
 import uvicorn  # type: ignore
@@ -44,8 +45,15 @@ from .schema import (
     ServerSchema,
 )
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db.alembic_upgrade()
+    yield
+
+
 db = Database(app_config.redis.host, app_config.redis.port)
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 
 def with_plugins() -> Iterable[PluginManager]:
@@ -180,7 +188,8 @@ def expand_role(role: str) -> List[str]:
     """Some roles imply other roles or permissions. For example, admin role
     also gives permissions for all user permissions.
     """
-    role_implications = {
+    role_implications: Dict = {
+        "nobody": [],
         "admin": [
             "user",
             "can_list_all_queries",

@@ -49,6 +49,7 @@ Relevant for people who want to run mquery in production or on a a bigger scale.
 - [On-disk format](./ondiskformat.md): Read if you want to understand ursadb's on
     disk format (spoiler: many files are just JSON and can be inspected with vim).
 - [Plugin system](./plugins.md): For filtering, processing and tagging files.
-- [Database format](./redis.md): Information about the data stored in redis.
+- [Database format](./database.md): Information about the data stored in the database.
+- [Redis applications](./redis.md): Of historical interest, redis is used only for [rq](https://python-rq.org/) now.
 - [User management](./users.md): Control and manage access to your mquery instance.
 - [API](./api.md): Mquery exposes a simple API that you may use for your automation.
