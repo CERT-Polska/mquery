@@ -1,6 +1,7 @@
 import enum
 
-from sqlalchemy import Enum as PgEnum
+from sqlalchemy.dialects import postgresql
+
 from sqlmodel import SQLModel, Field, ARRAY, String, Column, Relationship
 from typing import Optional, List, Union, TYPE_CHECKING
 
@@ -19,8 +20,10 @@ class JobStatus(enum.Enum):
 class JobView(SQLModel):
     """Public fields of mquery jobs."""
 
+    __table_args__ = {"extend_existing": True}
+
     id: str
-    status: JobStatus = Field(sa_type=PgEnum(JobStatus, name="jobstatus"))  # type: ignore
+    status: JobStatus = Field(sa_column=Column(postgresql.ENUM(JobStatus, name="jobstatus")))  # type: ignore
     error: Optional[str]
     rule_name: str
     rule_author: str

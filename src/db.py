@@ -15,6 +15,7 @@ from sqlmodel import (
     and_,
     update,
     col,
+    delete,
 )
 
 from .models.agentgroup import AgentGroup
@@ -87,25 +88,18 @@ class Database:
             return self.__get_job(session, job)
 
     def get_valid_jobs(self, username_filter: Optional[str]) -> List[Job]:
-        """Retrieves valid (accessible and not removed) jobs from the database."""
+        """Retrieves valid (accessible) jobs from the database."""
         with self.session() as session:
-            query = (
-                select(Job)
-                .where(Job.status != JobStatus.cancelled)
-                .order_by(col(Job.submitted).desc())
-            )
+            query = select(Job).order_by(col(Job.submitted).desc())
             if username_filter:
                 query = query.where(Job.rule_author == username_filter)
             return session.exec(query).all()
 
     def remove_query(self, job: JobId) -> None:
-        """Sets the job status to removed."""
+        """Delete the job, linked match and job agent from the database."""
         with self.session() as session:
-            session.execute(
-                update(Job)
-                .where(Job.id == job)
-                .values(status=JobStatus.cancelled)
-            )
+            delete_query = delete(Job).where(Job.id == job)
+            session.execute(delete_query)
             session.commit()
 
     def add_match(self, job: JobId, match: Match) -> None:
