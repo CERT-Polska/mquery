@@ -17,11 +17,12 @@ from sqlmodel import (
     and_,
     update,
     col,
+    delete,
 )
 
 from .models.agentgroup import AgentGroup
 from .models.configentry import ConfigEntry
-from .models.job import Job
+from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
 from .schema import MatchesSchema, ConfigSchema
@@ -67,7 +68,11 @@ class Database:
             session.execute(
                 update(Job)
                 .where(Job.id == job)
-                .values(status="cancelled", finished=int(time()), error=error)
+                .values(
+                    status=JobStatus.cancelled,
+                    finished=int(time()),
+                    error=error,
+                )
             )
             session.commit()
 
@@ -85,23 +90,18 @@ class Database:
             return self.__get_job(session, job)
 
     def get_valid_jobs(self, username_filter: Optional[str]) -> List[Job]:
-        """Retrieves valid (accessible and not removed) jobs from the database."""
+        """Retrieves valid (accessible) jobs from the database."""
         with self.session() as session:
-            query = (
-                select(Job)
-                .where(Job.status != "removed")
-                .order_by(col(Job.submitted).desc())
-            )
+            query = select(Job).order_by(col(Job.submitted).desc())
             if username_filter:
                 query = query.where(Job.rule_author == username_filter)
             return session.exec(query).all()
 
     def remove_query(self, job: JobId) -> None:
-        """Sets the job status to removed."""
+        """Delete the job, linked match and job agent from the database."""
         with self.session() as session:
-            session.execute(
-                update(Job).where(Job.id == job).values(status="removed")
-            )
+            delete_query = delete(Job).where(Job.id == job)
+            session.execute(delete_query)
             session.commit()
 
     def add_match(self, job: JobId, match: Match) -> None:
@@ -149,7 +149,7 @@ class Database:
                 session.execute(
                     update(Job)
                     .where(Job.internal_id == job.internal_id)
-                    .values(finished=int(time()), status="done")
+                    .values(finished=int(time()), status=JobStatus.done)
                 )
             session.commit()
 
@@ -220,7 +220,7 @@ class Database:
                 .values(
                     total_datasets=num_datasets,
                     datasets_left=num_datasets,
-                    status="processing",
+                    status=JobStatus.processing,
                 )
             )
             session.commit()
@@ -253,7 +253,7 @@ class Database:
         with self.session() as session:
             obj = Job(
                 id=job,
-                status="new",
+                status=JobStatus.new,
                 rule_name=rule_name,
                 rule_author=rule_author,
                 raw_yara=raw_yara,
