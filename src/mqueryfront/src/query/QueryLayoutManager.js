@@ -60,7 +60,7 @@ const QueryLayoutManager = (props) => {
         queryResults
     ) : null;
 
-    const queryFieldPane = isCollapsed ? null : (
+    const queryFieldPane = qhash && isCollapsed ? null : (
         <div className={resultsTab ? "col-md-6" : "col-md-12"}>
             <QueryField
                 readOnly={!!qhash}
