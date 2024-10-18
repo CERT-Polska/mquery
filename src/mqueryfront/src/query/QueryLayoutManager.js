@@ -60,23 +60,24 @@ const QueryLayoutManager = (props) => {
         queryResults
     ) : null;
 
-    const queryFieldPane = qhash && isCollapsed ? null : (
-        <div className={resultsTab ? "col-md-6" : "col-md-12"}>
-            <QueryField
-                readOnly={!!qhash}
-                onSubmitQuery={onSubmitQuery}
-                onEditQuery={onEditQuery}
-                onParseQuery={onParseQuery}
-                onTaintSelect={onTaintSelect}
-                availableTaints={availableTaints}
-                rawYara={rawYara}
-                onYaraUpdate={onYaraUpdate}
-                parsedError={parsedError}
-                selectedTaints={selectedTaints}
-                forceSlowQueries={forceSlowQueries}
-            />
-        </div>
-    );
+    const queryFieldPane =
+        qhash && isCollapsed ? null : (
+            <div className={resultsTab ? "col-md-6" : "col-md-12"}>
+                <QueryField
+                    readOnly={!!qhash}
+                    onSubmitQuery={onSubmitQuery}
+                    onEditQuery={onEditQuery}
+                    onParseQuery={onParseQuery}
+                    onTaintSelect={onTaintSelect}
+                    availableTaints={availableTaints}
+                    rawYara={rawYara}
+                    onYaraUpdate={onYaraUpdate}
+                    parsedError={parsedError}
+                    selectedTaints={selectedTaints}
+                    forceSlowQueries={forceSlowQueries}
+                />
+            </div>
+        );
 
     return (
         <div className="container-fluid">
