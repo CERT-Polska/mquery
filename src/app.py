@@ -68,6 +68,8 @@ def with_plugins() -> Iterable[PluginManager]:
 
 
 # See docs/users.md for documentation on the permission model.
+# Enum values are meaningless and may change. Make sure to not store them
+# anywhere (for storing/transfer use role names instead).
 class UserRole(Enum):
     # "role groups", used to grant a collection of "action roles"
     nobody = auto()  # no permissions granted
