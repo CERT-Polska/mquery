@@ -13,7 +13,9 @@ down_revision = "dbb81bd4d47f"
 branch_labels = None
 depends_on = None
 
-job_status = sa.Enum("done", "new", "cancelled", "processing", name="jobstatus")
+job_status = sa.Enum(
+    "done", "new", "cancelled", "processing", name="jobstatus"
+)
 
 
 def upgrade() -> None:
