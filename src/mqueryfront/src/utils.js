@@ -1,12 +1,11 @@
 export const isStatusFinished = (status) =>
-    ["done", "cancelled", "removed"].includes(status);
+    ["done", "cancelled"].includes(status);
 
 const statusClassMap = {
     done: "success",
     new: "info",
     processing: "info",
     cancelled: "danger",
-    removed: "dark",
 };
 
 export const isAuthEnabled = (config) =>

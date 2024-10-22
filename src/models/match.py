@@ -1,3 +1,4 @@
+from sqlalchemy import ForeignKey
 from sqlmodel import SQLModel, Field, ARRAY, String, Column, JSON, Relationship
 from typing import List, Union, Dict, Any
 
@@ -15,5 +16,7 @@ class Match(SQLModel, table=True):
     # A list of yara rules matched to this file
     matches: List[str] = Field(sa_column=Column(ARRAY(String)))
 
-    job_id: int = Field(foreign_key="job.internal_id")
+    job_id: int = Field(
+        sa_column=Column(ForeignKey("job.internal_id", ondelete="CASCADE"))
+    )
     job: Job = Relationship(back_populates="matches")
