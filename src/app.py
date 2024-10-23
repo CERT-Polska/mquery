@@ -20,6 +20,7 @@ from typing import Any, Callable, List, Union, Dict, Iterable, Optional
 import tempfile
 import zipfile
 import jwt
+import logging
 import base64
 from cryptography.hazmat.primitives import serialization
 
@@ -49,7 +50,10 @@ from .schema import (
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    db.alembic_upgrade()
+    try:
+        db.alembic_upgrade()
+    except Exception:
+        logging.exception("Failed to apply migrations. Trying to continue...")
     yield
 
 
