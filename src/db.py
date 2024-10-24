@@ -44,6 +44,22 @@ class TaskType(Enum):
 JobId = str
 
 
+class UserModelConfig:
+    def __init__(self, db_instance):
+        self.db = db_instance
+
+    def __getattr__(self, role_name):
+        # auth_default_roles = self.db.get_mquery_config_key(role_name)
+        # if auth_default_roles is None:
+        #     return []
+        # else:
+        #     print(role.strip() for role in auth_default_roles.split(","))
+        #     return [
+        #         role.strip() for role in auth_default_roles.split(",")
+        #     ]
+        return self.db.get_mquery_config_key(role_name)
+
+
 class Database:
     def __init__(self, redis_host: str, redis_port: int) -> None:
         self.redis: Any = StrictRedis(
@@ -56,6 +72,10 @@ class Database:
         Queue(agent, connection=self.redis).enqueue(
             task, *args, job_timeout=app_config.rq.job_timeout
         )
+
+    @property
+    def config(self):
+        return UserModelConfig(self)
 
     @contextmanager
     def session(self):
