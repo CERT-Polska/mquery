@@ -8,6 +8,7 @@ from mquery.models.agentgroup import AgentGroup  # type: ignore # noqa
 from mquery.models.configentry import ConfigEntry  # type: ignore # noqa
 from mquery.models.job import Job  # type: ignore # noqa
 from mquery.models.match import Match  # type: ignore # noqa
+from mquery.models.queuedfile import QueuedFile  # type: ignore # noqa
 
 
 target_metadata = SQLModel.metadata

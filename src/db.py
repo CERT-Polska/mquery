@@ -25,6 +25,7 @@ from .models.configentry import ConfigEntry
 from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
+from .models.queuedfile import QueuedFile
 from .schema import MatchesSchema, ConfigSchema
 from .config import app_config
 
@@ -410,6 +411,27 @@ class Database:
                 entry = ConfigEntry(plugin=plugin_name, key=key)
             entry.value = value
             session.add(entry)
+            session.commit()
+
+    def get_from_index_queue(self, ursadb_id: str, limit: int) -> List[str]:
+        """Get next `limit` files from the specified ursadb.
+        This function does not mark files as `in progress` in any way, so
+        subsequent executions may return the same set of files until
+        remove_from_index_queue is called."""
+        with self.session() as session:
+            statement = select(QueuedFile).where(
+                QueuedFile.ursadb_id == ursadb_id,
+            ).limit(limit)
+            files = session.exec(statement).all()
+            return [f.path for f in files]
+
+    def remove_from_index_queue(self, paths: List[str]) -> None:
+        """Delete given paths from the index queue of the specified ursadb.
+        For performance reasons avoid huge lists of paths, since they
+        must fit into a single SQL query."""
+        with self.session() as session:
+            delete_query = delete(QueuedFile).where(QueuedFile.path in paths)
+            session.execute(delete_query)
             session.commit()
 
     def alembic_upgrade(self) -> None:
