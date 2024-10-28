@@ -1,5 +1,5 @@
-from sqlalchemy import Column, ForeignKey
-from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import ForeignKey
+from sqlmodel import SQLModel, Field, Relationship, Column
 from typing import Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -14,7 +14,9 @@ class JobAgent(SQLModel, table=True):
     task_in_progress: int
 
     job_id: int = Field(
-        sa_column=Column(ForeignKey("job.internal_id", ondelete="CASCADE"))
+        sa_column=Column(
+            ForeignKey("job.internal_id", ondelete="CASCADE"), nullable=False
+        ),
     )
     job: "Job" = Relationship(back_populates="agents")
 
