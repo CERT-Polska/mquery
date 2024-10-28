@@ -17,6 +17,8 @@ class Match(SQLModel, table=True):
     matches: List[str] = Field(sa_column=Column(ARRAY(String)))
 
     job_id: int = Field(
-        sa_column=Column(ForeignKey("job.internal_id", ondelete="CASCADE"))
+        sa_column=Column(
+            ForeignKey("job.internal_id", ondelete="CASCADE"), nullable=False
+        )
     )
     job: Job = Relationship(back_populates="matches")
