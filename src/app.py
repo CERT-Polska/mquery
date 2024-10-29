@@ -1,7 +1,6 @@
 from contextlib import asynccontextmanager
 import os
 
-from enum import Enum, auto
 import uvicorn  # type: ignore
 from pathlib import Path
 from fastapi import (
@@ -26,7 +25,7 @@ from cryptography.hazmat.primitives import serialization
 
 from .config import app_config
 from .util import mquery_version
-from .db import Database
+from .db import Database, UserRole
 from .lib.yaraparse import parse_yara
 from .plugins import PluginManager
 from .lib.ursadb import UrsaDb
@@ -71,24 +70,6 @@ def with_plugins() -> Iterable[PluginManager]:
         plugins.cleanup()
 
 
-# See docs/users.md for documentation on the permission model.
-# Enum values are meaningless and may change. Make sure to not store them
-# anywhere (for storing/transfer use role names instead).
-class UserRole(Enum):
-    # "role groups", used to grant a collection of "action roles"
-    nobody = auto()  # no permissions granted
-    user = auto()  # can run yara queries and read the state
-    admin = auto()  # can manage the system (and do everything else)
-
-    # "action roles", used to give permission to a specific thing
-    can_manage_all_queries = auto()
-    can_manage_queries = auto()
-    can_list_all_queries = auto()
-    can_list_queries = auto()
-    can_view_queries = auto()
-    can_download_files = auto()
-
-
 class User:
     def __init__(self, token: Optional[Dict]) -> None:
         self.__token = token
@@ -115,7 +96,7 @@ class User:
 
 async def current_user(authorization: Optional[str] = Header(None)) -> User:
     auth_enabled = db.config.auth_enabled
-    if not auth_enabled or auth_enabled == "false":
+    if not auth_enabled:
         return User(None)
 
     if not authorization:
@@ -170,8 +151,8 @@ class RoleChecker:
 
     def __call__(self, user: User = Depends(current_user)):
         auth_enabled = db.config.auth_enabled
-        if not auth_enabled or auth_enabled == "false":
-            return
+        if not auth_enabled:
+            return User(None)
 
         all_roles = get_user_roles(user)
         if not any(role in self.need_permissions for role in all_roles):
@@ -455,7 +436,7 @@ def query(
         ]
 
     degenerate_rules = [r.name for r in rules if r.parse().is_degenerate]
-    allow_slow = db.config.query_allow_slow == "true"
+    allow_slow = db.config.query_allow_slow
     if degenerate_rules and not (allow_slow and data.force_slow_queries):
         if allow_slow:
             # Warning: "You can force a slow query" literal is used to
