@@ -72,9 +72,10 @@ class UserModelConfig:
             "auth_default_roles"
         )
         if auth_default_roles is None:
-            return []
-        else:
-            return [role.strip() for role in auth_default_roles.split(",")]
+            auth_default_roles = "admin"
+        return [
+            UserRole[role.strip()] for role in auth_default_roles.split(",")
+        ]
 
     @property
     def openid_client_id(self) -> str:

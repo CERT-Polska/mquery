@@ -182,12 +182,7 @@ def get_user_roles(user: User) -> List[UserRole]:
     client_id = db.config.openid_client_id
     user_roles = user.roles(client_id)
     auth_default_roles = db.config.auth_default_roles
-    if not auth_default_roles:
-        auth_default_roles = "admin"
-    default_roles = [
-        UserRole[role.strip()] for role in auth_default_roles.split(",")
-    ]
-    all_roles = set(user_roles + default_roles)
+    all_roles = set(user_roles + auth_default_roles)
     return sum((expand_role(role) for role in all_roles), [])
 
 
