@@ -96,7 +96,17 @@ class Agent:
         match = Match(file=orig_name, meta=metadata, matches=matches)
         self.db.add_match(job, match)
 
+    @staticmethod
+    def get_readable_string(data):
+        try:
+            # Próbujemy zdekodować dane jako UTF-8, jeśli to możliwe
+            return data.decode('utf-8')
+        except UnicodeDecodeError:
+            # Jeśli nie można zdekodować, zwracamy jako ciąg heksadecymalny
+            return data.hex()
+
     def execute_yara(self, job: Job, files: List[str]) -> None:
+        logging.info("########################################################")
         rule = yara.compile(source=job.raw_yara)
         num_matches = 0
         num_errors = 0
@@ -104,11 +114,28 @@ class Agent:
         self.db.job_start_work(job.id, num_files)
 
         for orig_name in files:
+
             try:
                 path = self.plugins.filter(orig_name)
                 if not path:
                     continue
                 matches = rule.match(path)
+                logging.info(f"matches: {matches}")
+
+                for rule in matches:
+                    logging.info(f"Dopasowana reguła: {rule}")
+                    for string_match in rule.strings:
+                        logging.info(string_match.identifier)
+                        logging.info(string_match.instances)
+                        logging.info("_------------------------------")
+                        for string in string_match.instances:
+                            logging.info(string)
+                            logging.info(string.matched_data)
+                            logging.info(string.matched_length)
+                            logging.info(string.offset)
+                            logging.info(string.xor_key)
+                            logging.info(string.plaintext())
+
                 if matches:
                     self.update_metadata(
                         job.id, orig_name, path, [r.rule for r in matches]
