@@ -4,6 +4,8 @@ from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
 from contextlib import contextmanager
 import yara  # type: ignore
+import os
+import shutil
 
 from .db import Database, JobId
 from .util import make_sha256_tag
@@ -300,35 +302,40 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
 
 def index_queue(batch_size: int) -> None:
     agent = make_agent()
-    # while True: - later
-    for i in range(1):
-        files = agent.db.get_from_index_queue(agent.group_id, batch_size)
-        if not files:
-            logging.info("no files to index %s", agent.group_id)
-            continue
+    files = agent.db.get_from_index_queue(agent.group_id, batch_size)
+    if not files:
+        logging.info("no files to index %s", agent.group_id)
+        return
 
-        to_index = []
-        for orig_name in files:
-            try:
-                path = agent.plugins.filter(orig_name)
-                if path:
-                    to_index.append(path)
-            except Exception:
-                logging.exception("Unknown error (plugin?): %s", orig_name)
+    to_index = []
+    for orig_name in files:
+        try:
+            path = agent.plugins.filter(orig_name)
+            if path:
+                if path != orig_name:
+                    assert not os.path.isfile(orig_name)
+                    shutil.copyfile(path, orig_name)
+                    to_index.append(orig_name)
+        except Exception:
+            logging.exception("Unknown error (plugin?): %s", orig_name)
 
-        logging.exception("Indexing %s files", len(to_index))
+    logging.exception("Indexing %s files", len(to_index))
 
-        # todo refactor this
-        mounted_names = []
-        for fname in to_index:
-            fname = fname.replace('"', '\\"')
-            mounted_names.append(fname)
-        mounted_list = " ".join(f'"{fpath}"' for fpath in mounted_names)
+    if not to_index:
+        return
 
-        #agent.ursa.execute_command(
-        logging.info(
-            f"index {mounted_list} with [gram3, text4, wide8, hash4];"
-        )
+    # todo refactor this
+    mounted_names = []
+    for fname in to_index:
+        fname = fname.replace('"', '\\"')
+        mounted_names.append(fname)
+    mounted_list = " ".join(f'"{fpath}"' for fpath in mounted_names)
 
-        agent.db.remove_from_index_queue(files)
-        agent.plugins.cleanup()
+    #agent.ursa.execute_command(
+    logging.error(
+        f"index {mounted_list} with [gram3, text4, wide8, hash4];"
+    )
+    logging.error("ok")
+
+    agent.db.remove_from_index_queue(files)
+    agent.plugins.cleanup()
