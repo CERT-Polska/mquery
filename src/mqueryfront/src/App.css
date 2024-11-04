@@ -87,3 +87,20 @@
 .cursor-pointer {
     cursor: pointer;
 }
+
+.modal-container {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-block {
+    position: relative;
+}
+
+.modal-table {
+    max-height: 40vh;
+    max-width: 50vw;
+    overflow: scroll;
+}
