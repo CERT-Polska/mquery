@@ -2,10 +2,22 @@ import React from "react";
 import path from "path-browserify";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
+import ActionShowMatchContext from "../components/ActionShowMatchContext";
 
 const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
-    const { matches, meta, file } = match;
+    const { matches, meta, file, context } = match; // NOTE: presuming new field in Match schema context which would be dict with 'matches' as keys
+
+    const stubContext = context
+        ? context
+        : {
+              key1:
+                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+              key2:
+                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+              key3:
+                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+          };
 
     const fileBasename = path.basename(file);
 
@@ -66,6 +78,12 @@ const QueryMatchesItem = (props) => {
                         <ActionCopyToClipboard
                             text={fileBasename}
                             tooltipMessage="Copy file name to clipboard"
+                        />
+                    </small>
+                    <small className="text-secondary ms-2 me-1 mt-1">
+                        <ActionShowMatchContext
+                            filename={fileBasename}
+                            context={stubContext}
                         />
                     </small>
                     {matchBadges}
