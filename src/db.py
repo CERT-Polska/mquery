@@ -114,16 +114,22 @@ class Database:
 
     def __get_jobfile(self, session: Session, jobfile_id: str) -> JobFile:
         """Internal helper to get a jobfile from the database."""
-        return session.exec(select(JobFile).where(JobFile.id == jobfile_id)).one()
+        return session.exec(
+            select(JobFile).where(JobFile.id == jobfile_id)
+        ).one()
 
     def get_jobfile(self, jobfile_id: str) -> JobFile:
         """Retrieves a jobfile from the database."""
         with self.session() as session:
             return self.__get_jobfile(session, jobfile_id)
-        
-    def get_jobfiles_ids_by_job_id(self, job_id: int | None) -> List[int | None]:
+
+    def get_jobfiles_ids_by_job_id(
+        self, job_id: int | None
+    ) -> List[int | None]:
         with self.session() as session:
-            jobfiles = session.exec(select(JobFile).where(JobFile.job_id == job_id)).all()
+            jobfiles = session.exec(
+                select(JobFile).where(JobFile.job_id == job_id)
+            ).all()
             return [jobfile.id for jobfile in jobfiles]
 
     def add_jobfile(self, job_id: int | None, files: List[str]) -> None:
@@ -136,9 +142,7 @@ class Database:
     def remove_jobfile(self, jobfile: JobFile) -> None:
         """Removes all JobFile instances with given Job.id."""
         with self.session() as session:
-            session.query(JobFile).where(
-                JobFile.id == jobfile.id
-            ).delete()
+            session.query(JobFile).where(JobFile.id == jobfile.id).delete()
             session.commit()
 
     def job_contains(self, job: JobId, ordinal: int, file_path: str) -> bool:

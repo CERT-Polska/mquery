@@ -4,7 +4,6 @@ from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
 from contextlib import contextmanager
 import yara  # type: ignore
-from itertools import accumulate
 
 from .db import Database, JobId
 from .util import make_sha256_tag
@@ -261,7 +260,6 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
             agent.db.add_jobfile(job.internal_id, pop_result.files)
 
         jobfile_ids = agent.db.get_jobfiles_ids_by_job_id(job.internal_id)
-        logging.critical(f'Jobfile_ids: {jobfile_ids}')
         for jobfile_id in jobfile_ids:
             agent.queue.enqueue(
                 run_yara_batch,
