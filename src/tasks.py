@@ -241,10 +241,9 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
         if "error" in result:
             raise RuntimeError(result["error"])
 
-        files = result["files"]
-        agent.db.add_queryresult(job.internal_id, files)
-
-        file_count = len(files)
+        file_count = result["file_count"]
+        iterator = result["iterator"]
+        logging.info(f"Iterator {iterator} contains {file_count} files")
 
         total_files = agent.db.update_job_files(job_id, file_count)
         if job.files_limit and total_files > job.files_limit:
@@ -257,32 +256,31 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
         # add len(batch_sizes) new tasks, -1 to account for this task
         agent.add_tasks_in_progress(job, len(batch_sizes) - 1)
 
-        batched_files = (
-            files[batch_end - batch_size : batch_end]
-            for batch_end, batch_size in zip(
-                accumulate(batch_sizes), batch_sizes
-            )
-        )
+        for batch_size in batch_sizes:
+            pop_result = agent.ursa.pop(iterator, batch_size)
+            agent.db.add_jobfile(job.internal_id, pop_result.files)
 
-        for batch_files in batched_files:
+        jobfile_ids = agent.db.get_jobfiles_ids_by_job_id(job.internal_id)
+        logging.critical(f'Jobfile_ids: {jobfile_ids}')
+        for jobfile_id in jobfile_ids:
             agent.queue.enqueue(
                 run_yara_batch,
                 job_id,
-                batch_files,
+                jobfile_id,
                 job_timeout=app_config.rq.job_timeout,
             )
 
         agent.db.dataset_query_done(job_id)
-        agent.db.remove_queryresult(job.internal_id)
 
 
-def run_yara_batch(job_id: JobId, batch_files: List[str]) -> None:
+def run_yara_batch(job_id: JobId, jobfile_id: str) -> None:
     """Actually scans files, and updates a database with the results."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == "cancelled":
             logging.info("Job was cancelled, returning...")
             return
-
-        agent.execute_yara(job, batch_files)
+        jobfile = agent.db.get_jobfile(jobfile_id)
+        agent.execute_yara(job, jobfile.files)
         agent.add_tasks_in_progress(job, -1)
+        agent.db.remove_jobfile(jobfile)

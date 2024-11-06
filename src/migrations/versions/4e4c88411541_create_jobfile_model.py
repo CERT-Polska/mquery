@@ -1,4 +1,4 @@
-"""create Queryresult model
+"""create Jobfile model
 Revision ID: 4e4c88411541
 Revises: dbb81bd4d47f
 Create Date: 2024-10-17 14:31:49.278443
@@ -16,7 +16,7 @@ depends_on = None
 
 def upgrade() -> None:
     op.create_table(
-        "queryresult",
+        "jobfile",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("job_id", sa.Integer(), nullable=False),
         sa.Column("files", sa.ARRAY(sa.String()), nullable=True),
@@ -29,4 +29,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_table("queryresult")
+    op.drop_table("jobfile")
