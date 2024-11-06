@@ -101,7 +101,7 @@ class BackendStatusDatasetsSchema(BaseModel):
 
 class ServerSchema(BaseModel):
     version: str
-    auth_enabled: Optional[bool]
+    auth_enabled: Optional[str]
     openid_url: Optional[str]
     openid_client_id: Optional[str]
     about: str

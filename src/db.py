@@ -78,7 +78,7 @@ class UserModelConfig:
         ]
 
     @property
-    def openid_client_id(self) -> str:
+    def openid_client_id(self) -> str | None:
         return self.db.get_mquery_config_key("openid_client_id")
 
     @property
@@ -87,13 +87,10 @@ class UserModelConfig:
 
     @property
     def auth_enabled(self) -> bool:
-        auth_enabled = self.db.get_mquery_config_key("auth_enabled")
-        if not auth_enabled or auth_enabled == "false":
-            return False
-        return True
+        return self.db.get_mquery_config_key("auth_enabled") == "true"
 
     @property
-    def openid_url(self) -> str:
+    def openid_url(self) -> str | None:
         return self.db.get_mquery_config_key("openid_url")
 
     @property

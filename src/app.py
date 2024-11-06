@@ -577,7 +577,7 @@ def query_remove(
 def server() -> ServerSchema:
     return ServerSchema(
         version=mquery_version(),
-        auth_enabled=db.config.auth_enabled,
+        auth_enabled=str(db.config.auth_enabled).lower(),
         openid_url=db.config.openid_url,
         openid_client_id=db.config.openid_client_id,
         about=app_config.mquery.about,
