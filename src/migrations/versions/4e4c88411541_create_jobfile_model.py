@@ -1,6 +1,6 @@
 """create Jobfile model
 Revision ID: 4e4c88411541
-Revises: dbb81bd4d47f
+Revises: 6b495d5a4855
 Create Date: 2024-10-17 14:31:49.278443
 """
 from alembic import op
@@ -9,7 +9,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "4e4c88411541"
-down_revision = "dbb81bd4d47f"
+down_revision = "6b495d5a4855"
 branch_labels = None
 depends_on = None
 
