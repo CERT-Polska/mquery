@@ -1,4 +1,4 @@
-from typing import List, Optional, cast
+from typing import List, Optional, cast, Dict
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
@@ -68,7 +68,7 @@ class Agent:
         return list(result["result"]["datasets"].keys())
 
     def update_metadata(
-        self, job: JobId, orig_name: str, path: str, matches: List[str]
+        self, job: JobId, orig_name: str, path: str, matches: List[str], context: Dict[str, List[str]]
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -93,7 +93,7 @@ class Agent:
         del metadata["path"]
 
         # Update the database.
-        match = Match(file=orig_name, meta=metadata, matches=matches)
+        match = Match(file=orig_name, meta=metadata, matches=matches, context=context)
         self.db.add_match(job, match)
 
     @staticmethod
@@ -120,25 +120,28 @@ class Agent:
                 if not path:
                     continue
                 matches = rule.match(path)
-                logging.info(f"matches: {matches}")
 
+                context = {}
                 for rule in matches:
-                    logging.info(f"Dopasowana reguła: {rule}")
+                    match_string_data = []
                     for string_match in rule.strings:
-                        logging.info(string_match.identifier)
-                        logging.info(string_match.instances)
-                        logging.info("_------------------------------")
-                        for string in string_match.instances:
-                            logging.info(string)
-                            logging.info(string.matched_data)
-                            logging.info(string.matched_length)
-                            logging.info(string.offset)
-                            logging.info(string.xor_key)
-                            logging.info(string.plaintext())
-
+                        expression_keys = []
+                        for expression_key in string_match.instances:
+                            if str(expression_key) not in expression_keys:
+                                match_string_data.append(
+                                    f"{expression_key.offset}:{expression_key.matched_length}"
+                                    f":{string_match.identifier} {expression_key}"
+                                )
+                                context.update(
+                                    {
+                                        rule: match_string_data,
+                                    }
+                                )
+                                expression_keys.append(str(expression_key))
+                logging.info(f"context {context}")
                 if matches:
                     self.update_metadata(
-                        job.id, orig_name, path, [r.rule for r in matches]
+                        job.id, orig_name, path, [r.rule for r in matches], context
                     )
                     num_matches += 1
             except yara.Error:
