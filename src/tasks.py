@@ -1,3 +1,4 @@
+import json
 from typing import List, Optional, cast, Dict
 import logging
 from rq import get_current_job, Queue  # type: ignore
@@ -134,14 +135,14 @@ class Agent:
                                 )
                                 context.update(
                                     {
-                                        rule: match_string_data,
+                                        str(rule): match_string_data,
                                     }
                                 )
                                 expression_keys.append(str(expression_key))
-                logging.info(f"context {context}")
                 if matches:
+                    logging.info(f"context {context}")
                     self.update_metadata(
-                        job.id, orig_name, path, [r.rule for r in matches], context
+                        job=job.id, orig_name=orig_name, path=path, matches=[r.rule for r in matches], context=context
                     )
                     num_matches += 1
             except yara.Error:
