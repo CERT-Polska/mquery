@@ -4,6 +4,8 @@ from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
 from contextlib import contextmanager
 import yara  # type: ignore
+import os
+import shutil
 
 from .db import Database, JobId
 from .util import make_sha256_tag
@@ -166,6 +168,12 @@ def make_agent(group_override: Optional[str] = None):
         group_id = group_override
     else:
         group_id = get_current_job().origin  # type: ignore
+        if ':' in group_id:
+            # Slight hack: `:` delimits worker type, so "default" is a queue
+            # for the default group, but same goes for "default:indexer"
+            group_id = group_id[:group_id.rfind(":")]
+    if ':' in group_id:
+        raise RuntimeError("Group ID can't contain a special character ':'")
     return Agent(group_id)
 
 
@@ -290,3 +298,44 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
 
         agent.execute_yara(job, pop_result.files)
         agent.add_tasks_in_progress(job, -1)
+
+
+def index_queue(batch_size: int) -> None:
+    agent = make_agent()
+    files = agent.db.get_from_index_queue(agent.group_id, batch_size)
+    if not files:
+        logging.info("no files to index %s", agent.group_id)
+        return
+
+    to_index = []
+    for orig_name in files:
+        try:
+            path = agent.plugins.filter(orig_name)
+            if path:
+                if path != orig_name:
+                    assert not os.path.isfile(orig_name)
+                    shutil.copyfile(path, orig_name)
+                    to_index.append(orig_name)
+        except Exception:
+            logging.exception("Unknown error (plugin?): %s", orig_name)
+
+    logging.exception("Indexing %s files", len(to_index))
+
+    if not to_index:
+        return
+
+    # todo refactor this
+    mounted_names = []
+    for fname in to_index:
+        fname = fname.replace('"', '\\"')
+        mounted_names.append(fname)
+    mounted_list = " ".join(f'"{fpath}"' for fpath in mounted_names)
+
+    #agent.ursa.execute_command(
+    logging.error(
+        f"index {mounted_list} with [gram3, text4, wide8, hash4];"
+    )
+    logging.error("ok")
+
+    agent.db.remove_from_index_queue(files)
+    agent.plugins.cleanup()

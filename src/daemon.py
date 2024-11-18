@@ -10,14 +10,14 @@ from . import tasks
 from .config import app_config
 
 
-def start_worker(args: argparse.Namespace, process_index: int) -> None:
+def start_worker(group_id: str, process_index: int) -> None:
     setup_logging()
     logging.info(
-        "Agent [%s] running (process %s)...", args.group_id, process_index
+        "Agent [%s] running (process %s)...", group_id, process_index
     )
 
     with Connection(Redis(app_config.redis.host, app_config.redis.port)):
-        w = Worker([args.group_id])
+        w = Worker([group_id])
         w.work()
 
 
@@ -34,10 +34,17 @@ def main() -> None:
         default="default",
     )
     parser.add_argument(
+        "-s",
         "--scale",
         type=int,
-        help="Specifies the number of concurrent processes to use.",
+        help="Specifies the number of worker processes to start.",
         default=1,
+    )
+    parser.add_argument(
+        "-i",
+        "--with-indexer",
+        action="store_true",
+        help="Also start the index worker. Must run in the same filesystem as ursadb.",
     )
 
     args = parser.parse_args()
@@ -46,17 +53,17 @@ def main() -> None:
     # The goal is to make the web UI aware of this worker and its configuration.
     tasks.make_agent(args.group_id).register()
 
-    if args.scale > 1:
-        children = [
-            Process(target=start_worker, args=(args, i))
-            for i in range(args.scale)
-        ]
-        for child in children:
-            child.start()
-        for child in children:
-            child.join()
-    else:
-        start_worker(args, 0)
+    children = [
+        Process(target=start_worker, args=(args.group_id, i))
+        for i in range(args.scale)
+    ]
+    if args.with_indexer:
+        indexer_name = args.group_id + ":indexer"
+        children.append(Process(target=start_worker, args=(indexer_name, 0)))
+    for child in children:
+        child.start()
+    for child in children:
+        child.join()
 
 
 if __name__ == "__main__":
