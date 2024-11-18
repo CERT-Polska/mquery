@@ -18,6 +18,11 @@ services:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
       - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:5000/api/server || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
   daemon:
     restart: always
     build:
@@ -30,6 +35,8 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     depends_on:
+      web:
+        condition: service_healthy
       redis:
         condition: service_started
       ursadb:
