@@ -18,19 +18,23 @@ services:
       dockerfile: deploy/docker/dev.web.Dockerfile
     ports:
     - "5000:5000"
-    links:
-    - redis
-    - postgres
+    depends_on:
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - .:/usr/src/app
-    depends_on:
-      - "redis"
-      - "postgres"
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
       - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:5000/api/server || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
   dev-daemon:
     build:
       context: .
@@ -43,9 +47,14 @@ services:
     - "${SAMPLES_DIR}:/mnt/samples"
     - .:/usr/src/app
     depends_on:
-      - "redis"
-      - "ursadb"
-      - "postgres"
+      dev-web:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ursadb:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
@@ -76,3 +85,8 @@ services:
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=mquery
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
