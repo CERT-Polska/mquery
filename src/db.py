@@ -8,7 +8,7 @@ from time import time
 import random
 import string
 from redis import StrictRedis
-from enum import Enum
+from enum import Enum, auto
 from rq import Queue  # type: ignore
 from sqlmodel import (
     Session,
@@ -40,8 +40,62 @@ class TaskType(Enum):
     COMMAND = "command"
 
 
+# See docs/users.md for documentation on the permission model.
+# Enum values are meaningless and may change. Make sure to not store them
+# anywhere (for storing/transfer use role names instead).
+class UserRole(Enum):
+    # "role groups", used to grant a collection of "action roles"
+    nobody = auto()  # no permissions granted
+    user = auto()  # can run yara queries and read the state
+    admin = auto()  # can manage the system (and do everything else)
+
+    # "action roles", used to give permission to a specific thing
+    can_manage_all_queries = auto()
+    can_manage_queries = auto()
+    can_list_all_queries = auto()
+    can_list_queries = auto()
+    can_view_queries = auto()
+    can_download_files = auto()
+
+
 # Type alias for Job ids
 JobId = str
+
+
+class UserModelConfig:
+    def __init__(self, db_instance):
+        self.db = db_instance
+
+    @property
+    def auth_default_roles(self) -> List[UserRole]:
+        auth_default_roles = self.db.get_mquery_config_key(
+            "auth_default_roles"
+        )
+        if auth_default_roles is None:
+            auth_default_roles = "admin"
+        return [
+            UserRole[role.strip()] for role in auth_default_roles.split(",")
+        ]
+
+    @property
+    def openid_client_id(self) -> str | None:
+        return self.db.get_mquery_config_key("openid_client_id")
+
+    @property
+    def query_allow_slow(self) -> bool:
+        return self.db.get_mquery_config_key("query_allow_slow") == "true"
+
+    @property
+    def auth_enabled(self) -> bool:
+        return self.db.get_mquery_config_key("auth_enabled") == "true"
+
+    @property
+    def openid_url(self) -> str | None:
+        return self.db.get_mquery_config_key("openid_url")
+
+    @property
+    def openid_secret(self) -> str | None:
+        return self.db.get_mquery_config_key("openid_secret")
 
 
 class Database:
@@ -56,6 +110,10 @@ class Database:
         Queue(agent, connection=self.redis).enqueue(
             task, *args, job_timeout=app_config.rq.job_timeout
         )
+
+    @property
+    def config(self):
+        return UserModelConfig(self)
 
     @contextmanager
     def session(self):
