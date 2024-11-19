@@ -9,6 +9,7 @@ import pytest  # type: ignore
 import requests
 import random
 import os
+import pprint
 
 from ..lib.ursadb import UrsaDb  # noqa
 
@@ -261,7 +262,7 @@ def request_query(log, i, taints=[]):
             "taints": taints,
         },
     )
-    log.info("API response: %s", res.json())
+    log.info("API response: %s\n", pprint.pformat(res.json()))
     res.raise_for_status()
 
     query_hash = res.json()["query_hash"]
@@ -270,7 +271,7 @@ def request_query(log, i, taints=[]):
         res = requests.get(
             f"http://web:5000/api/matches/{query_hash}?offset=0&limit=50"
         )
-        log.info("API response: %s", res.json())
+        log.info("API response: %s\n", pprint.pformat(res.json()))
         if res.json()["job"]["status"] == "done":
             break
         time.sleep(1)

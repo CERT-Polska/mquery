@@ -251,42 +251,34 @@ def query_ursadb(job_id: JobId, dataset_id: str, ursadb_query: str) -> None:
                 "Try a more precise query."
             )
 
-        batches = __get_batch_sizes(file_count)
-        # add len(batches) new tasks, -1 to account for this task
-        agent.add_tasks_in_progress(job, len(batches) - 1)
+        batch_sizes = __get_batch_sizes(file_count)
+        # add len(batch_sizes) new tasks, -1 to account for this task
+        agent.add_tasks_in_progress(job, len(batch_sizes) - 1)
 
-        for batch in batches:
+        for batch_size in batch_sizes:
+            pop_result = agent.ursa.pop(iterator, batch_size)
+            agent.db.add_jobfile(job.internal_id, pop_result.files)
+
+        jobfile_ids = agent.db.get_jobfiles_ids_by_job_id(job.internal_id)
+        for jobfile_id in jobfile_ids:
             agent.queue.enqueue(
                 run_yara_batch,
                 job_id,
-                iterator,
-                batch,
+                jobfile_id,
                 job_timeout=app_config.rq.job_timeout,
             )
 
         agent.db.dataset_query_done(job_id)
 
 
-def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
+def run_yara_batch(job_id: JobId, jobfile_id: str) -> None:
     """Actually scans files, and updates a database with the results."""
     with job_context(job_id) as agent:
         job = agent.db.get_job(job_id)
         if job.status == JobStatus.cancelled:
             logging.info("Job was cancelled, returning...")
             return
-
-        pop_result = agent.ursa.pop(iterator, batch_size)
-        logging.info("job %s: Pop successful: %s", job_id, pop_result)
-        if pop_result.was_locked:
-            # Iterator is currently locked, re-enqueue self
-            agent.queue.enqueue(
-                run_yara_batch,
-                job_id,
-                iterator,
-                batch_size,
-                job_timeout=app_config.rq.job_timeout,
-            )
-            return
-
-        agent.execute_yara(job, pop_result.files)
+        jobfile = agent.db.get_jobfile(jobfile_id)
+        agent.execute_yara(job, jobfile.files)
         agent.add_tasks_in_progress(job, -1)
+        agent.db.remove_jobfile(jobfile)
