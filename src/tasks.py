@@ -1,5 +1,4 @@
-import json
-from typing import List, Optional, cast, Dict
+from typing import List, Optional, cast, Dict, Any
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
@@ -69,7 +68,12 @@ class Agent:
         return list(result["result"]["datasets"].keys())
 
     def update_metadata(
-        self, job: JobId, orig_name: str, path: str, matches: List[str], context: Dict[str, List[str]]
+        self,
+        job: JobId,
+        orig_name: str,
+        path: str,
+        matches: List[str],
+        context: Dict[str, List[Dict[str, bytes]]]
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -94,20 +98,45 @@ class Agent:
         del metadata["path"]
 
         # Update the database.
-        match = Match(file=orig_name, meta=metadata, matches=matches, context=context)
+        match = Match(
+            file=orig_name, meta=metadata, matches=matches, context=context
+        )
         self.db.add_match(job, match)
 
     @staticmethod
-    def get_readable_string(data):
-        try:
-            # Próbujemy zdekodować dane jako UTF-8, jeśli to możliwe
-            return data.decode('utf-8')
-        except UnicodeDecodeError:
-            # Jeśli nie można zdekodować, zwracamy jako ciąg heksadecymalny
-            return data.hex()
+    def read_file(file_path: str) -> bytes:
+        """Reads the entire file content.
+
+        Returns:
+            bytes: The content of the file.
+        """
+        with open(file_path, "rb") as file:
+            return file.read()
+
+    @staticmethod
+    def read_bytes_from_offset(
+        data: bytes, matched_length: int, offset: int, byte_range: int = 32
+    ) -> tuple[bytes, bytes, bytes]:
+        """Reads a specific range of bytes from the already loaded file content around a given offset.
+
+        Args:
+            data (bytes): Data to read.
+            matched_length (int): Number of bytes to read.
+            offset (int): The offset in bytes from which to start reading.
+            byte_range (int): The range in bytes to read around the offset (default is 32).
+
+        Returns:
+            bytes: A chunk of bytes from the file, starting from the given offset minus bit_range
+                   and ending at offset plus matched_length and byte_range.
+        """
+
+        before = data[offset - byte_range: offset]
+        matching = data[offset: offset + matched_length]
+        after = data[offset + matched_length: offset + matched_length + byte_range]
+
+        return before, matching, after
 
     def execute_yara(self, job: Job, files: List[str]) -> None:
-        logging.info("########################################################")
         rule = yara.compile(source=job.raw_yara)
         num_matches = 0
         num_errors = 0
@@ -115,34 +144,37 @@ class Agent:
         self.db.job_start_work(job.id, num_files)
 
         for orig_name in files:
-
             try:
                 path = self.plugins.filter(orig_name)
                 if not path:
                     continue
                 matches = rule.match(path)
 
-                context = {}
-                for rule in matches:
-                    match_string_data = []
-                    for string_match in rule.strings:
-                        expression_keys = []
-                        for expression_key in string_match.instances:
-                            if str(expression_key) not in expression_keys:
-                                match_string_data.append(
-                                    f"{expression_key.offset}:{expression_key.matched_length}"
-                                    f":{string_match.identifier} {expression_key}"
-                                )
-                                context.update(
-                                    {
-                                        str(rule): match_string_data,
-                                    }
-                                )
-                                expression_keys.append(str(expression_key))
                 if matches:
-                    logging.info(f"context {context}")
+                    data = self.read_file(path)
+                    context = {}
+
+                    for rule in matches:
+                        match_context = []
+                        for string_match in rule.strings:
+                            expression_keys = []
+                            for expression_key in string_match.instances:
+                                if expression_key not in expression_keys:
+                                    before, matching, after = self.read_bytes_from_offset(
+                                        data=data,
+                                        offset=expression_key.offset,
+                                        matched_length=expression_key.matched_length,
+                                    )
+                                    match_context.append({"before": before, "matching": matching, "after": after})
+                                    context.update({str(rule): match_context})
+                                    expression_keys.append(expression_key)
+
                     self.update_metadata(
-                        job=job.id, orig_name=orig_name, path=path, matches=[r.rule for r in matches], context=context
+                        job=job.id,
+                        orig_name=orig_name,
+                        path=path,
+                        matches=[r.rule for r in matches],
+                        context=context,
                     )
                     num_matches += 1
             except yara.Error:
