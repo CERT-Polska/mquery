@@ -131,7 +131,7 @@ class Agent:
         """
 
         before = data[offset - byte_range : offset]
-        matching = data[offset: offset + matched_length]
+        matching = data[offset : offset + matched_length]
         after = data[
             offset + matched_length : offset + matched_length + byte_range
         ]
