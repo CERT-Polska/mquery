@@ -73,7 +73,7 @@ class Agent:
         orig_name: str,
         path: str,
         matches: List[str],
-        context: Dict[str, List[Dict[str, bytes]]]
+        context: Dict[str, List[Dict[str, bytes]]],
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -130,9 +130,11 @@ class Agent:
                    and ending at offset plus matched_length and byte_range.
         """
 
-        before = data[offset - byte_range: offset]
+        before = data[offset - byte_range : offset]
         matching = data[offset: offset + matched_length]
-        after = data[offset + matched_length: offset + matched_length + byte_range]
+        after = data[
+            offset + matched_length : offset + matched_length + byte_range
+        ]
 
         return before, matching, after
 
@@ -160,12 +162,22 @@ class Agent:
                             expression_keys = []
                             for expression_key in string_match.instances:
                                 if expression_key not in expression_keys:
-                                    before, matching, after = self.read_bytes_from_offset(
+                                    (
+                                        before,
+                                        matching,
+                                        after,
+                                    ) = self.read_bytes_from_offset(
                                         data=data,
                                         offset=expression_key.offset,
                                         matched_length=expression_key.matched_length,
                                     )
-                                    match_context.append({"before": before, "matching": matching, "after": after})
+                                    match_context.append(
+                                        {
+                                            "before": before,
+                                            "matching": matching,
+                                            "after": after,
+                                        }
+                                    )
                                     context.update({str(rule): match_context})
                                     expression_keys.append(expression_key)
 
