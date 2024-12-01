@@ -1,4 +1,4 @@
-from typing import List, Optional, cast, Dict, Any
+from typing import List, Optional, cast, Dict
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
