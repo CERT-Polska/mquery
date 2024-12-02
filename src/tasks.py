@@ -157,9 +157,9 @@ class Agent:
                     data = self.read_file(path)
                     context = {}
 
-                    for rule in matches:
+                    for rule_name in matches:
                         match_context = []
-                        for string_match in rule.strings:
+                        for string_match in rule_name.strings:
                             expression_keys = []
                             for expression_key in string_match.instances:
                                 if expression_key not in expression_keys:
