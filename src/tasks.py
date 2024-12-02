@@ -1,3 +1,4 @@
+import base64
 from typing import List, Optional, cast, Dict
 import logging
 from rq import get_current_job, Queue  # type: ignore
@@ -73,7 +74,7 @@ class Agent:
         orig_name: str,
         path: str,
         matches: List[str],
-        context: Dict[str, List[Dict[str, bytes]]],
+        context: Dict[str, List[Dict[str, str]]],
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -173,9 +174,15 @@ class Agent:
                                     )
                                     match_context.append(
                                         {
-                                            "before": before,
-                                            "matching": matching,
-                                            "after": after,
+                                            "before": base64.b64encode(
+                                                before
+                                            ).decode("utf-8"),
+                                            "matching": base64.b64encode(
+                                                matching
+                                            ).decode("utf-8"),
+                                            "after": base64.b64encode(
+                                                after
+                                            ).decode("utf-8"),
                                         }
                                     )
                                     context.update({str(rule): match_context})
