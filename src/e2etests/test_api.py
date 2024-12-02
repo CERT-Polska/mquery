@@ -120,6 +120,7 @@ def test_query_two_results(add_files_to_index):
         res = request_query(log, i)
 
         m = res.json()["matches"]
+        log.info(f"-------------------------> {m}")
         assert len(m) == 2
         with open(m[0]["file"], "r") as file:
             text1 = file.read()
