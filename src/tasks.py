@@ -134,7 +134,10 @@ class Agent:
         before = data[max(0, offset - byte_range) : offset]
         matching = data[offset : offset + matched_length]
         after = data[
-            offset + matched_length : min(len(data), offset + matched_length + byte_range)
+            offset
+            + matched_length : min(
+                len(data), offset + matched_length + byte_range
+            )
         ]
 
         return before, matching, after
@@ -151,8 +154,8 @@ class Agent:
                 path = self.plugins.filter(orig_name)
                 if not path:
                     continue
-                matches = rule.match(path)
 
+                matches = rule.match(path)
                 if matches:
                     data = self.read_file(path)
                     context = self.get_match_context(data, matches)
@@ -191,38 +194,34 @@ class Agent:
                 f"in {scanned_datasets}/{job.total_datasets} ({dataset_percent:.0%}) of datasets.",
             )
 
-    def get_match_context(self, data, matches):
+    def get_match_context(
+        self, data: bytes, matches: List[yara.Match]
+    ) -> dict:
         context = {}
-        for rule_name in matches:
+        for yara_match in matches:
             match_context = []
-            for string_match in rule_name.strings:
+            for string_match in yara_match.strings:
                 expression_keys = []
                 for expression_key in string_match.instances:
-                    if expression_key not in expression_keys:
-                        (
-                            before,
-                            matching,
-                            after,
-                        ) = self.read_bytes_from_offset(
-                            data=data,
-                            offset=expression_key.offset,
-                            matched_length=expression_key.matched_length,
-                        )
-                        match_context.append(
-                            {
-                                "before": base64.b64encode(
-                                    before
-                                ).decode("utf-8"),
-                                "matching": base64.b64encode(
-                                    matching
-                                ).decode("utf-8"),
-                                "after": base64.b64encode(
-                                    after
-                                ).decode("utf-8"),
-                            }
-                        )
-                        context.update({str(rule_name): match_context})
-                        expression_keys.append(expression_key)
+                    if expression_key in expression_keys:
+                        continue
+
+                    (before, matching, after,) = self.read_bytes_from_offset(
+                        data=data,
+                        offset=expression_key.offset,
+                        matched_length=expression_key.matched_length,
+                    )
+                    match_context.append(
+                        {
+                            "before": base64.b64encode(before).decode("utf-8"),
+                            "matching": base64.b64encode(matching).decode(
+                                "utf-8"
+                            ),
+                            "after": base64.b64encode(after).decode("utf-8"),
+                        }
+                    )
+                    context.update({str(yara_match): match_context})
+                    expression_keys.append(expression_key)
         return context
 
     def init_search(self, job: Job, tasks: int) -> None:
