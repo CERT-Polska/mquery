@@ -1,4 +1,5 @@
-from typing import List, Optional, cast
+import base64
+from typing import List, Optional, cast, Dict
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
@@ -68,7 +69,12 @@ class Agent:
         return list(result["result"]["datasets"].keys())
 
     def update_metadata(
-        self, job: JobId, orig_name: str, path: str, matches: List[str]
+        self,
+        job: JobId,
+        orig_name: str,
+        path: str,
+        matches: List[str],
+        context: Dict[str, List[Dict[str, str]]],
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -93,8 +99,48 @@ class Agent:
         del metadata["path"]
 
         # Update the database.
-        match = Match(file=orig_name, meta=metadata, matches=matches)
+        match = Match(
+            file=orig_name, meta=metadata, matches=matches, context=context
+        )
         self.db.add_match(job, match)
+
+    @staticmethod
+    def read_file(file_path: str) -> bytes:
+        """Reads the entire file content.
+
+        Returns:
+            bytes: The content of the file.
+        """
+        with open(file_path, "rb") as file:
+            return file.read()
+
+    @staticmethod
+    def read_bytes_from_offset(
+        data: bytes, matched_length: int, offset: int, byte_range: int = 32
+    ) -> tuple[bytes, bytes, bytes]:
+        """Reads a specific range of bytes from the already loaded file content around a given offset.
+
+        Args:
+            data (bytes): Data to read.
+            matched_length (int): Number of bytes to read.
+            offset (int): The offset in bytes from which to start reading.
+            byte_range (int): The range in bytes to read around the offset (default is 32).
+
+        Returns:
+            bytes: A chunk of bytes from the file, starting from the given offset minus bit_range
+                   and ending at offset plus matched_length and byte_range.
+        """
+
+        before = data[max(0, offset - byte_range) : offset]
+        matching = data[offset : offset + matched_length]
+        after = data[
+            offset
+            + matched_length : min(
+                len(data), offset + matched_length + byte_range
+            )
+        ]
+
+        return before, matching, after
 
     def execute_yara(self, job: Job, files: List[str]) -> None:
         rule = yara.compile(source=job.raw_yara)
@@ -108,10 +154,18 @@ class Agent:
                 path = self.plugins.filter(orig_name)
                 if not path:
                     continue
+
                 matches = rule.match(path)
                 if matches:
+                    data = self.read_file(path)
+                    context = self.get_match_context(data, matches)
+
                     self.update_metadata(
-                        job.id, orig_name, path, [r.rule for r in matches]
+                        job=job.id,
+                        orig_name=orig_name,
+                        path=path,
+                        matches=[r.rule for r in matches],
+                        context=context,
                     )
                     num_matches += 1
             except yara.Error:
@@ -139,6 +193,36 @@ class Agent:
                 f"Scanned {new_processed}/{job.total_files} ({scan_percent:.0%}) of candidates "
                 f"in {scanned_datasets}/{job.total_datasets} ({dataset_percent:.0%}) of datasets.",
             )
+
+    def get_match_context(
+        self, data: bytes, matches: List[yara.Match]
+    ) -> dict:
+        context = {}
+        for yara_match in matches:
+            match_context = []
+            for string_match in yara_match.strings:
+                expression_keys = []
+                for expression_key in string_match.instances:
+                    if expression_key in expression_keys:
+                        continue
+
+                    (before, matching, after,) = self.read_bytes_from_offset(
+                        data=data,
+                        offset=expression_key.offset,
+                        matched_length=expression_key.matched_length,
+                    )
+                    match_context.append(
+                        {
+                            "before": base64.b64encode(before).decode("utf-8"),
+                            "matching": base64.b64encode(matching).decode(
+                                "utf-8"
+                            ),
+                            "after": base64.b64encode(after).decode("utf-8"),
+                        }
+                    )
+                    context.update({str(yara_match): match_context})
+                    expression_keys.append(expression_key)
+        return context
 
     def init_search(self, job: Job, tasks: int) -> None:
         self.db.init_jobagent(job, self.db_id, tasks)
