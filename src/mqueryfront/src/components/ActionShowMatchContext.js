@@ -1,13 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLightbulb } from "@fortawesome/free-solid-svg-icons";
+import Draggable from "react-draggable";
+
+const useClickOutside = (ref, callback) => {
+    const handleClick = (event) => {
+        if (ref.current && !ref.current.contains(event.target)) {
+            // lose focus (higher z-index) only if other modal was clicked
+            const modals = document.querySelectorAll(".modal");
+            const wasClicked = (modal) => modal.contains(event.target);
+            if (Array.from(modals).some(wasClicked)) {
+                callback();
+            }
+        }
+    };
+
+    useEffect(() => {
+        document.addEventListener("click", handleClick);
+
+        return () => {
+            document.removeEventListener("click", handleClick);
+        };
+    });
+};
 
 const ActionShowMatchContext = (props) => {
+    const ref = useRef(null);
     const [showModal, setShowModal] = useState(false);
+    const [focus, setFocus] = useState(true);
+    useClickOutside(ref, () => setFocus(false));
 
     const modalHeader = (
         <div className="modal-header d-flex justify-content-between">
-            <h6 className="modal-title">Match context</h6>
+            <h6 className="modal-title">{`Match context for ${props.filename}`}</h6>
             <button
                 type="button"
                 className="close "
@@ -44,7 +69,7 @@ const ActionShowMatchContext = (props) => {
     );
 
     return (
-        <>
+        <div className="d-flex flex-row">
             <button
                 title="Show match context"
                 className="text-secondary"
@@ -53,25 +78,29 @@ const ActionShowMatchContext = (props) => {
             >
                 <FontAwesomeIcon icon={faLightbulb} size="sm" />
             </button>
-            <div className="modal-container">
-                <div
-                    className="modal modal-block"
-                    style={{
-                        display: showModal ? "block" : "none",
-                        blockSize: "fit-content",
-                        width: "fit-content",
-                        position: "center",
-                    }}
-                >
-                    <div className="modal-dialog">
-                        <div className="modal-content">
-                            {modalHeader}
-                            {modalBody}
+            {showModal && (
+                <Draggable handle=".modal-header">
+                    <div
+                        className="modal-container"
+                        style={{ zIndex: focus ? 100 : 10 }}
+                        ref={ref}
+                        onClick={() => setFocus(true)}
+                    >
+                        <div
+                            className="modal modal-block"
+                            style={{ display: showModal ? "block" : "none" }}
+                        >
+                            <div className="modal-dialog modal-lg">
+                                <div className="modal-content">
+                                    {modalHeader}
+                                    {modalBody}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </>
+                </Draggable>
+            )}
+        </div>
     );
 };
 
