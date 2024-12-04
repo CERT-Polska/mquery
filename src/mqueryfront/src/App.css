@@ -90,18 +90,24 @@
 
 .modal-container {
     position: fixed;
+    offset-distance: 10px;
     z-index: auto;
     max-width: 50vw;
+    right: 5vw;
+}
+
+.modal-block {
+    position: relative;
+    block-size: "fit-content";
+    right: 5vw;
 }
 
 .modal-dialog {
     margin: 0;
 }
 
-.modal-block {
-    position: relative;
-    block-size: "fit-content";
-    position: "center";
+.modal-header:hover {
+    cursor: grab;
 }
 
 .modal-table {
