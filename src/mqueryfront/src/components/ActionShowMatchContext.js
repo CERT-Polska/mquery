@@ -24,6 +24,16 @@ const useClickOutside = (ref, callback) => {
     });
 };
 
+function base64ToHex(str64) {
+    return atob(str64)
+        .split("")
+        .map(function (aChar) {
+            return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+        .toUpperCase(); // Per your example output
+}
+
 const ActionShowMatchContext = (props) => {
     const ref = useRef(null);
     const [showModal, setShowModal] = useState(false);
@@ -42,23 +52,49 @@ const ActionShowMatchContext = (props) => {
             </button>
         </div>
     );
+    // Buffer.from(rawData, 'base64');
 
-    const tableRows = Object.entries(props.context).map(
-        (contextItem, index) => (
-            <tr key={index}>
-                <th scope="row fit-content">
-                    <span className="badge rounded-pill bg-primary ms-1 mt-1">
-                        {contextItem[0]}
-                    </span>
-                </th>
-                <th scope="row">{contextItem[1]}</th>
-            </tr>
-        )
-    );
+    const tableRows = Object.keys(props.context).map((rulename, index) => {
+        const rulenameRows = props.context[rulename].map((foundSample) => {
+            return (
+                <>
+                    <td scope="row">
+                        {atob(foundSample["before"])}
+                        {<b>{atob(foundSample["matching"])}</b>}
+                        {atob(foundSample["after"])}
+                    </td>
+                    <td scope="row">
+                        {base64ToHex(foundSample["before"])}
+                        {<b>{base64ToHex(foundSample["matching"])}</b>}
+                        {base64ToHex(foundSample["after"])}
+                    </td>
+                </>
+            );
+        });
+
+        return (
+            <>
+                <tr key={index}>
+                    <td
+                        scope="row fit-content"
+                        rowSpan={props.context[rulename].length}
+                    >
+                        <span className="badge rounded-pill bg-primary ms-1 mt-1">
+                            {rulename}
+                        </span>
+                    </td>
+                    {rulenameRows[0]}
+                </tr>
+                {rulenameRows.slice(1).map((row) => (
+                    <tr>{row}</tr>
+                ))}
+            </>
+        );
+    });
 
     const modalBody = (
         <div className="modal-body modal-table">
-            {!props.context ? (
+            {!Object.keys(props.context).length ? (
                 "No context available"
             ) : (
                 <table className="table">

@@ -11,12 +11,30 @@ const QueryMatchesItem = (props) => {
     const stubContext = context
         ? context
         : {
-              key1:
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-              key2:
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
-              key3:
-                  "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+              Multiple_Strings_Match: [
+                  {
+                      before: "",
+                      matching: "ZGVm",
+                      after: "IHRlc3RfcHl0aG9uMygpOgogICAgcHJpbnQoImhlbGw=",
+                  },
+              ],
+              mquery_exceptions4: [
+                  {
+                      before: "",
+                      matching: "ZGVm",
+                      after: "IHRlc3RfcHl0aG9uMygpOgogICAgcHJpbnQoImhlbGw=",
+                  },
+                  {
+                      before: "",
+                      matching: "dGVzdA==",
+                      after: "X3B5dGhvbjMoKToKICAgIHByaW50KCJoZWxsbyEiKQo=",
+                  },
+                  {
+                      before: "ZWxsbyEiKQogICAgYSA9IDQKICAgIHJldHVybiBhCgo=",
+                      matching: "dGVzdA==",
+                      after: "X3B5dGhvbjMoKQoK",
+                  },
+              ],
           };
 
     const fileBasename = path.basename(file);
