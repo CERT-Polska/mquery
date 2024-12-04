@@ -2,10 +2,40 @@ import React from "react";
 import path from "path-browserify";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
+import ActionShowMatchContext from "../components/ActionShowMatchContext";
 
 const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
-    const { matches, meta, file } = match;
+    const { matches, meta, file, context } = match; // NOTE: presuming new field in Match schema context which would be dict with 'matches' as keys
+
+    const stubContext = context
+        ? context
+        : {
+              Multiple_Strings_Match: [
+                  {
+                      before: "",
+                      matching: "ZGVm",
+                      after: "IHRlc3RfcHl0aG9uMygpOgogICAgcHJpbnQoImhlbGw=",
+                  },
+              ],
+              mquery_exceptions4: [
+                  {
+                      before: "",
+                      matching: "ZGVm",
+                      after: "IHRlc3RfcHl0aG9uMygpOgogICAgcHJpbnQoImhlbGw=",
+                  },
+                  {
+                      before: "",
+                      matching: "dGVzdA==",
+                      after: "X3B5dGhvbjMoKToKICAgIHByaW50KCJoZWxsbyEiKQo=",
+                  },
+                  {
+                      before: "ZWxsbyEiKQogICAgYSA9IDQKICAgIHJldHVybiBhCgo=",
+                      matching: "dGVzdA==",
+                      after: "X3B5dGhvbjMoKQoK",
+                  },
+              ],
+          };
 
     const fileBasename = path.basename(file);
 
@@ -66,6 +96,12 @@ const QueryMatchesItem = (props) => {
                         <ActionCopyToClipboard
                             text={fileBasename}
                             tooltipMessage="Copy file name to clipboard"
+                        />
+                    </small>
+                    <small className="text-secondary ms-2 me-1 mt-1">
+                        <ActionShowMatchContext
+                            filename={fileBasename}
+                            context={stubContext}
                         />
                     </small>
                     {matchBadges}
