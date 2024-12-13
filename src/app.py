@@ -11,6 +11,7 @@ from fastapi import (
     Depends,
     Header,
 )  # type: ignore
+from pydantic import BaseModel
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
 from starlette.staticfiles import StaticFiles  # type: ignore
@@ -588,6 +589,17 @@ def server() -> ServerSchema:
 def serve_index(path: str) -> FileResponse:
     return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
 
+
+@app.post(
+    "/api/queue/{ursadb_id}",
+    response_model=StatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_manage_queries)],
+)
+def list_of_paths_to_index(ursadb_id: str, file_paths: FilePathsSchema = Body(...)):
+    db.set_queued_file(ursadb_id, file_paths)
+
+    return StatusSchema(status="ok")
 
 @app.get("/recent", include_in_schema=False)
 @app.get("/status", include_in_schema=False)

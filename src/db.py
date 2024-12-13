@@ -1,3 +1,5 @@
+import logging
+
 from alembic.config import Config
 from alembic import command
 from pathlib import Path
@@ -25,6 +27,7 @@ from .models.configentry import ConfigEntry
 from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
+from .models.queuedfile import QueuedFile
 from .schema import MatchesSchema, ConfigSchema
 from .config import app_config
 
@@ -474,3 +477,15 @@ class Database:
         config_file = Path(__file__).parent / "alembic.ini"
         alembic_cfg = Config(str(config_file))
         command.upgrade(alembic_cfg, "head")
+
+    def set_queued_file(self, ursadb_id, file_paths):
+        with self.session() as session:
+            obj = QueuedFile(
+                ursadb_id=ursadb_id,
+                path=file_paths.path,
+                index_types=file_paths.index_types,
+                tags=file_paths.tags
+            )
+            session.add(obj)
+            session.commit()
+
