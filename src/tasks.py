@@ -160,7 +160,7 @@ class Agent:
     @staticmethod
     def get_match_context(
         data: bytes, matches: List[yara.Match]
-    ) -> Dict[str, Dict[str, Dict[str, base64.b64decode]]]:
+    ) -> Dict[str, Dict[str, Dict[str, str]]]:
         context = {}
         for yara_match in matches:
             match_context = {}
