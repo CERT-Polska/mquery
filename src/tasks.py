@@ -177,7 +177,6 @@ class Agent:
                 }
 
                 context[yara_match.rule] = match_context
-        logging.error(f"Match context: {context}")
         return context
 
     def init_search(self, job: Job, tasks: int) -> None:
