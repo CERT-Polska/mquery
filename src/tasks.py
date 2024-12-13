@@ -128,7 +128,7 @@ class Agent:
                         orig_name,
                         path,
                         [r.rule for r in matches],
-                        context
+                        context,
                     )
                     num_matches += 1
             except yara.Error:
