@@ -1,5 +1,5 @@
 import base64
-from typing import List, Optional, cast, Dict
+from typing import List, Optional, cast, Dict, Any
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
@@ -74,7 +74,7 @@ class Agent:
         orig_name: str,
         path: str,
         matches: List[str],
-        context: Dict[str, List[Dict[str, str]]],
+        context: Dict[str, Dict[str, Dict[str, str]]],
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -128,7 +128,7 @@ class Agent:
                         orig_name,
                         path,
                         [r.rule for r in matches],
-                        context,
+                        context
                     )
                     num_matches += 1
             except yara.Error:
