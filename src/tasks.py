@@ -338,9 +338,6 @@ def read_bytes_with_context(
 
     before = data[max(0, offset - byte_range) : offset]
     matching = data[offset : offset + matched_length]
-    after = data[
-        offset
-        + matched_length : min(len(data), offset + matched_length + byte_range)
-    ]
+    after = data[offset + matched_length : offset + matched_length + byte_range]
 
     return before, matching, after
