@@ -121,14 +121,13 @@ class Agent:
                 if matches:
                     with open(path, "rb") as file:
                         data = file.read()
-                    context = self.get_match_context(data, matches)
 
                     self.update_metadata(
                         job.id,
                         orig_name,
                         path,
                         [r.rule for r in matches],
-                        context,
+                        get_match_contexts(data, matches),
                     )
                     num_matches += 1
             except yara.Error:
@@ -156,28 +155,6 @@ class Agent:
                 f"Scanned {new_processed}/{job.total_files} ({scan_percent:.0%}) of candidates "
                 f"in {scanned_datasets}/{job.total_datasets} ({dataset_percent:.0%}) of datasets.",
             )
-
-    @staticmethod
-    def get_match_context(
-        data: bytes, matches: List[yara.Match]
-    ) -> Dict[str, Dict[str, Dict[str, str]]]:
-        context = {}
-        for yara_match in matches:
-            match_context = {}
-            for string_match in yara_match.strings:
-                expression_key = string_match.instances[0]
-
-                (before, matching, after) = read_bytes_with_context(
-                    data, expression_key.offset, expression_key.matched_length
-                )
-                match_context[expression_key] = {
-                    "before": base64.b64encode(before).decode("utf-8"),
-                    "matching": base64.b64encode(matching).decode("utf-8"),
-                    "after": base64.b64encode(after).decode("utf-8"),
-                }
-
-                context[yara_match.rule] = match_context
-        return context
 
     def init_search(self, job: Job, tasks: int) -> None:
         self.db.init_jobagent(job, self.db_id, tasks)
@@ -329,6 +306,28 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
 
         agent.execute_yara(job, pop_result.files)
         agent.add_tasks_in_progress(job, -1)
+
+
+def get_match_contexts(
+    data: bytes, matches: List[yara.Match]
+) -> Dict[str, Dict[str, Dict[str, str]]]:
+    context = {}
+    for yara_match in matches:
+        match_context = {}
+        for string_match in yara_match.strings:
+            expression_key = string_match.instances[0]
+
+            (before, matching, after) = read_bytes_with_context(
+                data, expression_key.offset, expression_key.matched_length
+            )
+            match_context[expression_key] = {
+                "before": base64.b64encode(before).decode("utf-8"),
+                "matching": base64.b64encode(matching).decode("utf-8"),
+                "after": base64.b64encode(after).decode("utf-8"),
+            }
+
+            context[yara_match.rule] = match_context
+    return context
 
 
 def read_bytes_with_context(
