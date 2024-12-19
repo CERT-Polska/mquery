@@ -315,12 +315,12 @@ def get_match_contexts(
     for yara_match in matches:
         match_context = {}
         for string_match in yara_match.strings:
-            expression_key = string_match.instances[0]
+            first = string_match.instances[0]
 
             (before, matching, after) = read_bytes_with_context(
-                data, expression_key.offset, expression_key.matched_length
+                data, first.offset, first.matched_length
             )
-            match_context[expression_key] = {
+            match_context[string_match.identifier] = {
                 "before": base64.b64encode(before).decode("utf-8"),
                 "matching": base64.b64encode(matching).decode("utf-8"),
                 "after": base64.b64encode(after).decode("utf-8"),
