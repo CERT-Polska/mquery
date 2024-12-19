@@ -167,7 +167,7 @@ class Agent:
             for string_match in yara_match.strings:
                 expression_key = string_match.instances[0]
 
-                (before, matching, after,) = read_bytes_with_context(
+                (before, matching, after) = read_bytes_with_context(
                     data, expression_key.matched_length, expression_key.offset
                 )
                 match_context[expression_key] = {
