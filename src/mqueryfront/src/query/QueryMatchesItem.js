@@ -2,10 +2,11 @@ import React from "react";
 import path from "path-browserify";
 import ActionDownload from "../components/ActionDownload";
 import ActionCopyToClipboard from "../components/ActionCopyToClipboard";
+import ActionShowMatchContext from "../components/ActionShowMatchContext";
 
 const QueryMatchesItem = (props) => {
     const { match, download_url } = props;
-    const { matches, meta, file } = match;
+    const { matches, meta, file, context } = match;
 
     const fileBasename = path.basename(file);
 
@@ -66,6 +67,12 @@ const QueryMatchesItem = (props) => {
                         <ActionCopyToClipboard
                             text={fileBasename}
                             tooltipMessage="Copy file name to clipboard"
+                        />
+                    </small>
+                    <small className="text-secondary ms-2 me-1 mt-1">
+                        <ActionShowMatchContext
+                            filename={fileBasename}
+                            context={context}
                         />
                     </small>
                     {matchBadges}
