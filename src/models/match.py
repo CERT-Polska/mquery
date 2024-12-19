@@ -22,4 +22,6 @@ class Match(SQLModel, table=True):
         )
     )
     job: Job = Relationship(back_populates="matches")
-    context: Dict[str, Dict[str, Dict[str, str]]] = Field(sa_column=Column(JSON, nullable=False))
+    context: Dict[str, Dict[str, Dict[str, str]]] = Field(
+        sa_column=Column(JSON, nullable=False)
+    )
