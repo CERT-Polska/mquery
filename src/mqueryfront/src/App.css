@@ -89,10 +89,9 @@
 }
 
 .modal-container {
-    position: fixed;
+    position: absolute;
     offset-distance: 10px;
     z-index: auto;
-    max-width: 50vw;
     right: 5vw;
 }
 
