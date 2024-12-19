@@ -168,7 +168,7 @@ class Agent:
                 expression_key = string_match.instances[0]
 
                 (before, matching, after) = read_bytes_with_context(
-                    data, expression_key.matched_length, expression_key.offset
+                    data, expression_key.offset, expression_key.matched_length
                 )
                 match_context[expression_key] = {
                     "before": base64.b64encode(before).decode("utf-8"),
@@ -332,12 +332,10 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
 
 
 def read_bytes_with_context(
-    data: bytes, matched_length: int, offset: int, byte_range: int = 32
+    data: bytes, offset: int, length: int, context: int = 32
 ) -> tuple[bytes, bytes, bytes]:
     """Return `matched_length` bytes from `offset`, along with `byte_range` bytes before and after the match."""
-
-    before = data[max(0, offset - byte_range) : offset]
-    matching = data[offset : offset + matched_length]
-    after = data[offset + matched_length : offset + matched_length + byte_range]
-
+    before = data[max(0, offset - context) : offset]
+    matching = data[offset : offset + length]
+    after = data[offset + length : offset + length + context]
     return before, matching, after
