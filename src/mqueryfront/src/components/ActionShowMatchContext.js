@@ -25,13 +25,29 @@ const useClickOutside = (ref, callback) => {
 };
 
 function base64ToHex(str64) {
-    return atob(str64)
-        .split("")
-        .map(function (aChar) {
-            return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join("")
-        .toUpperCase(); // Per your example output
+    return (
+        atob(str64)
+            .split("")
+            .map(function (aChar) {
+                return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join(" ")
+            .toUpperCase() + " "
+    );
+}
+
+function base64ToUtf8(str64) {
+    return (
+        atob(str64)
+            .split("")
+            .map(function (aChar) {
+                if (32 <= aChar.charCodeAt(0) && aChar.charCodeAt(0) < 127) {
+                    return aChar;
+                }
+                return ".";
+            })
+            .join(" ") + " "
+    );
 }
 
 const ActionShowMatchContext = (props) => {
@@ -66,21 +82,21 @@ const ActionShowMatchContext = (props) => {
                         </td>
                         <td
                             scope="row"
-                            className="text-monospace"
-                            style={{ width: "25%" }}
-                        >
-                            {atob(foundSample["before"])}
-                            {<b>{atob(foundSample["matching"])}</b>}
-                            {atob(foundSample["after"])}
-                        </td>
-                        <td
-                            scope="row"
-                            className="text-monospace"
-                            style={{ width: "50%" }}
+                            className="text-monospace text-break"
+                            style={{ width: "45%" }}
                         >
                             {base64ToHex(foundSample["before"])}
                             {<b>{base64ToHex(foundSample["matching"])}</b>}
                             {base64ToHex(foundSample["after"])}
+                        </td>
+                        <td
+                            scope="row"
+                            className="text-monospace text-break"
+                            style={{ width: "30%" }}
+                        >
+                            {base64ToUtf8(foundSample["before"])}
+                            {<b>{base64ToUtf8(foundSample["matching"])}</b>}
+                            {base64ToUtf8(foundSample["after"])}
                         </td>
                     </>
                 );
