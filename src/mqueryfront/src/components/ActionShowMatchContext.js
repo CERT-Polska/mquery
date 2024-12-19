@@ -52,32 +52,48 @@ const ActionShowMatchContext = (props) => {
             </button>
         </div>
     );
-    // Buffer.from(rawData, 'base64');
 
     const tableRows = Object.keys(props.context).map((rulename, index) => {
-        const rulenameRows = props.context[rulename].map((foundSample) => {
-            return (
-                <>
-                    <td scope="row">
-                        {atob(foundSample["before"])}
-                        {<b>{atob(foundSample["matching"])}</b>}
-                        {atob(foundSample["after"])}
-                    </td>
-                    <td scope="row">
-                        {base64ToHex(foundSample["before"])}
-                        {<b>{base64ToHex(foundSample["matching"])}</b>}
-                        {base64ToHex(foundSample["after"])}
-                    </td>
-                </>
-            );
-        });
+        const rulenameRows = Object.keys(props.context[rulename]).map(
+            (identifier) => {
+                const foundSample = props.context[rulename][identifier];
+                return (
+                    <>
+                        <td scope="row" style={{ width: "10%" }}>
+                            <span className="badge rounded-pill bg-info ms-1 mt-1">
+                                {identifier}
+                            </span>
+                        </td>
+                        <td
+                            scope="row"
+                            className="text-monospace"
+                            style={{ width: "25%" }}
+                        >
+                            {atob(foundSample["before"])}
+                            {<b>{atob(foundSample["matching"])}</b>}
+                            {atob(foundSample["after"])}
+                        </td>
+                        <td
+                            scope="row"
+                            className="text-monospace"
+                            style={{ width: "50%" }}
+                        >
+                            {base64ToHex(foundSample["before"])}
+                            {<b>{base64ToHex(foundSample["matching"])}</b>}
+                            {base64ToHex(foundSample["after"])}
+                        </td>
+                    </>
+                );
+            }
+        );
 
         return (
             <>
                 <tr key={index}>
                     <td
                         scope="row fit-content"
-                        rowSpan={props.context[rulename].length}
+                        rowSpan={Object.keys(props.context[rulename]).length}
+                        style={{ width: "15%" }}
                     >
                         <span className="badge rounded-pill bg-primary ms-1 mt-1">
                             {rulename}
@@ -97,7 +113,7 @@ const ActionShowMatchContext = (props) => {
             {!Object.keys(props.context).length ? (
                 "No context available"
             ) : (
-                <table className="table">
+                <table className="table table-bordered">
                     <tbody>{tableRows}</tbody>
                 </table>
             )}
