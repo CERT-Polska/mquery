@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="mquery",
-    version="1.4.0",
+    version="1.6.0",
     description="Blazingly fast Yara queries for malware analysts",
     packages=[
         "mquery",
