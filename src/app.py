@@ -11,7 +11,6 @@ from fastapi import (
     Depends,
     Header,
 )  # type: ignore
-from pydantic import BaseModel
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
 from starlette.staticfiles import StaticFiles  # type: ignore
@@ -45,6 +44,7 @@ from .schema import (
     BackendStatusDatasetsSchema,
     AgentSchema,
     ServerSchema,
+    FilePathInputSchema,
 )
 
 
@@ -175,6 +175,8 @@ can_view_queries = RoleChecker([UserRole.can_view_queries])
 can_manage_queries = RoleChecker([UserRole.can_manage_queries])
 can_list_queries = RoleChecker([UserRole.can_list_queries])
 can_download_files = RoleChecker([UserRole.can_download_files])
+can_manage_queues = RoleChecker([UserRole.can_manage_queues])
+can_view_queues = RoleChecker([UserRole.can_view_queues])
 
 
 def get_user_roles(user: User) -> List[UserRole]:
@@ -197,12 +199,14 @@ def expand_role(role: UserRole) -> List[UserRole]:
             UserRole.user,
             UserRole.can_list_all_queries,
             UserRole.can_manage_all_queries,
+            UserRole.can_manage_queues,
         ],
         UserRole.user: [
             UserRole.can_view_queries,
             UserRole.can_manage_queries,
             UserRole.can_list_queries,
             UserRole.can_download_files,
+            UserRole.can_view_queues,
         ],
         UserRole.can_manage_all_queries: [UserRole.can_manage_queries],
         UserRole.can_list_all_queries: [UserRole.can_list_queries],
@@ -552,7 +556,7 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
 @app.delete(
     "/api/query/{job_id}",
     response_model=StatusSchema,
-    dependencies=[Depends(can_manage_queries)],
+    dependencies=[Depends(can_manage_queues)],
 )
 def query_remove(
     job_id: str, user: User = Depends(current_user)
@@ -594,12 +598,15 @@ def serve_index(path: str) -> FileResponse:
     "/api/queue/{ursadb_id}",
     response_model=StatusSchema,
     tags=["queue"],
-    dependencies=[Depends(can_manage_queries)],
+    dependencies=[Depends(can_manage_queues)],
 )
-def list_of_paths_to_index(ursadb_id: str, file_paths: FilePathsSchema = Body(...)):
+def list_of_paths_to_index(
+    ursadb_id: str, file_paths: List[FilePathInputSchema] = Body(...)
+):
     db.set_queued_file(ursadb_id, file_paths)
 
     return StatusSchema(status="ok")
+
 
 @app.get("/recent", include_in_schema=False)
 @app.get("/status", include_in_schema=False)

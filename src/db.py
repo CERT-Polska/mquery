@@ -1,5 +1,3 @@
-import logging
-
 from alembic.config import Config
 from alembic import command
 from pathlib import Path
@@ -59,6 +57,8 @@ class UserRole(Enum):
     can_list_queries = auto()
     can_view_queries = auto()
     can_download_files = auto()
+    can_view_queues = auto()
+    can_manage_queues = auto()
 
 
 # Type alias for Job ids
@@ -480,12 +480,12 @@ class Database:
 
     def set_queued_file(self, ursadb_id, file_paths):
         with self.session() as session:
-            obj = QueuedFile(
-                ursadb_id=ursadb_id,
-                path=file_paths.path,
-                index_types=file_paths.index_types,
-                tags=file_paths.tags
-            )
+            for file in file_paths:
+                obj = QueuedFile(
+                    ursadb_id=ursadb_id,
+                    path=file.path,
+                    index_types=file.index_types,
+                    tags=file.tags,
+                )
             session.add(obj)
             session.commit()
-

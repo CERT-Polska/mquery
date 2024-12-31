@@ -107,11 +107,7 @@ class ServerSchema(BaseModel):
     about: str
 
 
-class FilePathsInputSchema(BaseModel):
+class FilePathInputSchema(BaseModel):
     path: str
     index_types: List[str]
     tags: List[str]
-
-
-class FilePathsSchema(FilePathsInputSchema):
-    ursadb_id: str
