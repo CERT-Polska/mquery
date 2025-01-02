@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLightbulb } from "@fortawesome/free-solid-svg-icons";
 import Draggable from "react-draggable";
+import ReactHtmlParser from "react-html-parser";
 
-const useClickOutside = (ref, callback) => {
+const useClickOutsideModal = (ref, callback) => {
     const handleClick = (event) => {
         if (ref.current && !ref.current.contains(event.target)) {
             // lose focus (higher z-index) only if other modal was clicked
@@ -31,12 +32,12 @@ function base64ToHex(str64) {
             .map(function (aChar) {
                 return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
             })
-            .join(" ")
-            .toUpperCase() + " "
+            .join("")
+            .toUpperCase()
     );
 }
 
-function base64ToUtf8(str64) {
+function base64ToSanitizedUtf8(str64) {
     return (
         atob(str64)
             .split("")
@@ -46,26 +47,43 @@ function base64ToUtf8(str64) {
                 }
                 return ".";
             })
-            .join(" ") + " "
+            .join("")
     );
+}
+
+function insertEveryNChars (str, insert, n) {
+    return str.split(new RegExp(`(.{${n}})`)).filter(x=>x).join(insert)
+}
+
+function cellHTML(foundSample, lineLength, transformFunc) {
+    const hexBefore = transformFunc(foundSample["before"]);
+    const hexMatching = transformFunc(foundSample["matching"]);
+    const hexAfter = transformFunc(foundSample["after"]);
+    const basicStr = hexBefore + hexMatching + hexAfter;
+    const strWithBreakLines = insertEveryNChars(basicStr, '<br>', lineLength);
+    const breaksInBefore = Math.floor(hexBefore.length / lineLength);
+    const breaksInBeforeAndMatching = Math.floor((hexBefore.length + hexMatching.length) / lineLength);
+    const BoldOpeningTagIndex = hexBefore.length + 4*breaksInBefore;
+    const BoldClosingTagIndex = hexBefore.length + hexMatching.length + 4*breaksInBeforeAndMatching;
+    let boldedStr = strWithBreakLines.slice(0, BoldClosingTagIndex) + '</b>' + strWithBreakLines.slice(BoldClosingTagIndex);
+    boldedStr = boldedStr.slice(0, BoldOpeningTagIndex) + '<b>' + boldedStr.slice(BoldOpeningTagIndex);
+    return boldedStr
 }
 
 const ActionShowMatchContext = (props) => {
     const ref = useRef(null);
     const [showModal, setShowModal] = useState(false);
     const [focus, setFocus] = useState(true);
-    useClickOutside(ref, () => setFocus(false));
+    useClickOutsideModal(ref, () => setFocus(false));
 
     const modalHeader = (
         <div className="modal-header d-flex justify-content-between">
             <h6 className="modal-title">{`Match context for ${props.filename}`}</h6>
             <button
                 type="button"
-                className="close "
+                className="btn-close"
                 onClick={() => setShowModal(false)}
-            >
-                <span aria-hidden="true">&times;</span>
-            </button>
+            />
         </div>
     );
 
@@ -82,21 +100,15 @@ const ActionShowMatchContext = (props) => {
                         </td>
                         <td
                             scope="row"
-                            className="text-monospace text-break"
-                            style={{ width: "45%" }}
+                            className="text-monospace"
                         >
-                            {base64ToHex(foundSample["before"])}
-                            {<b>{base64ToHex(foundSample["matching"])}</b>}
-                            {base64ToHex(foundSample["after"])}
+                            {ReactHtmlParser(cellHTML(foundSample, 20, base64ToHex))}
                         </td>
                         <td
                             scope="row"
-                            className="text-monospace text-break"
-                            style={{ width: "30%" }}
+                            className="text-monospace"
                         >
-                            {base64ToUtf8(foundSample["before"])}
-                            {<b>{base64ToUtf8(foundSample["matching"])}</b>}
-                            {base64ToUtf8(foundSample["after"])}
+                            {ReactHtmlParser(cellHTML(foundSample, 10, base64ToSanitizedUtf8))}
                         </td>
                     </>
                 );
