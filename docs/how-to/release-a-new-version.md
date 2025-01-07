@@ -1,6 +1,6 @@
 # How to release a new mquery version
 
-I never remembe the exact steps, so let's document this once and for all.
+I never remember the exact steps, so let's document this once and for all.
 
 This should be automated someday.
 
