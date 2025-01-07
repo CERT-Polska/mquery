@@ -480,13 +480,14 @@ class Database:
 
     def set_queued_file(self, ursadb_id, file_paths):
         with self.session() as session:
-            objects = [
-                QueuedFile(
-                    ursadb_id=ursadb_id,
-                    path=file.path,
-                    index_types=file.index_types,
-                    tags=file.tags)
-                for file in file_paths
-            ]
-            session.add_all(objects)
+            session.bulk_insert_mappings(
+                QueuedFile, [
+                    {
+                        "ursadb_id": ursadb_id,
+                        "path": file.path,
+                        "index_types": file.index_types,
+                        "tags": file.tags
+                    } for file in file_paths
+                ]
+            )
             session.commit()
