@@ -487,5 +487,5 @@ class Database:
                     index_types=file.index_types,
                     tags=file.tags,
                 )
-            session.add(obj)
+                session.add(obj)
             session.commit()
