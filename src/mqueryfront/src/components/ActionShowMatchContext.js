@@ -31,11 +31,11 @@ function base64ToHex(str64) {
         .map(function (aChar) {
             return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
         })
-        .join("")
-        .toUpperCase();
+        .join(" ")
+        .toUpperCase() + ' ';
 }
 
-function base64ToSanitizedUtf8(str64) {
+function base64ToSanitizedString(str64) {
     return atob(str64)
         .split("")
         .map(function (aChar) {
@@ -101,19 +101,19 @@ const ActionShowMatchContext = (props) => {
                 const foundSample = props.context[rulename][identifier];
                 return (
                     <>
-                        <td scope="row" style={{ width: "10%" }}>
+                        <td scope="row">
                             <span className="badge rounded-pill bg-info ms-1 mt-1">
                                 {identifier}
                             </span>
                         </td>
                         <td scope="row" className="text-monospace">
                             {ReactHtmlParser(
-                                cellHTML(foundSample, 20, base64ToHex)
+                                cellHTML(foundSample, 24, base64ToHex)
                             )}
                         </td>
                         <td scope="row" className="text-monospace">
                             {ReactHtmlParser(
-                                cellHTML(foundSample, 10, base64ToSanitizedUtf8)
+                                cellHTML(foundSample, 8, base64ToSanitizedString)
                             )}
                         </td>
                     </>
@@ -127,7 +127,6 @@ const ActionShowMatchContext = (props) => {
                     <td
                         scope="row fit-content"
                         rowSpan={Object.keys(props.context[rulename]).length}
-                        style={{ width: "15%" }}
                     >
                         <span className="badge rounded-pill bg-primary ms-1 mt-1">
                             {rulename}
@@ -176,7 +175,7 @@ const ActionShowMatchContext = (props) => {
                             className="modal modal-block"
                             style={{ display: showModal ? "block" : "none" }}
                         >
-                            <div className="modal-dialog modal-lg">
+                            <div className="modal-dialog modal-xl">
                                 <div className="modal-content">
                                     {modalHeader}
                                     {modalBody}
