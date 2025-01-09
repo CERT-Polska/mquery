@@ -26,13 +26,15 @@ const useClickOutsideModal = (ref, callback) => {
 };
 
 function base64ToHex(str64) {
-    return atob(str64)
-        .split("")
-        .map(function (aChar) {
-            return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
-        })
-        .join(" ")
-        .toUpperCase() + ' ';
+    return (
+        atob(str64)
+            .split("")
+            .map(function (aChar) {
+                return ("0" + aChar.charCodeAt(0).toString(16)).slice(-2);
+            })
+            .join(" ")
+            .toUpperCase() + " "
+    );
 }
 
 function base64ToSanitizedString(str64) {
@@ -113,7 +115,11 @@ const ActionShowMatchContext = (props) => {
                         </td>
                         <td scope="row" className="text-monospace">
                             {ReactHtmlParser(
-                                cellHTML(foundSample, 8, base64ToSanitizedString)
+                                cellHTML(
+                                    foundSample,
+                                    8,
+                                    base64ToSanitizedString
+                                )
                             )}
                         </td>
                     </>
