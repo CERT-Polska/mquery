@@ -124,6 +124,9 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
         token_json = jwt.decode(
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
+    except jwt.ExpiredSignatureError:
+        # token expired, so user is now anonymous
+        return User(None)
     except jwt.InvalidTokenError:
         # Invalid token means invalid signature, issuer, or just expired.
         raise unauthorized
