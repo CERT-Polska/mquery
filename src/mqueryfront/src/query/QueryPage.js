@@ -38,6 +38,7 @@ class QueryPageInner extends Component {
     }
 
     async componentDidMount() {
+        localStorage.setItem("currentLocation", window.location.href)
         if (this.queryHash) {
             this.fetchJob();
         }

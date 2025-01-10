@@ -23,6 +23,7 @@ class RecentPage extends Component {
     }
 
     componentDidMount() {
+        localStorage.setItem("currentLocation", window.location.href)
         api.get("/job")
             .then((response) => {
                 const { jobs } = response.data;

@@ -20,6 +20,7 @@ class StatusPage extends Component {
     }
 
     componentDidMount() {
+        localStorage.setItem("currentLocation", window.location.href)
         api.get("/backend")
             .then((response) => {
                 this.setState({ backend: response.data });
