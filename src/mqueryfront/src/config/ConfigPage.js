@@ -14,7 +14,7 @@ class ConfigPage extends Component {
     }
 
     componentDidMount() {
-        localStorage.setItem("currentLocation", window.location.href)
+        localStorage.setItem("currentLocation", window.location.href);
         api.get("/config")
             .then((response) => {
                 this.setState({ config: response.data });

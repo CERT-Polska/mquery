@@ -29,49 +29,49 @@ export const openidLoginUrl = (config) => {
 };
 
 export const storeTokenData = (token_data) => {
-    localStorage.setItem("rawToken", token_data['access_token']);
-    localStorage.setItem("expiresAt", Date.now() + token_data['expires_in'] *1000)
-    localStorage.setItem("refreshToken", token_data['refresh_token'])
-}
+    localStorage.setItem("rawToken", token_data["access_token"]);
+    localStorage.setItem(
+        "expiresAt",
+        Date.now() + token_data["expires_in"] * 1000
+    );
+    localStorage.setItem("refreshToken", token_data["refresh_token"]);
+};
 
 export const refreshAccesToken = (config) => {
     // console.log("CONFIG: ", config)
-    if(config && 'openid_client_id' in config) {
-        const expiresAt = localStorage.getItem("expiresAt")
-        if(expiresAt && Date.now() > Number(expiresAt) - 60*1000){
-            let openid_client_id = config["openid_client_id"]
+    // if(config && 'openid_client_id' in config) {
+    const expiresAt = localStorage.getItem("expiresAt");
+    if (expiresAt && Date.now() > Number(expiresAt) - 60 * 1000) {
+        let openid_client_id = config["openid_client_id"];
 
-            let refreshToken = localStorage.getItem("refreshToken")
-            const params = new URLSearchParams();
-            params.append("grant_type", "refresh_token");
-            params.append("refresh_token", refreshToken);
-            params.append("client_id", openid_client_id);
-            params.append("redirect_uri", window.location.origin + "/auth");
-            axios
-                    .post(config["openid_url"] + "/token", params)
-                    .then((response) => {
-                        storeTokenData(response.data)
-                    })
-                    .catch((error) => {
-                        console.error(error)
-                        const currentLocation = localStorage.getItem("currentLocation")
-                        if(currentLocation) {
-                            window.location.href = currentLocation
-                        }
-                        else {
-                            window.location.href = "/"
-                        } 
-                    });
-        }
-
+        let refreshToken = localStorage.getItem("refreshToken");
+        const params = new URLSearchParams();
+        params.append("grant_type", "refresh_token");
+        params.append("refresh_token", refreshToken);
+        params.append("client_id", openid_client_id);
+        params.append("redirect_uri", window.location.origin + "/auth");
+        axios
+            .post(config["openid_url"] + "/token", params)
+            .then((response) => {
+                storeTokenData(response.data);
+            })
+            .catch((error) => {
+                console.error(error);
+                const currentLocation = localStorage.getItem("currentLocation");
+                if (currentLocation) {
+                    window.location.href = currentLocation;
+                } else {
+                    window.location.href = "/";
+                }
+            });
     }
 
-}
+    // }
+};
 
 export const clearTokenData = (tokenInterval) => {
-    clearInterval(tokenInterval)
+    clearInterval(tokenInterval);
     localStorage.removeItem("expiresAt");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("rawToken");
-
-}
+};
