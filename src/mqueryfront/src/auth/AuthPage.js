@@ -37,7 +37,7 @@ class AuthPage extends Component {
         axios
             .post(this.props.config["openid_url"] + "/token", params)
             .then((response) => {
-                this.props.login(response.data["access_token"]);
+                this.props.login(response.data);
             })
             .catch((error) => {
                 this.setState({ error: error });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Navigation from "./Navigation";
 import QueryPage from "./query/QueryPage";
@@ -9,6 +9,7 @@ import AboutPage from "./about/AboutPage";
 import AuthPage from "./auth/AuthPage";
 import api, { parseJWT } from "./api";
 import "./App.css";
+import { refreshAccesToken, storeTokenData, clearTokenData } from "./utils";
 
 function getCurrentTokenOrNull() {
     // This function handles missing and corrupted token in the same way.
@@ -21,20 +22,36 @@ function getCurrentTokenOrNull() {
 
 function App() {
     const [config, setConfig] = useState(null);
+    const configRef = useRef(config)
+    const tokenIntervalRef = useRef(null)
+
+    useEffect(() => {
+        configRef.current = config;
+    }, [config])
 
     useEffect(() => {
         api.get("/server").then((response) => {
             setConfig(response.data);
         });
+            tokenIntervalRef.current = setInterval(() =>{
+                    refreshAccesToken(configRef.current)
+            }, 60000)
+            return () => clearInterval(tokenIntervalRef.current);
     }, []);
 
-    const login = (rawToken) => {
-        localStorage.setItem("rawToken", rawToken);
+    const login = (token_data) => {
+        storeTokenData(token_data)
+        let location_href = localStorage.getItem("currentLocation")
+        if(location_href) {
+            window.location.href = location_href
+        }
+        else {
         window.location.href = "/";
+        }
     };
 
     const logout = () => {
-        localStorage.removeItem("rawToken");
+        clearTokenData(tokenIntervalRef.curr);
         if (config !== null) {
             const logout_url = new URL(config["openid_url"] + "/logout");
             logout_url.searchParams.append(
