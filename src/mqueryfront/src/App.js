@@ -22,28 +22,23 @@ function getCurrentTokenOrNull() {
 
 function App() {
     const [config, setConfig] = useState(null);
-    const configRef = useRef(config);
     const tokenIntervalRef = useRef(null);
-
-    useEffect(() => {
-        configRef.current = config;
-    }, [config]);
 
     useEffect(() => {
         api.get("/server").then((response) => {
             setConfig(response.data);
         });
         tokenIntervalRef.current = setInterval(() => {
-            if (configRef.current && "openid_client_id" in configRef.current) {
-                refreshAccesToken(configRef.current);
-            }
-        }, 60000);
+            refreshAccesToken();
+        }, 200000);
         return () => clearInterval(tokenIntervalRef.current);
     }, []);
-
-    const login = (token_data) => {
-        storeTokenData(token_data);
-        let location_href = localStorage.getItem("currentLocation");
+    const login = async (token_data) => {
+        token_data.not_before_policy = token_data["not-before-policy"];
+        delete token_data["not-before-policy"];
+        const response = await api.post("/login", token_data);
+        storeTokenData(token_data["access_token"]);
+        const location_href = localStorage.getItem("currentLocation");
         if (location_href) {
             window.location.href = location_href;
         } else {
@@ -52,7 +47,7 @@ function App() {
     };
 
     const logout = () => {
-        clearTokenData(tokenIntervalRef.curr);
+        clearTokenData(tokenIntervalRef.current);
         if (config !== null) {
             const logout_url = new URL(config["openid_url"] + "/logout");
             logout_url.searchParams.append(

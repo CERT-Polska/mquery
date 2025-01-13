@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import api, { parseJWT } from "./api";
 export const isStatusFinished = (status) =>
     ["done", "cancelled"].includes(status);
 
@@ -27,51 +27,53 @@ export const openidLoginUrl = (config) => {
     );
     return login_url;
 };
-
-export const storeTokenData = (token_data) => {
-    localStorage.setItem("rawToken", token_data["access_token"]);
-    localStorage.setItem(
-        "expiresAt",
-        Date.now() + token_data["expires_in"] * 1000
-    );
-    localStorage.setItem("refreshToken", token_data["refresh_token"]);
+const sleepSync = (ms) => {
+    const start = Date.now();
+    while (Date.now() - start < ms) {}
+};
+export const storeTokenData = (token) => {
+    localStorage.setItem("rawToken", token);
+    const decodedToken = parseJWT(token);
+    localStorage.setItem("expiresAt", decodedToken.exp * 1000);
 };
 
-export const refreshAccesToken = (config) => {
-    // console.log("CONFIG: ", config)
-    // if(config && 'openid_client_id' in config) {
+export const refreshAccesToken = async () => {
+    const rawToken = localStorage.getItem("rawToken");
     const expiresAt = localStorage.getItem("expiresAt");
-    if (expiresAt && Date.now() > Number(expiresAt) - 60 * 1000) {
-        let openid_client_id = config["openid_client_id"];
-
-        let refreshToken = localStorage.getItem("refreshToken");
-        const params = new URLSearchParams();
-        params.append("grant_type", "refresh_token");
-        params.append("refresh_token", refreshToken);
-        params.append("client_id", openid_client_id);
-        params.append("redirect_uri", window.location.origin + "/auth");
-        axios
-            .post(config["openid_url"] + "/token", params)
-            .then((response) => {
-                storeTokenData(response.data);
-            })
-            .catch((error) => {
-                console.error(error);
-                const currentLocation = localStorage.getItem("currentLocation");
-                if (currentLocation) {
-                    window.location.href = currentLocation;
-                } else {
-                    window.location.href = "/";
-                }
+    if (rawToken) {
+        if (Date.now() > expiresAt - 3000) {
+            const headers = rawToken
+                ? { Authorization: `Bearer ${rawToken}` }
+                : {};
+            const response = await axios.request("/api/token/refresh", {
+                method: "POST",
+                data: undefined,
+                params: undefined,
+                headers: headers,
             });
+            if (response.data["new_token"]) {
+                storeTokenData(response.data["new_token"]);
+            } else {
+                return;
+            }
+        }
     }
-
-    // }
 };
 
 export const clearTokenData = (tokenInterval) => {
     clearInterval(tokenInterval);
     localStorage.removeItem("expiresAt");
-    localStorage.removeItem("refreshToken");
     localStorage.removeItem("rawToken");
+};
+
+export const tokenExpired = () => {
+    const rawToken = localStorage.getItem("rawToken");
+    if (rawToken) {
+        const expiresAt = localStorage.getItem("expiresAt");
+        if (Date.now() > expiresAt) {
+            return true;
+        }
+        return false;
+    }
+    return false;
 };

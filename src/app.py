@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 import os
 
+import requests  # type: ignore
+
 import uvicorn  # type: ignore
 from pathlib import Path
 from fastapi import (
@@ -44,6 +46,9 @@ from .schema import (
     BackendStatusDatasetsSchema,
     AgentSchema,
     ServerSchema,
+    LoginSchema,
+    LogoutSchema,
+    RefreshTokenSchema,
 )
 
 
@@ -70,6 +75,22 @@ def with_plugins() -> Iterable[PluginManager]:
         plugins.cleanup()
 
 
+def get_new_token(refresh_token):
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": db.config.openid_client_id,
+        "client_secret": db.config.openid_secret,
+    }
+    url = "http://mquery-keycloak-1:8080/auth/realms/myrealm/protocol/openid-connect/token"
+    try:
+        response = requests.post(url=url, data=data)
+        return response.json()
+
+    except requests.exceptions.RequestException:
+        return None
+
+
 class User:
     def __init__(self, token: Optional[Dict]) -> None:
         self.__token = token
@@ -92,6 +113,37 @@ class User:
             return [UserRole[name] for name in role_names]
         except KeyError:
             return []
+
+
+class TokenChecker:
+    def __init__(self):
+        self._tokens_data = {}
+
+    def show_tokens(self):
+        return self._tokens_data
+
+    def set_token(self, token, refresh_token):
+        self._tokens_data[token] = refresh_token
+
+    def refresh_token(self, token):
+        if token in self._tokens_data:
+            token_data = get_new_token(self._tokens_data[token])
+            if token_data:
+                new_token = token_data["access_token"]
+                new_refresh_token = token_data["refresh_token"]
+                del self._tokens_data[token]
+                self._tokens_data[new_token] = new_refresh_token
+                return new_token
+            return None
+        else:
+            return None
+
+    def remove_token(self, token):
+        if token in self._tokens_data:
+            del self._tokens_data[token]
+
+
+token_checker = TokenChecker()
 
 
 async def current_user(authorization: Optional[str] = Header(None)) -> User:
@@ -125,7 +177,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
     except jwt.ExpiredSignatureError:
-        # token expired, so user is now anonymous
+        # token expired so user is anonymous
         return User(None)
     except jwt.InvalidTokenError:
         # Invalid token means invalid signature, issuer, or just expired.
@@ -303,6 +355,7 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
 
     This endpoint is not stable and may be subject to change in the future.
     """
+    logging.error(f"NEW TOKEN\n{token_checker.show_tokens()}\n***** ")
     datasets: Dict[str, int] = {}
     for agent_spec in db.get_active_agents().values():
         try:
@@ -585,6 +638,43 @@ def server() -> ServerSchema:
         openid_client_id=db.config.openid_client_id,
         about=app_config.mquery.about,
     )
+
+
+@app.post("/api/login", response_model=LoginSchema, tags=["stable"])
+async def login(request: Request):
+    token = await request.json()
+    logging.error("\n*************\nLOGGING IN?\n***********\n")
+    try:
+        token_checker.set_token(token["access_token"], token["refresh_token"])
+        return LoginSchema(status="OK")
+    except Exception as e:
+        logging.warning(
+            f"Error during user login: {repr(e)}\n token data:{token}"
+        )
+        return LoginSchema(status="Bad Token")
+
+
+@app.post("/api/logout", response_model=LogoutSchema, tags=["stable"])
+async def logout(request: Request):
+    token = await request.json()
+    try:
+        token_checker.remove_token(token["access_token"])
+        return LogoutSchema(status="OK")
+    except Exception as e:
+        logging.warning(
+            f"Error during user logout: {repr(e)}\n token data:{token}"
+        )
+        return LogoutSchema(status="Bad Token")
+
+
+@app.post("/api/token/refresh", response_model=RefreshTokenSchema)
+def refresh_token(request: Request):
+    _, token = request.headers.get("Authorization").split()
+    try:
+        new_token = token_checker.refresh_token(token)
+        return RefreshTokenSchema(new_token=new_token)
+    except Exception:
+        return RefreshTokenSchema(new_token=None)
 
 
 @app.get("/query/{path}", include_in_schema=False)

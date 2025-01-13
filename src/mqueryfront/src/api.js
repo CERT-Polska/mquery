@@ -1,4 +1,5 @@
 import axios from "axios";
+import { refreshAccesToken, tokenExpired } from "./utils";
 
 export const api_url = "/api";
 
@@ -8,7 +9,10 @@ export function parseJWT(token) {
     return JSON.parse(atob(base64));
 }
 
-function request(method, path, payload, params) {
+async function request(method, path, payload, params) {
+    if (tokenExpired()) {
+        await refreshAccesToken();
+    }
     const rawToken = localStorage.getItem("rawToken");
     const headers = rawToken ? { Authorization: `Bearer ${rawToken}` } : {};
     return axios

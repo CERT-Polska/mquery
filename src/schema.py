@@ -105,3 +105,15 @@ class ServerSchema(BaseModel):
     openid_url: Optional[str]
     openid_client_id: Optional[str]
     about: str
+
+
+class LoginSchema(BaseModel):
+    status: str
+
+
+class LogoutSchema(BaseModel):
+    status: str
+
+
+class RefreshTokenSchema(BaseModel):
+    new_token: str | None
