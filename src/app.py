@@ -355,7 +355,6 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
 
     This endpoint is not stable and may be subject to change in the future.
     """
-    logging.error(f"NEW TOKEN\n{token_checker.show_tokens()}\n***** ")
     datasets: Dict[str, int] = {}
     for agent_spec in db.get_active_agents().values():
         try:
@@ -643,11 +642,16 @@ def server() -> ServerSchema:
 @app.post("/api/login", response_model=LoginSchema, tags=["stable"])
 async def login(request: Request):
     token = await request.json()
-    logging.error("\n*************\nLOGGING IN?\n***********\n")
     try:
         token_checker.set_token(token["access_token"], token["refresh_token"])
         return LoginSchema(status="OK")
-    except Exception as e:
+    except KeyError as e:
+        logging.warning(
+            f"Error during user login: {repr(e)}\n token data:{token}"
+        )
+        return LoginSchema(status="Bad Token")
+
+    except TypeError as e:
         logging.warning(
             f"Error during user login: {repr(e)}\n token data:{token}"
         )
@@ -660,20 +664,26 @@ async def logout(request: Request):
     try:
         token_checker.remove_token(token["access_token"])
         return LogoutSchema(status="OK")
-    except Exception as e:
+    except KeyError as e:
         logging.warning(
-            f"Error during user logout: {repr(e)}\n token data:{token}"
+            f"Error during user log out: {repr(e)}\n token data:{token}"
+        )
+        return LogoutSchema(status="Bad Token")
+
+    except TypeError as e:
+        logging.warning(
+            f"Error during user log out: {repr(e)}\n token data:{token}"
         )
         return LogoutSchema(status="Bad Token")
 
 
 @app.post("/api/token/refresh", response_model=RefreshTokenSchema)
 def refresh_token(request: Request):
-    _, token = request.headers.get("Authorization").split()
     try:
+        _, token = request.headers.get("Authorization").split()
         new_token = token_checker.refresh_token(token)
         return RefreshTokenSchema(new_token=new_token)
-    except Exception:
+    except AttributeError:
         return RefreshTokenSchema(new_token=None)
 
 
