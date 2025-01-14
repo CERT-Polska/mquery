@@ -612,7 +612,6 @@ def server() -> ServerSchema:
 @app.post("/api/login", response_model=LoginSchema, tags=["stable"])
 async def login(request: Request, response: Response) -> LoginSchema:
     token = await request.json()
-    logging.error("LOGGING BEJBE")
     if token["refresh_token"]:
         response.set_cookie(
             key="refresh_token",
