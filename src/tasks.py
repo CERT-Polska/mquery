@@ -1,4 +1,5 @@
-from typing import List, Optional, cast
+import base64
+from typing import List, Optional, cast, Dict
 import logging
 from rq import get_current_job, Queue  # type: ignore
 from redis import Redis
@@ -68,7 +69,12 @@ class Agent:
         return list(result["result"]["datasets"].keys())
 
     def update_metadata(
-        self, job: JobId, orig_name: str, path: str, matches: List[str]
+        self,
+        job: JobId,
+        orig_name: str,
+        path: str,
+        matches: List[str],
+        context: Dict[str, Dict[str, Dict[str, str]]],
     ) -> None:
         """Saves matches to the database, and runs appropriate metadata
         plugins.
@@ -93,7 +99,9 @@ class Agent:
         del metadata["path"]
 
         # Update the database.
-        match = Match(file=orig_name, meta=metadata, matches=matches)
+        match = Match(
+            file=orig_name, meta=metadata, matches=matches, context=context
+        )
         self.db.add_match(job, match)
 
     def execute_yara(self, job: Job, files: List[str]) -> None:
@@ -108,10 +116,18 @@ class Agent:
                 path = self.plugins.filter(orig_name)
                 if not path:
                     continue
+
                 matches = rule.match(path)
                 if matches:
+                    with open(path, "rb") as file:
+                        data = file.read()
+
                     self.update_metadata(
-                        job.id, orig_name, path, [r.rule for r in matches]
+                        job.id,
+                        orig_name,
+                        path,
+                        [r.rule for r in matches],
+                        get_match_contexts(data, matches),
                     )
                     num_matches += 1
             except yara.Error:
@@ -290,3 +306,35 @@ def run_yara_batch(job_id: JobId, iterator: str, batch_size: int) -> None:
 
         agent.execute_yara(job, pop_result.files)
         agent.add_tasks_in_progress(job, -1)
+
+
+def get_match_contexts(
+    data: bytes, matches: List[yara.Match]
+) -> Dict[str, Dict[str, Dict[str, str]]]:
+    context = {}
+    for yara_match in matches:
+        match_context = {}
+        for string_match in yara_match.strings:
+            first = string_match.instances[0]
+
+            (before, matching, after) = read_bytes_with_context(
+                data, first.offset, first.matched_length
+            )
+            match_context[string_match.identifier] = {
+                "before": base64.b64encode(before).decode("utf-8"),
+                "matching": base64.b64encode(matching).decode("utf-8"),
+                "after": base64.b64encode(after).decode("utf-8"),
+            }
+
+            context[yara_match.rule] = match_context
+    return context
+
+
+def read_bytes_with_context(
+    data: bytes, offset: int, length: int, context: int = 32
+) -> tuple[bytes, bytes, bytes]:
+    """Return `matched_length` bytes from `offset`, along with `byte_range` bytes before and after the match."""
+    before = data[max(0, offset - context) : offset]
+    matching = data[offset : offset + length]
+    after = data[offset + length : offset + length + context]
+    return before, matching, after
