@@ -12,7 +12,6 @@ from fastapi import (
     HTTPException,
     Depends,
     Header,
-    Response,
 )  # type: ignore
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
