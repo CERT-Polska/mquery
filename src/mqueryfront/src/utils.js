@@ -27,10 +27,7 @@ export const openidLoginUrl = (config) => {
     );
     return login_url;
 };
-const sleepSync = (ms) => {
-    const start = Date.now();
-    while (Date.now() - start < ms) {}
-};
+
 export const storeTokenData = (token) => {
     localStorage.setItem("rawToken", token);
     const decodedToken = parseJWT(token);
@@ -41,21 +38,16 @@ export const refreshAccesToken = async () => {
     const rawToken = localStorage.getItem("rawToken");
     const expiresAt = localStorage.getItem("expiresAt");
     if (rawToken) {
-        if (Date.now() > expiresAt - 3000) {
-            const headers = rawToken
-                ? { Authorization: `Bearer ${rawToken}` }
-                : {};
-            const response = await axios.request("/api/token/refresh", {
-                method: "POST",
-                data: undefined,
-                params: undefined,
-                headers: headers,
-            });
-            if (response.data["new_token"]) {
-                storeTokenData(response.data["new_token"]);
-            } else {
-                return;
-            }
+        const headers = rawToken ? { Authorization: `Bearer ${rawToken}` } : {};
+        const response = await axios.request("/api/token/refresh", {
+            method: "POST",
+            headers: headers,
+            withCredentials: true,
+        });
+        if (response.data["token"]) {
+            storeTokenData(response.data["token"]);
+        } else {
+            return;
         }
     }
 };

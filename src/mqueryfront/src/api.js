@@ -11,6 +11,7 @@ export function parseJWT(token) {
 
 async function request(method, path, payload, params) {
     if (tokenExpired()) {
+        // If the token expired, try to refresh it with refresh_token
         await refreshAccesToken();
     }
     const rawToken = localStorage.getItem("rawToken");
@@ -21,6 +22,7 @@ async function request(method, path, payload, params) {
             data: payload,
             params: params,
             headers: headers,
+            withCredentials: true,
         })
         .catch((error) => {
             if (error.response.status === 401) {

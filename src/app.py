@@ -12,6 +12,7 @@ from fastapi import (
     HTTPException,
     Depends,
     Header,
+    Response,
 )  # type: ignore
 from starlette.requests import Request  # type: ignore
 from starlette.responses import Response, FileResponse, StreamingResponse  # type: ignore
@@ -47,8 +48,7 @@ from .schema import (
     AgentSchema,
     ServerSchema,
     LoginSchema,
-    LogoutSchema,
-    RefreshTokenSchema,
+    TokenSchema,
 )
 
 
@@ -75,7 +75,7 @@ def with_plugins() -> Iterable[PluginManager]:
         plugins.cleanup()
 
 
-def get_new_token(refresh_token):
+def get_new_tokens(refresh_token):
     data = {
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
@@ -85,10 +85,12 @@ def get_new_token(refresh_token):
     url = "http://mquery-keycloak-1:8080/auth/realms/myrealm/protocol/openid-connect/token"
     try:
         response = requests.post(url=url, data=data)
-        return response.json()
-
+        token_data = response.json()
+        new_refresh_token = token_data["refresh_token"]
+        new_token = token_data["access_token"]
+        return new_token, new_refresh_token
     except requests.exceptions.RequestException:
-        return None
+        return None, None
 
 
 class User:
@@ -113,37 +115,6 @@ class User:
             return [UserRole[name] for name in role_names]
         except KeyError:
             return []
-
-
-class TokenChecker:
-    def __init__(self):
-        self._tokens_data = {}
-
-    def show_tokens(self):
-        return self._tokens_data
-
-    def set_token(self, token, refresh_token):
-        self._tokens_data[token] = refresh_token
-
-    def refresh_token(self, token):
-        if token in self._tokens_data:
-            token_data = get_new_token(self._tokens_data[token])
-            if token_data:
-                new_token = token_data["access_token"]
-                new_refresh_token = token_data["refresh_token"]
-                del self._tokens_data[token]
-                self._tokens_data[new_token] = new_refresh_token
-                return new_token
-            return None
-        else:
-            return None
-
-    def remove_token(self, token):
-        if token in self._tokens_data:
-            del self._tokens_data[token]
-
-
-token_checker = TokenChecker()
 
 
 async def current_user(authorization: Optional[str] = Header(None)) -> User:
@@ -640,51 +611,33 @@ def server() -> ServerSchema:
 
 
 @app.post("/api/login", response_model=LoginSchema, tags=["stable"])
-async def login(request: Request):
+async def login(request: Request, response: Response):
     token = await request.json()
-    try:
-        token_checker.set_token(token["access_token"], token["refresh_token"])
+    logging.error("LOGGING BEJBE")
+    if token["refresh_token"]:
+        response.set_cookie(
+            key="refresh_token",
+            value=token["refresh_token"],
+            httponly=True,
+            max_age=36000,
+        )
         return LoginSchema(status="OK")
-    except KeyError as e:
-        logging.warning(
-            f"Error during user login: {repr(e)}\n token data:{token}"
+    return LoginSchema(status="Bad Token")
+
+
+@app.post("/api/token/refresh", response_model=TokenSchema)
+def refresh_token(request: Request, response: Response):
+    refresh_token_value = request.cookies.get("refresh_token")
+    if refresh_token_value:
+        new_token, new_refresh_token = get_new_tokens(refresh_token_value)
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            max_age=36000,
         )
-        return LoginSchema(status="Bad Token")
-
-    except TypeError as e:
-        logging.warning(
-            f"Error during user login: {repr(e)}\n token data:{token}"
-        )
-        return LoginSchema(status="Bad Token")
-
-
-@app.post("/api/logout", response_model=LogoutSchema, tags=["stable"])
-async def logout(request: Request):
-    token = await request.json()
-    try:
-        token_checker.remove_token(token["access_token"])
-        return LogoutSchema(status="OK")
-    except KeyError as e:
-        logging.warning(
-            f"Error during user log out: {repr(e)}\n token data:{token}"
-        )
-        return LogoutSchema(status="Bad Token")
-
-    except TypeError as e:
-        logging.warning(
-            f"Error during user log out: {repr(e)}\n token data:{token}"
-        )
-        return LogoutSchema(status="Bad Token")
-
-
-@app.post("/api/token/refresh", response_model=RefreshTokenSchema)
-def refresh_token(request: Request):
-    try:
-        _, token = request.headers.get("Authorization").split()
-        new_token = token_checker.refresh_token(token)
-        return RefreshTokenSchema(new_token=new_token)
-    except AttributeError:
-        return RefreshTokenSchema(new_token=None)
+        return TokenSchema(token=new_token)
+    return TokenSchema(token=None)
 
 
 @app.get("/query/{path}", include_in_schema=False)

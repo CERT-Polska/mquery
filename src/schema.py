@@ -111,9 +111,5 @@ class LoginSchema(BaseModel):
     status: str
 
 
-class LogoutSchema(BaseModel):
-    status: str
-
-
-class RefreshTokenSchema(BaseModel):
-    new_token: str | None
+class TokenSchema(BaseModel):
+    token: str | None

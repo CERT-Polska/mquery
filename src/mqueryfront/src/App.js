@@ -30,7 +30,7 @@ function App() {
         });
         tokenIntervalRef.current = setInterval(() => {
             refreshAccesToken();
-        }, 200000);
+        }, 900000); // refresh token every 15 minutes just in case user was idle.
         return () => clearInterval(tokenIntervalRef.current);
     }, []);
     const login = async (token_data) => {
