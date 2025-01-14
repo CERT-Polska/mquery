@@ -45,7 +45,8 @@ from .schema import (
     AgentSchema,
     ServerSchema,
     FileToQueueSchema,
-    QueueStatusSchema, EdgeOfFileSchema,
+    QueueStatusSchema,
+    EdgeOfFileSchema,
 )
 
 
