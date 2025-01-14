@@ -45,7 +45,7 @@ from .schema import (
     AgentSchema,
     ServerSchema,
     FileToQueueSchema,
-    QueueStatusSchema,
+    QueueStatusSchema, EdgeOfFileSchema,
 )
 
 
@@ -625,14 +625,14 @@ def get_queue_status(ursadb_id: str):
         return QueueStatusSchema(
             ursadb_id=ursadb_id,
             size=len(queue_files),
-            oldest_file={
-                "path": oldest_file.path,
-                "created_at": oldest_file.created_at,
-            },
-            newest_file={
-                "path": newest_file.path,
-                "created_at": newest_file.created_at,
-            },
+            oldest_file=EdgeOfFileSchema(
+                path=oldest_file.path,
+                created_at=oldest_file.created_at,
+            ),
+            newest_file=EdgeOfFileSchema(
+                path=oldest_file.path,
+                created_at=newest_file.created_at,
+            ),
         )
     raise HTTPException(
         status_code=400,
