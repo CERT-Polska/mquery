@@ -10,6 +10,7 @@ import string
 from redis import StrictRedis
 from enum import Enum, auto
 from rq import Queue  # type: ignore
+from sqlalchemy import exists
 from sqlmodel import (
     Session,
     create_engine,
@@ -26,7 +27,7 @@ from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
 from .models.queuedfile import QueuedFile
-from .schema import MatchesSchema, ConfigSchema
+from .schema import MatchesSchema, ConfigSchema, FileToQueueSchema
 from .config import app_config
 
 
@@ -478,16 +479,39 @@ class Database:
         alembic_cfg = Config(str(config_file))
         command.upgrade(alembic_cfg, "head")
 
-    def set_queued_file(self, ursadb_id, file_paths):
+    def add_queued_file(
+        self, ursadb_id: str, file_paths: List[FileToQueueSchema]
+    ):
         with self.session() as session:
             session.bulk_insert_mappings(
-                QueuedFile, [
+                QueuedFile,
+                [
                     {
                         "ursadb_id": ursadb_id,
                         "path": file.path,
                         "index_types": file.index_types,
-                        "tags": file.tags
-                    } for file in file_paths
-                ]
+                        "tags": file.tags,
+                    }
+                    for file in file_paths
+                ],
             )
             session.commit()
+
+    def get_queued_files(self, ursadb_id: str) -> List[QueuedFile]:
+        with self.session() as session:
+            queue_files = (
+                session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).all()
+            )
+
+        return queue_files
+
+    def delete_queued_file(self, ursadb_id: str) -> None:
+        with self.session() as session:
+            session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).delete()
+            session.commit()
+
+    def exist_ursadb(self, ursadb_id: str) -> bool:
+        with self.session() as session:
+            return session.query(
+                exists().where(QueuedFile.ursadb_id == ursadb_id)
+            ).scalar()

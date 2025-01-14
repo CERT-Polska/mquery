@@ -1,5 +1,6 @@
+from datetime import datetime
 from enum import Enum
-from typing import List, Dict, Optional, Sequence
+from typing import List, Dict, Optional, Sequence, Literal
 from pydantic import BaseModel, Field  # type: ignore
 from .models.job import JobView
 from .models.agentgroup import AgentGroupView
@@ -107,7 +108,19 @@ class ServerSchema(BaseModel):
     about: str
 
 
-class FilePathInputSchema(BaseModel):
+class FileToQueueSchema(BaseModel):
     path: str
-    index_types: List[str]
+    index_types: List[Literal["gram3", "text4", "hash4", "wide8"]]
     tags: List[str]
+
+
+class EdgeOfFileSchema(BaseModel):
+    path: str
+    created_at: datetime
+
+
+class QueueStatusSchema(BaseModel):
+    ursadb_id: str
+    size: int
+    oldest_file: EdgeOfFileSchema
+    newest_file: EdgeOfFileSchema

@@ -44,7 +44,8 @@ from .schema import (
     BackendStatusDatasetsSchema,
     AgentSchema,
     ServerSchema,
-    FilePathInputSchema,
+    FileToQueueSchema,
+    QueueStatusSchema,
 )
 
 
@@ -556,7 +557,7 @@ def job_statuses(user: User = Depends(current_user)) -> JobsSchema:
 @app.delete(
     "/api/query/{job_id}",
     response_model=StatusSchema,
-    dependencies=[Depends(can_manage_queues)],
+    dependencies=[Depends(can_manage_queries)],
 )
 def query_remove(
     job_id: str, user: User = Depends(current_user)
@@ -600,12 +601,61 @@ def serve_index(path: str) -> FileResponse:
     tags=["queue"],
     dependencies=[Depends(can_manage_queues)],
 )
-def list_of_paths_to_index(
-    ursadb_id: str, file_paths: List[FilePathInputSchema] = Body(...)
-):
-    db.set_queued_file(ursadb_id, file_paths)
+def add_files_to_queue(
+    ursadb_id: str, file_paths: List[FileToQueueSchema] = Body(...)
+) -> StatusSchema:
+    db.add_queued_file(ursadb_id, file_paths)
 
     return StatusSchema(status="ok")
+
+
+@app.get(
+    "/api/queue/{ursadb_id}",
+    response_model=QueueStatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_view_queues)],
+)
+def get_queue_status(ursadb_id: str):
+    queue_files = db.get_queued_files(ursadb_id)
+
+    if queue_files:
+        oldest_file = min(queue_files, key=lambda x: x.created_at)
+        newest_file = max(queue_files, key=lambda x: x.created_at)
+
+        return QueueStatusSchema(
+            ursadb_id=ursadb_id,
+            size=len(queue_files),
+            oldest_file={
+                "path": oldest_file.path,
+                "created_at": oldest_file.created_at,
+            },
+            newest_file={
+                "path": newest_file.path,
+                "created_at": newest_file.created_at,
+            },
+        )
+    raise HTTPException(
+        status_code=400,
+        detail="Ursadb_id not found.",
+    )
+
+
+@app.delete(
+    "/api/queue/{ursadb_id}",
+    response_model=StatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_manage_queues)],
+)
+def delete_queued_by_ursadb_id(ursadb_id: str):
+    ursadb_exist = db.exist_ursadb(ursadb_id)
+    if ursadb_exist:
+        db.delete_queued_file(ursadb_id)
+        return StatusSchema(status="ok")
+
+    raise HTTPException(
+        status_code=400,
+        detail="Ursadb_id not found.",
+    )
 
 
 @app.get("/recent", include_in_schema=False)
