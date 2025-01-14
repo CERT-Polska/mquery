@@ -74,7 +74,7 @@ def with_plugins() -> Iterable[PluginManager]:
         plugins.cleanup()
 
 
-def get_new_tokens(refresh_token):
+def get_new_tokens(refresh_token) -> tuple[Any, Any] | tuple[None, None]:
     data = {
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
@@ -83,7 +83,7 @@ def get_new_tokens(refresh_token):
     }
     url = "http://mquery-keycloak-1:8080/auth/realms/myrealm/protocol/openid-connect/token"
     try:
-        response = requests.post(url=url, data=data)
+        response: requests.Response = requests.post(url=url, data=data)
         token_data = response.json()
         new_refresh_token = token_data["refresh_token"]
         new_token = token_data["access_token"]
@@ -610,7 +610,7 @@ def server() -> ServerSchema:
 
 
 @app.post("/api/login", response_model=LoginSchema, tags=["stable"])
-async def login(request: Request, response: Response):
+async def login(request: Request, response: Response) -> LoginSchema:
     token = await request.json()
     logging.error("LOGGING BEJBE")
     if token["refresh_token"]:
@@ -625,7 +625,7 @@ async def login(request: Request, response: Response):
 
 
 @app.post("/api/token/refresh", response_model=TokenSchema)
-def refresh_token(request: Request, response: Response):
+def refresh_token(request: Request, response: Response) -> TokenSchema:
     refresh_token_value = request.cookies.get("refresh_token")
     if refresh_token_value:
         new_token, new_refresh_token = get_new_tokens(refresh_token_value)
