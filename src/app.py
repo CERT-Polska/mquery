@@ -151,7 +151,7 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
         # token expired so user is anonymous
         return User(None)
     except jwt.InvalidTokenError:
-        # Invalid token means invalid signature, issuer, or just expired.
+        # Invalid token means invalid signature, issuer.
         raise unauthorized
 
     return User(token_json)
