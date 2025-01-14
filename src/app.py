@@ -74,7 +74,7 @@ def with_plugins() -> Iterable[PluginManager]:
         plugins.cleanup()
 
 
-def get_new_tokens(refresh_token) -> tuple[Any, Any] | tuple[None, None]:
+def get_new_tokens(refresh_token):
     data = {
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
@@ -617,7 +617,7 @@ async def login(request: Request, response: Response) -> LoginSchema:
             key="refresh_token",
             value=token["refresh_token"],
             httponly=True,
-            max_age=36000,
+            max_age=1800,
         )
         return LoginSchema(status="OK")
     return LoginSchema(status="Bad Token")
@@ -632,7 +632,7 @@ def refresh_token(request: Request, response: Response) -> TokenSchema:
             key="refresh_token",
             value=new_refresh_token,
             httponly=True,
-            max_age=36000,
+            max_age=1800,
         )
         return TokenSchema(token=new_token)
     return TokenSchema(token=None)
