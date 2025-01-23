@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import Navigation from "./Navigation";
 import QueryPage from "./query/QueryPage";
@@ -9,6 +9,7 @@ import AboutPage from "./about/AboutPage";
 import AuthPage from "./auth/AuthPage";
 import api, { parseJWT } from "./api";
 import "./App.css";
+import { refreshAccesToken, storeTokenData, clearTokenData } from "./utils";
 
 function getCurrentTokenOrNull() {
     // This function handles missing and corrupted token in the same way.
@@ -21,20 +22,32 @@ function getCurrentTokenOrNull() {
 
 function App() {
     const [config, setConfig] = useState(null);
+    const tokenIntervalRef = useRef(null);
 
     useEffect(() => {
         api.get("/server").then((response) => {
             setConfig(response.data);
         });
+        tokenIntervalRef.current = setInterval(() => {
+            refreshAccesToken();
+        }, 900000); // refresh token every 15 minutes just in case user was idle.
+        return () => clearInterval(tokenIntervalRef.current);
     }, []);
-
-    const login = (rawToken) => {
-        localStorage.setItem("rawToken", rawToken);
-        window.location.href = "/";
+    const login = async (token_data) => {
+        token_data.not_before_policy = token_data["not-before-policy"];
+        delete token_data["not-before-policy"];
+        const response = await api.post("/login", token_data);
+        storeTokenData(token_data["access_token"]);
+        const location_href = localStorage.getItem("currentLocation");
+        if (location_href) {
+            window.location.href = location_href;
+        } else {
+            window.location.href = "/";
+        }
     };
 
     const logout = () => {
-        localStorage.removeItem("rawToken");
+        clearTokenData(tokenIntervalRef.current);
         if (config !== null) {
             const logout_url = new URL(config["openid_url"] + "/logout");
             logout_url.searchParams.append(

@@ -1,6 +1,8 @@
 from contextlib import asynccontextmanager
 import os
 
+import requests  # type: ignore
+
 import uvicorn  # type: ignore
 from pathlib import Path
 from fastapi import (
@@ -44,6 +46,8 @@ from .schema import (
     BackendStatusDatasetsSchema,
     AgentSchema,
     ServerSchema,
+    LoginSchema,
+    TokenSchema,
 )
 
 
@@ -68,6 +72,24 @@ def with_plugins() -> Iterable[PluginManager]:
         yield plugins
     finally:
         plugins.cleanup()
+
+
+def get_new_tokens(refresh_token):
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": db.config.openid_client_id,
+        "client_secret": db.config.openid_secret,
+    }
+    url = "http://mquery-keycloak-1:8080/auth/realms/myrealm/protocol/openid-connect/token"
+    try:
+        response: requests.Response = requests.post(url=url, data=data)
+        token_data = response.json()
+        new_refresh_token = token_data["refresh_token"]
+        new_token = token_data["access_token"]
+        return new_token, new_refresh_token
+    except requests.exceptions.RequestException:
+        return None, None
 
 
 class User:
@@ -124,8 +146,11 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
         token_json = jwt.decode(
             token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
         )
+    except jwt.ExpiredSignatureError:
+        # token expired so user is anonymous
+        return User(None)
     except jwt.InvalidTokenError:
-        # Invalid token means invalid signature, issuer, or just expired.
+        # Invalid token means invalid signature, issuer.
         raise unauthorized
 
     return User(token_json)
@@ -582,6 +607,35 @@ def server() -> ServerSchema:
         openid_client_id=db.config.openid_client_id,
         about=app_config.mquery.about,
     )
+
+
+@app.post("/api/login", response_model=LoginSchema, tags=["stable"])
+async def login(request: Request, response: Response) -> LoginSchema:
+    token = await request.json()
+    if token["refresh_token"]:
+        response.set_cookie(
+            key="refresh_token",
+            value=token["refresh_token"],
+            httponly=True,
+            max_age=1800,
+        )
+        return LoginSchema(status="OK")
+    return LoginSchema(status="Bad Token")
+
+
+@app.post("/api/token/refresh", response_model=TokenSchema)
+def refresh_token(request: Request, response: Response) -> TokenSchema:
+    refresh_token_value = request.cookies.get("refresh_token")
+    if refresh_token_value:
+        new_token, new_refresh_token = get_new_tokens(refresh_token_value)
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            max_age=1800,
+        )
+        return TokenSchema(token=new_token)
+    return TokenSchema(token=None)
 
 
 @app.get("/query/{path}", include_in_schema=False)

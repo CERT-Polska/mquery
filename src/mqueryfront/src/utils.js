@@ -1,3 +1,5 @@
+import axios from "axios";
+import api, { parseJWT } from "./api";
 export const isStatusFinished = (status) =>
     ["done", "cancelled"].includes(status);
 
@@ -24,4 +26,46 @@ export const openidLoginUrl = (config) => {
         window.location.origin + "/auth"
     );
     return login_url;
+};
+
+export const storeTokenData = (token) => {
+    localStorage.setItem("rawToken", token);
+    const decodedToken = parseJWT(token);
+    localStorage.setItem("expiresAt", decodedToken.exp * 1000);
+};
+
+export const refreshAccesToken = async () => {
+    const rawToken = localStorage.getItem("rawToken");
+    const expiresAt = localStorage.getItem("expiresAt");
+    if (rawToken) {
+        const headers = rawToken ? { Authorization: `Bearer ${rawToken}` } : {};
+        const response = await axios.request("/api/token/refresh", {
+            method: "POST",
+            headers: headers,
+            withCredentials: true,
+        });
+        if (response.data["token"]) {
+            storeTokenData(response.data["token"]);
+        } else {
+            return;
+        }
+    }
+};
+
+export const clearTokenData = (tokenInterval) => {
+    clearInterval(tokenInterval);
+    localStorage.removeItem("expiresAt");
+    localStorage.removeItem("rawToken");
+};
+
+export const tokenExpired = () => {
+    const rawToken = localStorage.getItem("rawToken");
+    if (rawToken) {
+        const expiresAt = localStorage.getItem("expiresAt");
+        if (Date.now() > expiresAt) {
+            return true;
+        }
+        return false;
+    }
+    return false;
 };
