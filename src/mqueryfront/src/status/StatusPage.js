@@ -5,6 +5,7 @@ import DatabaseTopology from "./DatabaseTopology";
 import VersionStatus from "./VersionStatus";
 import api from "../api";
 import WarningPage from "../components/WarningPage";
+import IndexLink from "./IndexLink";
 
 class StatusPage extends Component {
     constructor(props) {
@@ -29,6 +30,8 @@ class StatusPage extends Component {
             });
         this._ismounted = true;
     }
+
+    usraIDs = [1, 2, "asd"]; // TODO: collect from endpoint
 
     getAgentsUrsaURLDuplicatesWarning(agentgroups) {
         var ursaURLS = agentgroups.map((agent) => agent.spec.ursadb_url);
@@ -80,6 +83,14 @@ class StatusPage extends Component {
                         </div>
                         <div className="col-md-6">
                             <DatabaseTopology />
+                        </div>
+                    </div>
+                    <div className="row">
+                        <h1 className="text-center mq-bottom">Index files</h1>
+                        <div className="index-links-wrapper">
+                            {this.usraIDs.map((ursaID) => (
+                                <IndexLink ursaID={ursaID} />
+                            ))}
                         </div>
                     </div>
                 </div>
