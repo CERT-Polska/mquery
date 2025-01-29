@@ -111,3 +111,29 @@
     cursor: pointer;
     width: fit-content;
 }
+
+.modal-container {
+    position: absolute;
+    offset-distance: 10px;
+    z-index: auto;
+    right: 5vw;
+}
+
+.modal-block {
+    position: relative;
+    block-size: "fit-content";
+    right: 5vw;
+}
+
+.modal-dialog {
+    margin: 0;
+}
+
+.modal-header:hover {
+    cursor: grab;
+}
+
+.modal-table {
+    overflow-y: scroll;
+    max-height: 50vh;
+}
