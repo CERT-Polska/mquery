@@ -501,9 +501,9 @@ class Database:
 
         with self.session() as session:
             query = select(
-                func.count(QueuedFile.id).label("size"),
-                func.min(QueuedFile.created_at).label("oldest_file"),
-                func.max(QueuedFile.created_at).label("newest_file"),
+                func.count(QueuedFile.id),
+                func.min(QueuedFile.created_at),
+                func.max(QueuedFile.created_at),
             ).where(QueuedFile.ursadb_id == ursadb_id)
             queue_info = session.exec(query).one()
 
