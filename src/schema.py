@@ -114,13 +114,8 @@ class FileToQueueSchema(BaseModel):
     tags: List[str]
 
 
-class EdgeOfFileSchema(BaseModel):
-    path: str
-    created_at: datetime
-
-
 class QueueStatusSchema(BaseModel):
     ursadb_id: str
     size: int
-    oldest_file: EdgeOfFileSchema
-    newest_file: EdgeOfFileSchema
+    oldest_file: datetime | None
+    newest_file: datetime | None

@@ -46,7 +46,6 @@ from .schema import (
     ServerSchema,
     FileToQueueSchema,
     QueueStatusSchema,
-    EdgeOfFileSchema,
 )
 
 
@@ -605,7 +604,7 @@ def serve_index(path: str) -> FileResponse:
 def add_files_to_queue(
     ursadb_id: str, file_paths: List[FileToQueueSchema] = Body(...)
 ) -> StatusSchema:
-    db.add_queued_file(ursadb_id, file_paths)
+    db.add_files_to_queue(ursadb_id, file_paths)
 
     return StatusSchema(status="ok")
 
@@ -617,27 +616,13 @@ def add_files_to_queue(
     dependencies=[Depends(can_view_queues)],
 )
 def get_queue_status(ursadb_id: str):
-    queue_files = db.get_queued_files(ursadb_id)
-
-    if queue_files:
-        oldest_file = min(queue_files, key=lambda x: x.created_at)
-        newest_file = max(queue_files, key=lambda x: x.created_at)
-
-        return QueueStatusSchema(
-            ursadb_id=ursadb_id,
-            size=len(queue_files),
-            oldest_file=EdgeOfFileSchema(
-                path=oldest_file.path,
-                created_at=oldest_file.created_at,
-            ),
-            newest_file=EdgeOfFileSchema(
-                path=oldest_file.path,
-                created_at=newest_file.created_at,
-            ),
-        )
-    raise HTTPException(
-        status_code=400,
-        detail="Ursadb_id not found.",
+    queue_status = db.get_queue_info(ursadb_id)
+    logging.error(queue_status)
+    return QueueStatusSchema(
+        ursadb_id=ursadb_id,
+        size=queue_status[0],
+        oldest_file=queue_status[1],
+        newest_file=queue_status[2],
     )
 
 
@@ -647,16 +632,13 @@ def get_queue_status(ursadb_id: str):
     tags=["queue"],
     dependencies=[Depends(can_manage_queues)],
 )
-def delete_queued_by_ursadb_id(ursadb_id: str):
+def delete_queued_by_id(ursadb_id: str):
     ursadb_exist = db.exist_ursadb(ursadb_id)
-    if ursadb_exist:
-        db.delete_queued_file(ursadb_id)
-        return StatusSchema(status="ok")
 
-    raise HTTPException(
-        status_code=400,
-        detail="Ursadb_id not found.",
-    )
+    if ursadb_exist:
+        db.delete_queued_files(ursadb_id)
+        return StatusSchema(status="ok")
+    return StatusSchema(status="ursadb_id not found")
 
 
 @app.get("/recent", include_in_schema=False)

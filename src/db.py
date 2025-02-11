@@ -10,7 +10,7 @@ import string
 from redis import StrictRedis
 from enum import Enum, auto
 from rq import Queue  # type: ignore
-from sqlalchemy import exists
+from sqlalchemy import exists, func
 from sqlmodel import (
     Session,
     create_engine,
@@ -479,7 +479,7 @@ class Database:
         alembic_cfg = Config(str(config_file))
         command.upgrade(alembic_cfg, "head")
 
-    def add_queued_file(
+    def add_files_to_queue(
         self, ursadb_id: str, file_paths: List[FileToQueueSchema]
     ):
         with self.session() as session:
@@ -497,15 +497,19 @@ class Database:
             )
             session.commit()
 
-    def get_queued_files(self, ursadb_id: str) -> List[QueuedFile]:
+    def get_queue_info(self, ursadb_id: str) -> List[QueuedFile]:
+
         with self.session() as session:
-            queue_files = (
-                session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).all()
-            )
+            query = select(
+                func.count(QueuedFile.id).label("size"),
+                func.min(QueuedFile.created_at).label("oldest_file"),
+                func.max(QueuedFile.created_at).label("newest_file"),
+            ).where(QueuedFile.ursadb_id == ursadb_id)
+            queue_info = session.exec(query).one()
 
-        return queue_files
+        return queue_info
 
-    def delete_queued_file(self, ursadb_id: str) -> None:
+    def delete_queued_files(self, ursadb_id: str) -> None:
         with self.session() as session:
             session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).delete()
             session.commit()
