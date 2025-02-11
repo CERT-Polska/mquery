@@ -117,5 +117,5 @@ class FileToQueueSchema(BaseModel):
 class QueueStatusSchema(BaseModel):
     ursadb_id: str
     size: int
-    oldest_file: datetime | None
-    newest_file: datetime | None
+    oldest_file: Optional[datetime]
+    newest_file: Optional[datetime]
