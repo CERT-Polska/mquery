@@ -9,4 +9,4 @@ COPY requirements.txt src/plugins/requirements-*.txt /tmp/
 RUN ls /tmp/requirements*.txt | xargs -i,, pip --no-cache-dir install -r ,,
 RUN pip install watchdog
 
-CMD pip install -e /usr/src/app && watchmedo auto-restart --pattern="*.py" --recursive -- mquery-daemon
+CMD pip install -e /usr/src/app && watchmedo auto-restart --pattern=*.py --recursive -- mquery-daemon
