@@ -31,7 +31,7 @@ from .schema import (
     MatchesSchema,
     ConfigSchema,
     FileToQueueSchema,
-    QueueStatusDatasetsSchema,
+    QueueStatusDatabaseSchema,
 )
 from .config import app_config
 
@@ -502,7 +502,7 @@ class Database:
             )
             session.commit()
 
-    def get_queue_info(self, ursadb_id: str) -> QueueStatusDatasetsSchema:
+    def get_queue_info(self, ursadb_id: str) -> QueueStatusDatabaseSchema:
 
         with self.session() as session:
             query = select(
@@ -512,7 +512,11 @@ class Database:
             ).where(QueuedFile.ursadb_id == ursadb_id)
             queue_info = session.exec(query).one()
 
-        return queue_info
+        return QueueStatusDatabaseSchema(
+            size=queue_info[0],
+            oldest_file=queue_info[1],
+            newest_file=queue_info[2],
+        )
 
     def delete_queued_files(self, ursadb_id: str) -> None:
         with self.session() as session:

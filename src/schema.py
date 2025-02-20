@@ -114,14 +114,11 @@ class FileToQueueSchema(BaseModel):
     tags: List[str]
 
 
-class QueueStatusSchema(BaseModel):
+class QueueStatusDatabaseSchema(BaseModel):
+    size: int
+    oldest_file: Optional[datetime]
+    newest_file: Optional[datetime]
+
+
+class QueueStatusSchema(QueueStatusDatabaseSchema):
     ursadb_id: str
-    size: int
-    oldest_file: Optional[datetime]
-    newest_file: Optional[datetime]
-
-
-class QueueStatusDatasetsSchema(QueueStatusSchema):
-    size: int
-    oldest_file: Optional[datetime]
-    newest_file: Optional[datetime]
