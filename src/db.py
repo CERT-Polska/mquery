@@ -510,7 +510,7 @@ class Database:
                 func.min(QueuedFile.created_at),
                 func.max(QueuedFile.created_at),
             ).where(QueuedFile.ursadb_id == ursadb_id)
-            queue_info = session.exec(query).first()
+            queue_info = session.exec(query).one()
 
         queue_status = QueueStatusDatabaseSchema(
             size=queue_info[0],
