@@ -510,13 +510,15 @@ class Database:
                 func.min(QueuedFile.created_at),
                 func.max(QueuedFile.created_at),
             ).where(QueuedFile.ursadb_id == ursadb_id)
-            queue_info = session.exec(query).one()
+            queue_info = session.exec(query).first()
 
-        return QueueStatusDatabaseSchema(
+        queue_status = QueueStatusDatabaseSchema(
             size=queue_info[0],
             oldest_file=queue_info[1],
             newest_file=queue_info[2],
         )
+
+        return queue_status
 
     def delete_queued_files(self, ursadb_id: str) -> None:
         with self.session() as session:
