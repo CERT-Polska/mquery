@@ -617,12 +617,13 @@ def add_files_to_queue(
 )
 def get_queue_status(ursadb_id: str):
     queue_status = db.get_queue_info(ursadb_id)
-
+    logging.error(queue_status)
+    logging.error(type(queue_status))
     return QueueStatusSchema(
         ursadb_id=ursadb_id,
-        size=queue_status[0],
-        oldest_file=queue_status[1],
-        newest_file=queue_status[2],
+        size=queue_status.get("size"),
+        oldest_file=queue_status.get("oldest_file"),
+        newest_file=queue_status.get("newest_file"),
     )
 
 

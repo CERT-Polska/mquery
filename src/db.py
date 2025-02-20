@@ -5,7 +5,7 @@ from alembic import command
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Union
 from time import time
 import random
 import string
@@ -499,7 +499,7 @@ class Database:
             )
             session.commit()
 
-    def get_queue_info(self, ursadb_id: str) -> List[int | datetime | None]:
+    def get_queue_info(self, ursadb_id: str) -> Dict[str, Union[int, datetime | None]]:
 
         with self.session() as session:
             query = select(
@@ -509,6 +509,11 @@ class Database:
             ).where(QueuedFile.ursadb_id == ursadb_id)
             queue_info = session.exec(query).one()
 
+        queue_info = {
+            "size": queue_info[0],
+            "oldest_file": queue_info[1],
+            "newest_file": queue_info[2],
+        }
         return queue_info
 
     def delete_queued_files(self, ursadb_id: str) -> None:
