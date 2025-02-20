@@ -1,11 +1,9 @@
-from datetime import datetime
-
 from alembic.config import Config
 from alembic import command
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any
 from time import time
 import random
 import string
@@ -29,7 +27,12 @@ from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
 from .models.queuedfile import QueuedFile
-from .schema import MatchesSchema, ConfigSchema, FileToQueueSchema
+from .schema import (
+    MatchesSchema,
+    ConfigSchema,
+    FileToQueueSchema,
+    QueueStatusDatasetsSchema,
+)
 from .config import app_config
 
 
@@ -499,7 +502,7 @@ class Database:
             )
             session.commit()
 
-    def get_queue_info(self, ursadb_id: str) -> Dict[str, int | Optional[datetime]]:
+    def get_queue_info(self, ursadb_id: str) -> QueueStatusDatasetsSchema:
 
         with self.session() as session:
             query = select(
@@ -509,11 +512,6 @@ class Database:
             ).where(QueuedFile.ursadb_id == ursadb_id)
             queue_info = session.exec(query).one()
 
-        queue_info = {
-            "size": queue_info[0],
-            "oldest_file": queue_info[1],
-            "newest_file": queue_info[2],
-        }
         return queue_info
 
     def delete_queued_files(self, ursadb_id: str) -> None:

@@ -119,3 +119,9 @@ class QueueStatusSchema(BaseModel):
     size: int
     oldest_file: Optional[datetime]
     newest_file: Optional[datetime]
+
+
+class QueueStatusDatasetsSchema(QueueStatusSchema):
+    size: int
+    oldest_file: Optional[datetime]
+    newest_file: Optional[datetime]

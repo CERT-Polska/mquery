@@ -621,9 +621,9 @@ def get_queue_status(ursadb_id: str):
     logging.error(type(queue_status))
     return QueueStatusSchema(
         ursadb_id=ursadb_id,
-        size=queue_status.get("size"),
-        oldest_file=queue_status.get("oldest_file"),
-        newest_file=queue_status.get("newest_file"),
+        size=queue_status.size,
+        oldest_file=queue_status.oldest_file,
+        newest_file=queue_status.newest_file,
     )
 
 
