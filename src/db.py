@@ -5,7 +5,7 @@ from alembic import command
 from pathlib import Path
 from collections import defaultdict
 from contextlib import contextmanager
-from typing import List, Optional, Dict, Any, Union, Tuple
+from typing import List, Optional, Dict, Any, Tuple
 from time import time
 import random
 import string
@@ -499,7 +499,7 @@ class Database:
             )
             session.commit()
 
-    def get_queue_info(self, ursadb_id: str) -> Tuple[int, datetime, datetime]:
+    def get_queue_info(self, ursadb_id: str) -> List[int | datetime | None]:
 
         with self.session() as session:
             query = select(
