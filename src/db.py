@@ -10,7 +10,7 @@ import string
 from redis import StrictRedis
 from enum import Enum, auto
 from rq import Queue  # type: ignore
-from sqlalchemy import exists, func
+from sqlalchemy import exists
 from sqlmodel import (
     Session,
     create_engine,
@@ -19,6 +19,7 @@ from sqlmodel import (
     update,
     col,
     delete,
+    func,
 )
 
 from .models.agentgroup import AgentGroup
