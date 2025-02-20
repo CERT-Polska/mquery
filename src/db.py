@@ -10,7 +10,7 @@ import string
 from redis import StrictRedis
 from enum import Enum, auto
 from rq import Queue  # type: ignore
-from sqlalchemy import exists
+from sqlalchemy import exists, func
 from sqlmodel import (
     Session,
     create_engine,
@@ -19,7 +19,6 @@ from sqlmodel import (
     update,
     col,
     delete,
-    func,
 )
 
 from .models.agentgroup import AgentGroup
@@ -511,7 +510,7 @@ class Database:
                 func.min(QueuedFile.created_at),
                 func.max(QueuedFile.created_at),
             ).where(QueuedFile.ursadb_id == ursadb_id)
-            queue_info = session.exec(query).one()
+            queue_info: QueueStatusDatabaseSchema = session.exec(query).one()
 
         return QueueStatusDatabaseSchema(
             size=queue_info[0],
