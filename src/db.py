@@ -499,7 +499,7 @@ class Database:
             )
             session.commit()
 
-    def get_queue_info(self, ursadb_id: str) -> Dict[str, Union[int, datetime | None]]:
+    def get_queue_info(self, ursadb_id: str) -> Dict[str, int | Optional[datetime]]:
 
         with self.session() as session:
             query = select(
