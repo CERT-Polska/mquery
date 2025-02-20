@@ -505,12 +505,12 @@ class Database:
     def get_queue_info(self, ursadb_id: str) -> QueueStatusDatabaseSchema:
 
         with self.session() as session:
-            query = select(
+            query = select(  # type: ignore
                 func.count(QueuedFile.id),
                 func.min(QueuedFile.created_at),
                 func.max(QueuedFile.created_at),
             ).where(QueuedFile.ursadb_id == ursadb_id)
-            queue_info: QueueStatusDatabaseSchema = session.exec(query).one()
+            queue_info = session.exec(query).one()
 
         return QueueStatusDatabaseSchema(
             size=queue_info[0],
