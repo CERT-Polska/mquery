@@ -10,6 +10,7 @@ import string
 from redis import StrictRedis
 from enum import Enum, auto
 from rq import Queue  # type: ignore
+from sqlalchemy import exists, func
 from sqlmodel import (
     Session,
     create_engine,
@@ -25,7 +26,13 @@ from .models.configentry import ConfigEntry
 from .models.job import Job, JobStatus
 from .models.jobagent import JobAgent
 from .models.match import Match
-from .schema import MatchesSchema, ConfigSchema
+from .models.queuedfile import QueuedFile
+from .schema import (
+    MatchesSchema,
+    ConfigSchema,
+    FileToQueueSchema,
+    QueueStatusDatabaseSchema,
+)
 from .config import app_config
 
 
@@ -56,6 +63,8 @@ class UserRole(Enum):
     can_list_queries = auto()
     can_view_queries = auto()
     can_download_files = auto()
+    can_view_queues = auto()
+    can_manage_queues = auto()
 
 
 # Type alias for Job ids
@@ -474,3 +483,48 @@ class Database:
         config_file = Path(__file__).parent / "alembic.ini"
         alembic_cfg = Config(str(config_file))
         command.upgrade(alembic_cfg, "head")
+
+    def add_files_to_queue(
+        self, ursadb_id: str, file_paths: List[FileToQueueSchema]
+    ):
+        with self.session() as session:
+            session.bulk_insert_mappings(
+                QueuedFile,
+                [
+                    {
+                        "ursadb_id": ursadb_id,
+                        "path": file.path,
+                        "index_types": file.index_types,
+                        "tags": file.tags,
+                    }
+                    for file in file_paths
+                ],
+            )
+            session.commit()
+
+    def get_queue_info(self, ursadb_id: str) -> QueueStatusDatabaseSchema:
+
+        with self.session() as session:
+            query = select(  # type: ignore
+                func.count(QueuedFile.id),
+                func.min(QueuedFile.created_at),
+                func.max(QueuedFile.created_at),
+            ).where(QueuedFile.ursadb_id == ursadb_id)
+            queue_info = session.exec(query).one()
+
+        return QueueStatusDatabaseSchema(
+            size=queue_info[0],
+            oldest_file=queue_info[1],
+            newest_file=queue_info[2],
+        )
+
+    def delete_queued_files(self, ursadb_id: str) -> None:
+        with self.session() as session:
+            session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).delete()
+            session.commit()
+
+    def exist_ursadb(self, ursadb_id: str) -> bool:
+        with self.session() as session:
+            return session.query(
+                exists().where(QueuedFile.ursadb_id == ursadb_id)
+            ).scalar()
