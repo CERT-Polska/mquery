@@ -10,9 +10,7 @@ class IndexClearQueueButton extends Component {
         return (
             <span
                 data-toggle="tooltip"
-                title={
-                    "This action will remove all files from this queue"
-                }
+                title={"This action will remove all files from this queue"}
             >
                 <button
                     className="btn btn-secondary btn-sm btn-danger my-2"
