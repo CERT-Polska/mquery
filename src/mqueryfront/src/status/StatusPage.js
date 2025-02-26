@@ -5,7 +5,7 @@ import DatabaseTopology from "./DatabaseTopology";
 import VersionStatus from "./VersionStatus";
 import api from "../api";
 import WarningPage from "../components/WarningPage";
-import IndexLink from "./IndexLink";
+import { Link } from "react-router-dom";
 
 class StatusPage extends Component {
     constructor(props) {
@@ -87,14 +87,6 @@ class StatusPage extends Component {
                         </div>
                         <div className="col-md-6">
                             <DatabaseTopology />
-                        </div>
-                    </div>
-                    <div className="row">
-                        <h1 className="text-center mq-bottom">Index files</h1>
-                        <div className="index-links-wrapper">
-                            {this.state.ursaIDs.map((ursaID, index) => (
-                                <IndexLink key={index} ursaID={ursaID} />
-                            ))}
                         </div>
                     </div>
                 </div>

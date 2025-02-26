@@ -91,7 +91,7 @@ class IndexPageInner extends Component {
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
-                    <h1 className="text-center mq-bottom">{`Ursadb ${this.props.params.ursa_id}`}</h1>
+                    <h1 className="text-center mq-bottom">{`Ursadb: ${this.props.params.ursa_id}`}</h1>
                     <div className="index-form-wrapper">
                         <textarea
                             id="filenames-textarea"
