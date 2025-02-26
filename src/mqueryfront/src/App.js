@@ -70,7 +70,7 @@ function App() {
                     path="/auth"
                     element={<AuthPage config={config} login={login} />}
                 />
-                <Route path="/index-files/:ursa_id" element={<IndexPage />} />
+                <Route path="/ursadb/:ursa_id" element={<IndexPage />} />
             </Routes>
         </div>
     );

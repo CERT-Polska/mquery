@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const IndexLink = (props) => {
     return (
         <div className="index-navlink">
-            <Link exact="true" to={`/index-files/${props.ursaID}`}>
+            <Link exact="true" to={`/ursadb/${props.ursaID}`}>
                 Index using UrsaDB id.:{props.ursaID}
                 <FontAwesomeIcon
                     className="mx-2"
