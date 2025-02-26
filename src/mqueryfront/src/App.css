@@ -127,9 +127,6 @@
 }
 
 .index-navlink {
-    border-color: black;
-    border-style: solid;
-    border-width: thin;
     font-size: large;
     display: grid;
     grid-auto-flow: row;

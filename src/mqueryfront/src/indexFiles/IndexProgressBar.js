@@ -1,5 +1,8 @@
 import { Component } from "react";
 
+// NOTE: this module is currently not used, but might prove useful in future
+// when status might be applied to QueuedFile objects
+// (only required param is "percentage" as float value from 0 to 100)
 class IndexProgressBar extends Component {
     render() {
         return (

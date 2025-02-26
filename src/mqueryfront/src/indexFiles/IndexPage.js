@@ -3,15 +3,14 @@ import IndexMultiSelect from "./IndexMultiSelect";
 import { useParams } from "react-router-dom";
 import api from "../api";
 import ErrorBoundary from "../components/ErrorBoundary";
-import IndexProgressBar from "./IndexProgressBar";
 import IndexClearQueueButton from "./IndexClearQueueButton";
 
-// function getAvailableTaintsListFromDatasets(datasets) {
-//     var taintList = Object.values(datasets)
-//         .map((ds) => ds.taints)
-//         .flat();
-//     return [...new Set(taintList)];
-// }
+function getAvailableTaintsListFromDatasets(datasets) {
+    var taintList = Object.values(datasets)
+        .map((ds) => ds.taints)
+        .flat();
+    return [...new Set(taintList)];
+}
 
 class IndexPageInner extends Component {
     constructor(props) {
@@ -22,8 +21,9 @@ class IndexPageInner extends Component {
             selectedNGrams: [],
             availableTaints: [],
             selectedTaints: [],
-            allQueuedFilesLength: 0,
-            finishedQueuedFilesLength: 0,
+            size: 0,
+            oldestFile: null,
+            newestFile: null,
         };
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleTextareaInput = this.handleTextareaInput.bind(this);
@@ -35,30 +35,24 @@ class IndexPageInner extends Component {
 
     componentDidMount() {
         api.get(`/queue/${this.props.params.ursa_id}`)
-            // .then((response) => {
-            //     this.setState({
-            //         allQueuedFilesLength: response.data.all_files, // NOTE: dunno whether these params will be provided at all
-            //         finishedQueuedFilesLength: response.data.finished_files
-            //     })
-            // })
-            // .catch((error) => {
-            //     this.setState({ error: error });
-            // });
-            .catch((_e) => {
+            .then((response) => {
                 this.setState({
-                    allQueuedFilesLength: 10000,
-                    finishedQueuedFilesLength: 2137,
+                    size: response.data.size, // NOTE: dunno whether these params will be provided at all
+                    oldestFile: response.data.oldest_file,
+                    newestFile: response.data.newest_file,
                 });
-            }); // TODO: uncomment prev then-catch clause after API implementation
+            })
+            .catch((error) => {
+                this.setState({ error: error });
+            });
 
         api.get("/backend/datasets")
-            .then((_response) => {
-                // this.setState({
-                //     availableTaints: getAvailableTaintsListFromDatasets(response.data.datasets),
-                // });
+            .then((response) => {
                 this.setState({
-                    availableTaints: ["test_taint", "some other taint"],
-                }); // TODO: uncomment prev set state after API implementation
+                    availableTaints: getAvailableTaintsListFromDatasets(
+                        response.data.datasets
+                    ),
+                });
             })
             .catch((error) => {
                 this.setState({ error: error });
@@ -79,21 +73,21 @@ class IndexPageInner extends Component {
     }
 
     handleSubmit() {
-        // TODO: process following data accordingly to new endpoint
-        // c_onsole.log(this.state.filenames); // list of strings
-        // c_onsole.log(this.state.selectedNGrams); // list of {value: nGram, label: nGram} objects
-        // c_onsole.log(this.state.selectedTaints); // list of {value: taint, label: taint} objects
-        api.post(`/queue/${this.ursa_id}`, {})
-            .then((_r) => {})
-            .catch((_e) => {});
+        const indexList = this.state.selectedNGrams.map((nG) => nG.value);
+        const tagsList = this.state.selectedTaints.map((taint) => taint.value);
+        const data = this.state.filenames.map((filename) => ({
+            path: filename,
+            index_types: indexList,
+            tags: tagsList,
+        }));
+
+        api.post(`/queue/${this.ursa_id}`, data).catch((error) => {
+            this.setState({ error: error });
+        });
     }
 
     render() {
         const fileLen = this.state.filenames.length;
-        const percentage = this.state.allQueuedFilesLength
-            ? (this.state.finishedQueuedFilesLength * 100.0) /
-              this.state.allQueuedFilesLength
-            : 0;
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
@@ -131,16 +125,16 @@ class IndexPageInner extends Component {
                             }`}
                         </button>
                     </div>
-                    {percentage ? (
-                        <>
-                            <IndexProgressBar percentage={percentage} />
-                            <IndexClearQueueButton
-                                ursa_id={this.props.params.ursa_id}
-                            />
-                        </>
-                    ) : (
-                        <></>
+                    <div className="my-2">{`Files in queue (regardless of status): ${this.state.size}`}</div>
+                    {this.state.newestFile && (
+                        <div className="my-2">{`Newest file date of adding to queue (regardless of status): ${this.state.newestFile}`}</div>
                     )}
+                    {this.state.oldestFile && (
+                        <div className="my-2">{`Oldest file date of adding to queue (regardless of status): ${this.state.oldestFile}`}</div>
+                    )}
+                    <IndexClearQueueButton
+                        ursa_id={this.props.params.ursa_id}
+                    />
                 </div>
             </ErrorBoundary>
         );

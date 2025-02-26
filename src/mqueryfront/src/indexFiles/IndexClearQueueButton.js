@@ -3,7 +3,7 @@ import api from "../api";
 
 class IndexClearQueueButton extends Component {
     onClick() {
-        api.post(`/queue/${this.props.ursa_id}/clear`, {}).catch((_e) => {});
+        api.delete(`/queue/${this.props.ursa_id}`);
     }
 
     render() {
