@@ -11,7 +11,7 @@ class IndexClearQueueButton extends Component {
             <span
                 data-toggle="tooltip"
                 title={
-                    "This action will clear all unindexed files from this queue"
+                    "This action will remove all files from this queue"
                 }
             >
                 <button

@@ -37,7 +37,7 @@ class IndexPageInner extends Component {
         api.get(`/queue/${this.props.params.ursa_id}`)
             .then((response) => {
                 this.setState({
-                    size: response.data.size, // NOTE: dunno whether these params will be provided at all
+                    size: response.data.size, // NOTE: I don't know whether these params will be provided at all
                     oldestFile: response.data.oldest_file,
                     newestFile: response.data.newest_file,
                 });
@@ -91,13 +91,13 @@ class IndexPageInner extends Component {
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
-                    <h1 className="text-center mq-bottom">{`Index ${this.props.params.ursa_id}`}</h1>
+                    <h1 className="text-center mq-bottom">{`Ursadb ${this.props.params.ursa_id}`}</h1>
                     <div className="index-form-wrapper">
                         <textarea
                             id="filenames-textarea"
                             className="form-control"
                             name="rows"
-                            placeholder="Input filenames here (each line representing one filename)"
+                            placeholder="Input filenames here (one per line)"
                             onChange={this.handleTextareaInput}
                         />
                         <IndexMultiSelect
@@ -127,10 +127,10 @@ class IndexPageInner extends Component {
                     </div>
                     <div className="my-2">{`Files in queue (regardless of status): ${this.state.size}`}</div>
                     {this.state.newestFile && (
-                        <div className="my-2">{`Newest file date of adding to queue (regardless of status): ${this.state.newestFile}`}</div>
+                        <div className="my-2">{`Newest file in the queue: ${this.state.newestFile}`}</div>
                     )}
                     {this.state.oldestFile && (
-                        <div className="my-2">{`Oldest file date of adding to queue (regardless of status): ${this.state.oldestFile}`}</div>
+                        <div className="my-2">{`Oldest file in the queue`}</div>
                     )}
                     <IndexClearQueueButton
                         ursa_id={this.props.params.ursa_id}
