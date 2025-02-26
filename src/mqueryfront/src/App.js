@@ -9,6 +9,7 @@ import AboutPage from "./about/AboutPage";
 import AuthPage from "./auth/AuthPage";
 import api, { parseJWT } from "./api";
 import "./App.css";
+import IndexPage from "./indexFiles/IndexPage";
 
 function getCurrentTokenOrNull() {
     // This function handles missing and corrupted token in the same way.
@@ -69,6 +70,7 @@ function App() {
                     path="/auth"
                     element={<AuthPage config={config} login={login} />}
                 />
+                <Route path="/ursadb/:ursa_id" element={<IndexPage />} />
             </Routes>
         </div>
     );

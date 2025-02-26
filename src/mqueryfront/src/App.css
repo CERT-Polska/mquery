@@ -113,3 +113,24 @@
     overflow-y: scroll;
     max-height: 50vh;
 }
+
+.index-form-wrapper {
+    display: grid;
+    grid-auto-flow: row;
+    grid-row-gap: 10px;
+}
+
+.index-links-wrapper {
+    display: grid;
+    grid-auto-flow: row;
+    grid-row-gap: 3px;
+}
+
+.index-navlink {
+    font-size: large;
+    display: grid;
+    grid-auto-flow: row;
+    grid-row-gap: 10px;
+    cursor: pointer;
+    width: fit-content;
+}

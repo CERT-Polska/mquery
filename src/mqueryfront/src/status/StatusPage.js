@@ -5,6 +5,7 @@ import DatabaseTopology from "./DatabaseTopology";
 import VersionStatus from "./VersionStatus";
 import api from "../api";
 import WarningPage from "../components/WarningPage";
+import { Link } from "react-router-dom";
 
 class StatusPage extends Component {
     constructor(props) {
@@ -16,13 +17,19 @@ class StatusPage extends Component {
                 components: [],
             },
             error: null,
+            ursaIDs: [],
         };
     }
 
     componentDidMount() {
         api.get("/backend")
             .then((response) => {
-                this.setState({ backend: response.data });
+                this.setState({
+                    backend: response.data,
+                    ursaIDs: response.data.agents.map(
+                        (agent) => agent.spec.name
+                    ), // TODO: collect from endpoint
+                });
             })
             .catch((error) => {
                 this.setState({ error: error });
