@@ -12,7 +12,6 @@ class IndexMultiselect extends Component {
     render() {
         return (
             <Select
-                id={this.props.id}
                 name={this.props.name}
                 options={this.optionsList}
                 placeholder={this.props.placeholder}
