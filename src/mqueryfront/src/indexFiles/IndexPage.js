@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import api from "../api";
 import ErrorBoundary from "../components/ErrorBoundary";
 import IndexClearQueueButton from "./IndexClearQueueButton";
+import IndexSuccessPage from "./IndexSuccessPage";
 
 function getAvailableTaintsListFromDatasets(datasets) {
     var taintList = Object.values(datasets)
@@ -24,11 +25,14 @@ class IndexPageInner extends Component {
             size: 0,
             oldestFile: null,
             newestFile: null,
+            alertShowFileLen: false,
         };
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleTextareaInput = this.handleTextareaInput.bind(this);
         this.handleNGramSelect = this.handleNGramSelect.bind(this);
         this.handleTaintSelect = this.handleTaintSelect.bind(this);
+        this.handleAlertClose = this.handleAlertClose.bind(this);
+        this.fileOrFiles = this.fileOrFiles.bind(this);
     }
 
     ursa_id = this.props.params.ursa_id;
@@ -72,6 +76,10 @@ class IndexPageInner extends Component {
         this.setState({ selectedTaints: selection });
     }
 
+    fileOrFiles(length) {
+        return `file${length > 1 ? "s" : ""}`;
+    }
+
     handleSubmit() {
         const indexList = this.state.selectedNGrams.map((nG) => nG.value);
         const tagsList = this.state.selectedTaints.map((taint) => taint.value);
@@ -81,9 +89,30 @@ class IndexPageInner extends Component {
             tags: tagsList,
         }));
 
-        api.post(`/queue/${this.ursa_id}`, data).catch((error) => {
-            this.setState({ error: error });
-        });
+        api.post(`/queue/${this.ursa_id}`, data)
+            .catch((error) => {
+                this.setState({ error: error });
+            })
+            .then((_r) => {
+                this.setState({
+                    alertShowFileLen: this.state.filenames.length,
+                });
+            })
+            .then((_w) => {
+                this.setState({
+                    filenames: [],
+                    selectedNGrams: [],
+                    selectedTaints: [],
+                });
+                document.getElementById("filenames-textarea").value = "";
+            })
+            .catch((error) => {
+                this.setState({ error: error });
+            });
+    }
+
+    handleAlertClose() {
+        this.setState({ alertShowFileLen: false });
     }
 
     render() {
@@ -92,6 +121,16 @@ class IndexPageInner extends Component {
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
                     <h1 className="text-center mq-bottom">{`Ursadb: ${this.props.params.ursa_id}`}</h1>
+                    {this.state.alertShowFileLen && (
+                        <IndexSuccessPage
+                            msg={`Successfully added ${
+                                this.state.alertShowFileLen
+                            } ${this.fileOrFiles(
+                                this.state.alertShowFileLen
+                            )}!`}
+                            onClick={this.handleAlertClose}
+                        />
+                    )}
                     <div className="index-form-wrapper">
                         <textarea
                             id="filenames-textarea"
@@ -104,23 +143,26 @@ class IndexPageInner extends Component {
                             placeholder="Select nGrams"
                             options={this.state.availableNGrams}
                             onChange={this.handleNGramSelect}
+                            value={this.state.selectedNGrams}
                         />
                         {this.state.availableTaints.length > 0 && (
                             <IndexMultiSelect
                                 placeholder="Select taints"
                                 options={this.state.availableTaints}
                                 onChange={this.handleTaintSelect}
+                                value={this.state.selectedTaints}
                             />
                         )}
                         <button
                             className="btn btn-secondary btn-sm btn-success"
+                            disabled={fileLen === 0}
                             onClick={this.handleSubmit}
                         >
                             {`Add to queue${
                                 fileLen > 0
-                                    ? ` (${fileLen} file${
-                                          fileLen > 1 ? "s" : ""
-                                      })`
+                                    ? ` (${fileLen} ${this.fileOrFiles(
+                                          fileLen
+                                      )})`
                                     : ""
                             }`}
                         </button>
@@ -130,7 +172,7 @@ class IndexPageInner extends Component {
                         <div className="my-2">{`Newest file in the queue: ${this.state.newestFile}`}</div>
                     )}
                     {this.state.oldestFile && (
-                        <div className="my-2">{`Oldest file in the queue`}</div>
+                        <div className="my-2">{`Oldest file in the queue: ${this.state.oldestFile}`}</div>
                     )}
                     <IndexClearQueueButton
                         ursa_id={this.props.params.ursa_id}
