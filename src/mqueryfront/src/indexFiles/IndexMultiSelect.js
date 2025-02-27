@@ -12,10 +12,11 @@ class IndexMultiselect extends Component {
     render() {
         return (
             <Select
-                form="formName"
+                id={this.props.id}
                 name={this.props.name}
                 options={this.optionsList}
                 placeholder={this.props.placeholder}
+                value={this.props.value}
                 isMulti
                 isSearchable
                 onChange={this.props.onChange}
