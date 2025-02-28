@@ -5,6 +5,8 @@ import api from "../api";
 import ErrorBoundary from "../components/ErrorBoundary";
 import IndexClearQueueButton from "./IndexClearQueueButton";
 import IndexSuccessPage from "./IndexSuccessPage";
+import IndexClearedPage from "./IndexClearedPage";
+import Draggable from "react-draggable";
 
 function getAvailableTaintsListFromDatasets(datasets) {
     var taintList = Object.values(datasets)
@@ -26,12 +28,17 @@ class IndexPageInner extends Component {
             oldestFile: null,
             newestFile: null,
             alertShowFileLen: false,
+            alertShowCleared: false,
+            modalShowClearQueue: false,
         };
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleClearQueue = this.handleClearQueue.bind(this);
         this.handleTextareaInput = this.handleTextareaInput.bind(this);
         this.handleNGramSelect = this.handleNGramSelect.bind(this);
         this.handleTaintSelect = this.handleTaintSelect.bind(this);
+        this.handleModalOpen = this.handleModalOpen.bind(this);
         this.handleAlertClose = this.handleAlertClose.bind(this);
+        this.handleAlertClearedClose = this.handleAlertClearedClose.bind(this);
         this.fileOrFiles = this.fileOrFiles.bind(this);
     }
 
@@ -111,12 +118,92 @@ class IndexPageInner extends Component {
             });
     }
 
+    handleClearQueue() {
+        // TODO: include modal before handling closing
+        api.delete(`/queue/${this.ursa_id}`)
+            .then((response) => {
+                this.setState({
+                    modalShowClearQueue: false,
+                });
+                if (response.data.status == "ok") {
+                    this.setState({
+                        alertShowCleared: true,
+                    });
+                } // NOTE: this will not throw error on 'ursa_id not found' status
+            })
+            .catch((error) => this.setState({ error: error }));
+    }
+
     handleAlertClose() {
         this.setState({ alertShowFileLen: false });
     }
 
+    handleModalOpen() {
+        this.setState({ modalShowClearQueue: true });
+    }
+
+    handleAlertClearedClose() {
+        this.setState({ alertShowCleared: false });
+    }
+
     render() {
         const fileLen = this.state.filenames.length;
+
+        const clearQueueModal = (
+            <Draggable handle=".modal-header">
+                <div className="modal-container-index-page">
+                    <div
+                        className="modal modal-block"
+                        style={{
+                            display: this.state.modalShowClearQueue
+                                ? "block"
+                                : "none",
+                        }}
+                    >
+                        <div className="modal-dialog modal-xl">
+                            <div className="modal-content">
+                                <div className="modal-header d-flex justify-content-between">
+                                    <h6 className="modal-title">{`Clear queue alert`}</h6>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={() =>
+                                            this.setState({
+                                                modalShowClearQueue: false,
+                                            })
+                                        }
+                                    />
+                                </div>
+                                <div className="modal-body">
+                                    <div>
+                                        Are you sure you want to clear queue at
+                                        UrsaDB: {this.ursa_id}?
+                                    </div>
+                                    <div className="d-flex justify-content-evenly">
+                                        <IndexClearQueueButton
+                                            msg="Yes, clear queue"
+                                            ursa_id={this.props.params.ursa_id}
+                                            onClick={this.handleClearQueue}
+                                        />
+                                        <button
+                                            className="btn btn-secondary btn-sm my-2"
+                                            onClick={() =>
+                                                this.setState({
+                                                    modalShowClearQueue: false,
+                                                })
+                                            }
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Draggable>
+        );
+
         return (
             <ErrorBoundary error={this.state.error}>
                 <div className="container-fluid">
@@ -129,6 +216,16 @@ class IndexPageInner extends Component {
                                 this.state.alertShowFileLen
                             )}!`}
                             onClick={this.handleAlertClose}
+                        />
+                    )}
+                    {this.state.alertShowCleared && (
+                        <IndexClearedPage
+                            msg={`Successfully cleared ${
+                                this.state.alertShowFileLen
+                            } ${this.fileOrFiles(
+                                this.state.alertShowFileLen
+                            )} from queue ${this.ursa_id}!`}
+                            onClick={this.handleAlertClearedClose}
                         />
                     )}
                     <div className="index-form-wrapper">
@@ -175,8 +272,11 @@ class IndexPageInner extends Component {
                         <div className="my-2">{`Oldest file in the queue: ${this.state.oldestFile}`}</div>
                     )}
                     <IndexClearQueueButton
+                        msg="Clear queue"
                         ursa_id={this.props.params.ursa_id}
+                        onClick={this.handleModalOpen}
                     />
+                    {this.state.modalShowClearQueue && clearQueueModal}
                 </div>
             </ErrorBoundary>
         );

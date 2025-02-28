@@ -2,10 +2,6 @@ import React, { Component } from "react";
 import api from "../api";
 
 class IndexClearQueueButton extends Component {
-    onClick() {
-        api.delete(`/queue/${this.props.ursa_id}`);
-    }
-
     render() {
         return (
             <span
@@ -14,9 +10,9 @@ class IndexClearQueueButton extends Component {
             >
                 <button
                     className="btn btn-secondary btn-sm btn-danger my-2"
-                    onClick={() => this.onClick()}
+                    onClick={() => this.props.onClick()}
                 >
-                    Clear queue
+                    {this.props.msg}
                 </button>
             </span>
         );
