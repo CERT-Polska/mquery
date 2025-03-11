@@ -268,10 +268,14 @@ class IndexPageInner extends Component {
                     </div>
                     <div className="my-2">{`Files in queue (regardless of status): ${this.state.size}`}</div>
                     {this.state.newestFile && (
-                        <div className="my-2">{`Newest file in the queue: ${this.state.newestFile.replace('T', ' ').slice(0, -7)}`}</div>
+                        <div className="my-2">{`Newest file in the queue: ${this.state.newestFile
+                            .replace("T", " ")
+                            .slice(0, -7)}`}</div>
                     )}
                     {this.state.oldestFile && (
-                        <div className="my-2">{`Oldest file in the queue: ${this.state.oldestFile.replace('T', ' ').slice(0, -7)}`}</div>
+                        <div className="my-2">{`Oldest file in the queue: ${this.state.oldestFile
+                            .replace("T", " ")
+                            .slice(0, -7)}`}</div>
                     )}
                     <IndexClearQueueButton
                         msg="Clear queue"
