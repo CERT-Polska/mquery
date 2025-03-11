@@ -15,6 +15,10 @@ function getAvailableTaintsListFromDatasets(datasets) {
     return [...new Set(taintList)];
 }
 
+function pluralize(noun, length) {
+    return `${noun}${length !== 1 ? "s" : ""}`;
+}
+
 class IndexPageInner extends Component {
     constructor(props) {
         super(props);
@@ -39,7 +43,6 @@ class IndexPageInner extends Component {
         this.handleModalOpen = this.handleModalOpen.bind(this);
         this.handleAlertClose = this.handleAlertClose.bind(this);
         this.handleAlertClearedClose = this.handleAlertClearedClose.bind(this);
-        this.fileOrFiles = this.fileOrFiles.bind(this);
     }
 
     ursa_id = this.props.params.ursa_id;
@@ -81,10 +84,6 @@ class IndexPageInner extends Component {
 
     handleTaintSelect(selection) {
         this.setState({ selectedTaints: selection });
-    }
-
-    fileOrFiles(length) {
-        return `file${length > 1 ? "s" : ""}`;
     }
 
     handleSubmit() {
@@ -212,7 +211,8 @@ class IndexPageInner extends Component {
                         <IndexSuccessPage
                             msg={`Successfully added ${
                                 this.state.alertShowFileLen
-                            } ${this.fileOrFiles(
+                            } ${pluralize(
+                                "file",
                                 this.state.alertShowFileLen
                             )}!`}
                             onClick={this.handleAlertClose}
@@ -222,7 +222,8 @@ class IndexPageInner extends Component {
                         <IndexClearedPage
                             msg={`Successfully cleared ${
                                 this.state.alertShowFileLen
-                            } ${this.fileOrFiles(
+                            } ${pluralize(
+                                "file",
                                 this.state.alertShowFileLen
                             )} from queue ${this.ursa_id}!`}
                             onClick={this.handleAlertClearedClose}
@@ -255,21 +256,22 @@ class IndexPageInner extends Component {
                             disabled={fileLen === 0}
                             onClick={this.handleSubmit}
                         >
-                            {`Add to queue${
+                            {`Add ${
                                 fileLen > 0
-                                    ? ` (${fileLen} ${this.fileOrFiles(
+                                    ? ` ${fileLen} ${pluralize(
+                                          "file",
                                           fileLen
-                                      )})`
+                                      )}`
                                     : ""
-                            }`}
+                            } to queue`}
                         </button>
                     </div>
                     <div className="my-2">{`Files in queue (regardless of status): ${this.state.size}`}</div>
                     {this.state.newestFile && (
-                        <div className="my-2">{`Newest file in the queue: ${this.state.newestFile}`}</div>
+                        <div className="my-2">{`Newest file in the queue: ${this.state.newestFile.replace('T', ' ').slice(0, -7)}`}</div>
                     )}
                     {this.state.oldestFile && (
-                        <div className="my-2">{`Oldest file in the queue: ${this.state.oldestFile}`}</div>
+                        <div className="my-2">{`Oldest file in the queue: ${this.state.oldestFile.replace('T', ' ').slice(0, -7)}`}</div>
                     )}
                     <IndexClearQueueButton
                         msg="Clear queue"
