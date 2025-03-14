@@ -220,12 +220,7 @@ class IndexPageInner extends Component {
                     )}
                     {this.state.alertShowCleared && (
                         <IndexClearedPage
-                            msg={`Successfully cleared ${
-                                this.state.alertShowFileLen
-                            } ${pluralize(
-                                "file",
-                                this.state.alertShowFileLen
-                            )} from queue ${this.ursa_id}!`}
+                            msg={`Successfully cleared queue ${this.ursa_id}!`}
                             onClick={this.handleAlertClearedClose}
                         />
                     )}
@@ -284,6 +279,7 @@ class IndexPageInner extends Component {
                     />
                     {this.state.modalShowClearQueue && clearQueueModal}
                 </div>
+                <button onClick={() => console.log(this.state)}>Log state</button>
             </ErrorBoundary>
         );
     }
