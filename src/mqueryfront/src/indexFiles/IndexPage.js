@@ -279,7 +279,6 @@ class IndexPageInner extends Component {
                     />
                     {this.state.modalShowClearQueue && clearQueueModal}
                 </div>
-                <button onClick={() => console.log(this.state)}>Log state</button>
             </ErrorBoundary>
         );
     }
