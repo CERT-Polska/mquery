@@ -95,6 +95,13 @@
     right: 5vw;
 }
 
+.modal-container-index-page {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
 .modal-block {
     position: relative;
     block-size: "fit-content";
