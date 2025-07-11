@@ -95,6 +95,11 @@ def main() -> None:
         type=int,
         default=40,
     )
+    parser.add_argument(
+        "--docker-mountpoint",
+        help="mountpoint for samples within ursadb/Mquery docker",
+        default=None,
+    )
 
     args = parser.parse_args()
     types = list(set(args.types))
@@ -143,7 +148,12 @@ def main() -> None:
             next_path = workdir / s3_obj.object_name
             with open(next_path, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
+
+            if args.docker_mountpoint != None:
+                next_path = f"{args.docker_mountpoint}/{s3_obj.object_name}"
+                
             batch.append(str(next_path))
+            
         finally:
             f_in.close()
             f_in.release_conn()
