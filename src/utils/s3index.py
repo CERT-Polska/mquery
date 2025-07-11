@@ -24,6 +24,7 @@ def all_indexed_names(ursa: UrsaDb) -> Set[str]:
 def process_and_delete_batch(
     ursa: UrsaDb,
     batch: List[str],
+    workdir_batch: List[str],
     compact_threshold: int,
     types: List[str],
     tags: List[str],
@@ -47,7 +48,7 @@ def process_and_delete_batch(
     )
     if "error" in result:
         logging.error("Batch %s errored: %s", result["error"])
-    for bfile in batch:
+    for bfile in workdir_batch:
         os.unlink(bfile)
 
 
@@ -139,6 +140,7 @@ def main() -> None:
         workdir.mkdir()
 
     batch = []
+    workdir_batch = []
     for s3_obj in client.list_objects(args.s3_bucket):
         if s3_obj.object_name in fileset:
             continue
@@ -151,7 +153,7 @@ def main() -> None:
 
             if args.docker_mountpoint != None:
                 next_path = f"{args.docker_mountpoint}/{s3_obj.object_name}"
-                
+            workdir_batch.append(str(workdir / s3_obj.object_name))    
             batch.append(str(next_path))
             
         finally:
@@ -160,13 +162,13 @@ def main() -> None:
 
         if len(batch) == args.batch:
             process_and_delete_batch(
-                ursa, batch, compact_threshold, types, args.tags
+                ursa, batch, workdir_batch, compact_threshold, types, args.tags
             )
             batch = []
 
     if len(batch):
         process_and_delete_batch(
-            ursa, batch, compact_threshold, types, args.tags
+            ursa, batch, workdir_batch, compact_threshold, types, args.tags
         )
 
     if list(workdir.iterdir()):
