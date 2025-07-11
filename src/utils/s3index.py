@@ -165,6 +165,7 @@ def main() -> None:
                 ursa, batch, workdir_batch, compact_threshold, types, args.tags
             )
             batch = []
+            workdir_batch = []
 
     if len(batch):
         process_and_delete_batch(
