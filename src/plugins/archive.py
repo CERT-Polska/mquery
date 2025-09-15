@@ -19,8 +19,8 @@ class GzipPlugin(MetadataPlugin):
         super().__init__(db, config)
         self.tmpfiles: List[IO[bytes]] = []
 
-    def filter(self, orig_name: str, file_path: str) -> Optional[str]:
-        if orig_name.endswith(".gz"):
+    def filter(self, matched_fname: str, file_path: str) -> Optional[str]:
+        if matched_fname.endswith(".gz"):
             tmp = tempfile.NamedTemporaryFile()
             self.tmpfiles.append(tmp)
             with gzip.open(file_path, "rb") as f_in:

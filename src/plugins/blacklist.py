@@ -13,14 +13,14 @@ class RegexBlacklistPlugin(MetadataPlugin):
 
     is_filter = True
     config_fields = {
-        "blacklist_pattern": "Regular expression for files that should be ignored",
+        "blacklist_pattern": "Regular expression for files that should be ignored.",
     }
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         super().__init__(db, config)
         self.blacklist_pattern = config["blacklist_pattern"]
 
-    def filter(self, orig_name: str, file_path: str) -> Optional[str]:
-        if re.search(self.blacklist_pattern, orig_name):
+    def filter(self, matched_fname: str, file_path: str) -> Optional[str]:
+        if re.search(self.blacklist_pattern, matched_fname):
             return None
         return file_path

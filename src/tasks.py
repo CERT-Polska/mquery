@@ -338,3 +338,46 @@ def read_bytes_with_context(
     matching = data[offset : offset + length]
     after = data[offset + length : offset + length + context]
     return before, matching, after
+
+
+def __index_single_batch(plugins: PluginManager, batch: list[str]) -> None:
+    ursa = UrsaDb(app_config.mquery.backend)
+    ursadb_batch = []
+
+    if not batch:
+        logging.info("Nothing to index")
+        return
+
+    logging.info("Preprocessing batch of size: %s", len(batch))
+    for file_path in batch:
+        final_path = plugins.filter(file_path)
+        if final_path is None:
+            continue
+        ursadb_batch.append(final_path)
+
+    logging.info("Batch preprocessed, asking ursadb to index it.")
+    mounted_list = " ".join(f'"{fpath}"' for fpath in ursadb_batch)
+    ursa.execute_command(f"index {mounted_list};")
+    plugins.cleanup()
+
+
+def index_pending_files() -> None:
+    db = Database(app_config.redis.host, app_config.redis.port)
+    plugins = PluginManager(app_config.mquery.plugins, db)
+
+    job = get_current_job()
+    assert (
+        job is not None
+    ), "index_pending_files called outside of a job context"
+
+    group_id = job.origin.replace(":indexer", "")
+    logging.info("Starting indexing job for group %s", group_id)
+
+    while True:
+        batch = db.get_indexing_batch(group_id)
+        if not batch:
+            logging.info("Indexing job done for group %s")
+            break
+
+        __index_single_batch(plugins, batch)
+        db.complete_indexing_batch(group_id, batch)

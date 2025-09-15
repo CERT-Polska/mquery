@@ -574,6 +574,59 @@ def query_remove(
     return StatusSchema(status="ok")
 
 
+@app.post(
+    "/api/queue/{ursadb_id}",
+    response_model=StatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_manage_queues)],
+)
+def add_files_to_queue(
+    ursadb_id: str, file_paths: List[FileToQueueSchema] = Body(...)
+) -> StatusSchema:
+    db.add_files_to_queue(ursadb_id, file_paths)
+
+    return StatusSchema(status="ok")
+
+
+@app.get(
+    "/api/queue/{ursadb_id}",
+    response_model=QueueStatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_view_queues)],
+)
+def get_queue_status(ursadb_id: str) -> QueueStatusSchema:
+    queue_status = db.get_queue_info(ursadb_id)
+
+    return QueueStatusSchema(
+        ursadb_id=ursadb_id,
+        size=queue_status.size,
+        oldest_file=queue_status.oldest_file,
+        newest_file=queue_status.newest_file,
+    )
+
+
+@app.delete(
+    "/api/queue/{ursadb_id}",
+    response_model=StatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_manage_queues)],
+)
+def delete_queued_by_id(ursadb_id: str) -> StatusSchema:
+    db.delete_queued_files(ursadb_id)
+    return StatusSchema(status="ok")
+
+
+@app.post(
+    "/api/queue/{ursadb_id}/index",
+    response_model=StatusSchema,
+    tags=["queue"],
+    dependencies=[Depends(can_manage_queues)],
+)
+def index_queue(ursadb_id: str) -> StatusSchema:
+    db.create_indexing_task(ursadb_id)
+    return StatusSchema(status="ok")
+
+
 # Permissionless routes.
 # 1. Static routes are always publicly accessible without authorisation.
 # 2. /api/server is a special route always accessible for everyone.
@@ -595,58 +648,13 @@ def serve_index(path: str) -> FileResponse:
     return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
 
 
-@app.post(
-    "/api/queue/{ursadb_id}",
-    response_model=StatusSchema,
-    tags=["queue"],
-    dependencies=[Depends(can_manage_queues)],
-)
-def add_files_to_queue(
-    ursadb_id: str, file_paths: List[FileToQueueSchema] = Body(...)
-) -> StatusSchema:
-    db.add_files_to_queue(ursadb_id, file_paths)
-
-    return StatusSchema(status="ok")
-
-
-@app.get(
-    "/api/queue/{ursadb_id}",
-    response_model=QueueStatusSchema,
-    tags=["queue"],
-    dependencies=[Depends(can_view_queues)],
-)
-def get_queue_status(ursadb_id: str):
-    queue_status = db.get_queue_info(ursadb_id)
-
-    return QueueStatusSchema(
-        ursadb_id=ursadb_id,
-        size=queue_status.size,
-        oldest_file=queue_status.oldest_file,
-        newest_file=queue_status.newest_file,
-    )
-
-
-@app.delete(
-    "/api/queue/{ursadb_id}",
-    response_model=StatusSchema,
-    tags=["queue"],
-    dependencies=[Depends(can_manage_queues)],
-)
-def delete_queued_by_id(ursadb_id: str):
-    ursadb_exist = db.exist_ursadb(ursadb_id)
-
-    if ursadb_exist:
-        db.delete_queued_files(ursadb_id)
-        return StatusSchema(status="ok")
-    return StatusSchema(status="ursadb_id not found")
-
-
 @app.get("/recent", include_in_schema=False)
 @app.get("/status", include_in_schema=False)
 @app.get("/query", include_in_schema=False)
 @app.get("/config", include_in_schema=False)
 @app.get("/auth", include_in_schema=False)
 @app.get("/about", include_in_schema=False)
+@app.get("/ursadb", include_in_schema=False)
 def serve_index_sub() -> FileResponse:
     # Static routes are always publicly accessible without authorisation.
     return FileResponse(Path(__file__).parent / "mqueryfront/dist/index.html")
