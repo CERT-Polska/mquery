@@ -9,12 +9,16 @@ class Match(SQLModel, table=True):
     """Represents a file matched to a job, along with a related metadata."""
 
     id: Union[int, None] = Field(default=None, primary_key=True)
-    # A file path on one of the daemons
+    """Unique match ID"""
+
     file: str
-    # A metadata dictionary - contains various tags added by plugins
+    """A file path on one of the daemons"""
+
     meta: Dict[str, Any] = Field(sa_column=Column(JSON))
-    # A list of yara rules matched to this file
+    """A metadata dictionary - contains various tags added by plugins"""
+
     matches: List[str] = Field(sa_column=Column(ARRAY(String)))
+    """A list of yara rules matched to this file"""
 
     job_id: int = Field(
         sa_column=Column(

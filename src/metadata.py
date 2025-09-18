@@ -20,14 +20,19 @@ class MetadataPlugin(ABC):
     is_filter = False
     # can this plugin be used for extracting metadata?
     is_extractor = False
+    # Configuration key defaults
+    config_defaults: Dict[str, str] = {}
 
     def __init__(self, db: Database, config: MetadataPluginConfig) -> None:
         self.db = db
         for key in self.config_fields.keys():
             if key not in config or not config[key]:
-                raise KeyError(
-                    f"Required configuration key '{key}' is not set"
-                )
+                if key in self.config_defaults:
+                    config[key] = self.config_defaults[key]
+                else:
+                    raise KeyError(
+                        f"Required configuration key '{key}' is not set"
+                    )
 
     @classmethod
     def get_name(cls) -> str:

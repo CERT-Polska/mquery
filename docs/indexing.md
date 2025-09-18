@@ -4,6 +4,8 @@ Indexing is one of the two most important things you can do with mquery
 (the other one is searching). So it's pretty useful to understand how it works.
 There are many ways to do it, unfortunately not all are equally good.
 
+There is an experimental feature of [indexing queues](4--indexing-queues).
+
 ## Method 1: ursacli
 
 Run the `ursacli` executable. For docker compose deployment, go to the mquery
@@ -143,3 +145,22 @@ more details).
 5. You can tag indexed samples with metadata tags. Tags can be used for limiting
 future searches. Use `--tag tlp:green --tag virusshare`.
 
+### 4. Indexing queues
+
+Using the API, you can:
+* Submit files to a queue using `POST /api/queue/{ursadb_id}`
+* Ask the server to index them using `POST /api/queue/{ursadb_id}/index`
+
+For this to work, you must have at least one mquery daemon started with flag
+`--with-indexer`.
+
+That daemon must also share a filesystem (or at least a directory) with underlying
+ursadb. For example, if you use `/mnt/samples`, indexing daemon and ursadb must see
+the same files in both locations (you can run them on the same machine, or mount NFS).
+
+There must be at most one indexing daemon. This is not currently verified.
+
+The indexing worker will pick up indexing jobs, and send pending files to ursadb.
+
+This is a good method of indexing files from s3 for example, but it's currently not
+experimental.

@@ -10,7 +10,7 @@ import string
 from redis import StrictRedis
 from enum import Enum, auto
 from rq import Queue  # type: ignore
-from sqlalchemy import exists, func
+from sqlalchemy import func
 from sqlmodel import (
     Session,
     create_engine,
@@ -346,6 +346,14 @@ class Database:
             self.__schedule(agent, tasks.start_search, job)
         return job
 
+    def create_indexing_task(self, ursadb_id: str) -> None:
+        """Asks indexer for `ursadb_id` to index pending files."""
+        from . import tasks
+
+        Queue(f"{ursadb_id}:indexer", connection=self.redis).enqueue(
+            tasks.index_pending_files
+        )
+
     def get_job_matches(
         self, job_id: JobId, offset: int = 0, limit: Optional[int] = None
     ) -> MatchesSchema:
@@ -503,7 +511,6 @@ class Database:
             session.commit()
 
     def get_queue_info(self, ursadb_id: str) -> QueueStatusDatabaseSchema:
-
         with self.session() as session:
             query = select(  # type: ignore
                 func.count(QueuedFile.id),
@@ -523,8 +530,24 @@ class Database:
             session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).delete()
             session.commit()
 
-    def exist_ursadb(self, ursadb_id: str) -> bool:
+    def get_indexing_batch(self, ursadb_id: str) -> List[str]:
+        BATCH_SIZE = 100
         with self.session() as session:
-            return session.query(
-                exists().where(QueuedFile.ursadb_id == ursadb_id)
-            ).scalar()
+            files = session.exec(
+                select(QueuedFile)
+                .where(QueuedFile.ursadb_id == ursadb_id)
+                .limit(BATCH_SIZE)
+            ).all()
+            return [f.path for f in files]
+
+    def complete_indexing_batch(
+        self, ursadb_id: str, paths: list[str]
+    ) -> None:
+        with self.session() as session:
+            session.execute(
+                delete(QueuedFile).where(
+                    QueuedFile.ursadb_id == ursadb_id,
+                    QueuedFile.path.in_(paths),  # type: ignore
+                )
+            )
+            session.commit()

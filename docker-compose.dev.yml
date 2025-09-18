@@ -29,6 +29,7 @@ services:
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
+      - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
       - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://localhost:5000/api/server || exit 1"]
@@ -46,6 +47,7 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - .:/usr/src/app
+    - "s3:/mnt/s3"
     depends_on:
       dev-web:
         condition: service_healthy
@@ -58,6 +60,7 @@ services:
     environment:
       - "REDIS_HOST=redis"
       - "MQUERY_BACKEND=tcp://ursadb:9281"
+      - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
       - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
   ursadb:
     image: mqueryci/ursadb:v1.5.1
@@ -66,6 +69,7 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - "${INDEX_DIR}:/var/lib/ursadb"
+    - "s3:/mnt/s3"
     user: "0:0"
   keycloak:
     image: quay.io/keycloak/keycloak:15.1.0
@@ -90,3 +94,5 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+volumes:
+  s3:
