@@ -125,19 +125,39 @@ Traceback (most recent call last):
     super().__init__(db, config)
   File "/opt/mquery/src/metadata.py", line 28, in __init__
     raise KeyError(
-KeyError: "Required configuration key 's3_url' is not set"
+KeyError: "Required configuration key 's3_host' is not set"
 ```
 
 Navigate to the mquery config page at http://localhost/config. You should see
 the plugin configuration there. Set all the fields:
 
-* `s3_url` to your S3 url - in our example this will be `your_ip:9000` (for
+* `s3_host` to your S3 url - in our example this will be `your_ip:9000` (for
    example `1.2.3.4:9000`, or just `localhost:9000`).
    Remember, do not add `http://`.
 * `s3_bucket` to your S3 bucket name - in our example `mquery`.
 * `s3_access_key` and `s3_secret_key` to your S3 credentials for mquery.
   Create key pair in minio if you don't have one already.
 * `s3_secure` to `false` (in our example - you probably want HTTPs in production).
+* `s3_source_dir` - to `/s3/mquery`. This is a "virtual" directory - indexing files that start like this will instead pull them from S3. This directory doesn't have to really exist.
+* `s3_target_dir` - to `/mnt/s3`. Files will be downloaded here, and this directory must exist (mquery will try to create it otherwise).
+
+
+Files and directories are mapped depending on s3_bucket, s3_source_dir and
+s3_target_dir, in a following way:
+
+* If filtered path doesn't start with s3_source_dir, skip it (don't do anything)
+* Otherwise strip the s3_source_dir prefix and use the rest as object name.
+* Download that object to s3_target_dir directory.
+
+On a practical example, let's say:
+
+* `s3_source_dir` is `/s3/mwdb/`
+* `s3_target_dir` it `/mnt/samples`
+* `s3_bucket` is `mwdb`
+
+Then indexing file /s3/mwdb/0/1/2/3/0123e9d3 will strip the `/s3/mwdb` prefix,
+and consider `0/1/2/3/0123e9d3` as the object name. This object will be downloaded
+from `mwdb` bucket, to /mnt/samples/0/1/2/3/0123e9d for indexing.
 
 At this point, workers should be able to load plugins correctly.
 

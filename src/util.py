@@ -4,7 +4,7 @@ from typing import Dict, Any
 
 
 LOG_FORMAT = "[%(asctime)s][%(levelname)s] %(message)s"
-LOG_DATEFMT = "%d/%m/%Y %H:%M:%S"
+LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
 def setup_logging() -> None:
