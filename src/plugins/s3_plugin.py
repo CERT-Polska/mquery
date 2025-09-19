@@ -39,7 +39,7 @@ class S3Plugin(MetadataPlugin):
         "s3_secure": "Use https? Set to 'true' or 'false'. Default is true.",
         "s3_bucket": "Bucket where the samples are stored.",
         "s3_source_dir": "Path prefix for S3 files. Indexing files from this directory will instead pull them from S3. This directory doesn't have to exist.",
-        "s3_target_dir": "Download s3 files here before indexing. Ursadb must see this directory, and will store this path in the index. This directory must exist!",
+        "s3_target_dir": "Download s3 files here before indexing. Ursadb must see this directory. This directory must exist!",
     }
     config_defaults = {
         "s3_secure": "true",

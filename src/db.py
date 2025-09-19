@@ -19,6 +19,7 @@ from sqlmodel import (
     update,
     col,
     delete,
+    desc,
 )
 
 from .models.agentgroup import AgentGroup
@@ -532,12 +533,37 @@ class Database:
 
     def get_indexing_batch(self, ursadb_id: str) -> List[str]:
         BATCH_SIZE = 100
+
+        # We can only batch files with the same tags and index types, so first find
+        # the biggest group of files waiting to be indexed:
+        group_subquery = (
+            select(  # type: ignore
+                QueuedFile.index_types,
+                QueuedFile.tags,
+                func.count().label("count"),
+            )
+            .group_by(QueuedFile.index_types, QueuedFile.tags)
+            .order_by(desc("count"))
+            .limit(1)
+            .subquery()
+        )
+
+        # Then return up to BATCH_SIZE files from that group.
         with self.session() as session:
+            group = session.execute(select(group_subquery)).first()
+            if not group:
+                return []
+
             files = session.exec(
                 select(QueuedFile)
-                .where(QueuedFile.ursadb_id == ursadb_id)
+                .where(
+                    QueuedFile.ursadb_id == ursadb_id,
+                    QueuedFile.index_types == group.index_types,
+                    QueuedFile.tags == group.tags,
+                )
                 .limit(BATCH_SIZE)
             ).all()
+
             return [f.path for f in files]
 
     def complete_indexing_batch(
