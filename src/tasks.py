@@ -376,7 +376,7 @@ def index_pending_files() -> None:
     while True:
         batch = db.get_indexing_batch(group_id)
         if not batch:
-            logging.info("Indexing job done for group %s")
+            logging.info("Indexing job done for group %s", group_id)
             break
 
         __index_single_batch(plugins, batch)

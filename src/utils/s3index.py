@@ -117,7 +117,7 @@ def main() -> None:
     compact_threshold = current_datasets + args.working_datasets
 
     client = Minio(
-        args.s3_url,
+        args.s3_host,
         args.s3_access_key,
         args.s3_secret_key,
         secure=int(args.s3_secure),
