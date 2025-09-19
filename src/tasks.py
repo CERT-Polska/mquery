@@ -12,6 +12,7 @@ from .config import app_config
 from .plugins import PluginManager
 from .models.job import Job, JobStatus
 from .models.match import Match
+from .models.queuedfile import QueuedFile
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
 from .metadata import Metadata
@@ -340,24 +341,34 @@ def read_bytes_with_context(
     return before, matching, after
 
 
-def __index_single_batch(plugins: PluginManager, batch: list[str]) -> None:
+def __index_single_batch(
+    plugins: PluginManager, files_to_index: list[QueuedFile]
+) -> None:
     ursa = UrsaDb(app_config.mquery.backend)
     ursadb_batch = []
 
-    if not batch:
+    if not files_to_index:
         logging.info("Nothing to index")
         return
 
-    logging.info("Preprocessing batch of size: %s", len(batch))
-    for file_path in batch:
+    paths = [f.path for f in files_to_index]
+    representative = files_to_index[0]
+    index_types = representative.index_types
+    tags = representative.tags
+
+    logging.debug("Raw files to index %s", paths)
+    logging.info("Preprocessing batch of size: %s", len(paths))
+    for file_path in paths:
         final_path = plugins.filter(file_path)
         if final_path is None:
+            logging.debug("Filtering out file %s", file_path)
             continue
         ursadb_batch.append(final_path)
 
+    logging.debug("Final paths %s", ursadb_batch)
     logging.info("Batch preprocessed, asking ursadb to index it.")
-    mounted_list = " ".join(f'"{fpath}"' for fpath in ursadb_batch)
-    ursa.execute_command(f"index {mounted_list};")
+
+    ursa.index(ursadb_batch, index_types=index_types, tags=tags)
     plugins.cleanup()
 
 
@@ -380,4 +391,4 @@ def index_pending_files() -> None:
             break
 
         __index_single_batch(plugins, batch)
-        db.complete_indexing_batch(group_id, batch)
+        db.complete_indexing_batch(batch)

@@ -1,10 +1,16 @@
 import json
 import time
 import zmq  # type: ignore
+import logging
 from typing import Dict, Any, List, Optional
 
 
 Json = Dict[str, Any]
+
+
+def escape(string: str) -> str:
+    """Escape the string in a naive, minimal way (doesn't support everything yet)."""
+    return '"' + string.replace('"', '\\"') + '"'
 
 
 class PopResult:
@@ -39,6 +45,7 @@ class UrsaDb:
         self.backend = backend
 
     def __execute(self, command: str, recv_timeout: int = 2000) -> Json:
+        logging.info("Ursadb command: %s", command)
         context = zmq.Context()
         try:
             socket = context.socket(zmq.REQ)
@@ -102,3 +109,24 @@ class UrsaDb:
 
     def execute_command(self, command: str) -> Json:
         return self.__execute(command, -1)
+
+    def index(
+        self, paths: list[str], index_types: list[str], tags: list[str] = []
+    ):
+        quoted_paths = [escape(path) for path in paths]
+
+        file_list = " ".join(quoted_paths)
+        with_specifier = "with [" + ", ".join(index_types) + "]"
+        tags_specifier = (
+            "with taints [" + ", ".join(escape(t) for t in tags) + "]"
+        )
+
+        command = " ".join(
+            [
+                "index",
+                file_list,
+                with_specifier,
+                tags_specifier,
+            ]
+        )
+        self.execute_command(command + ";")
