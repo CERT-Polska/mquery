@@ -88,6 +88,9 @@ class S3Plugin(MetadataPlugin):
             # Since we don't own it, we will not remove it.
             return target_file
 
+        logging.info(
+            "Downloading %s/%s to %s", self.bucket, object_name, target_file
+        )
         try:
             response = self.minio.get_object(self.bucket, object_name)
         except S3Error as e:

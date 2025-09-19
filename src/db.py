@@ -531,7 +531,7 @@ class Database:
             session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).delete()
             session.commit()
 
-    def get_indexing_batch(self, ursadb_id: str) -> List[str]:
+    def get_indexing_batch(self, ursadb_id: str) -> List[QueuedFile]:
         BATCH_SIZE = 100
 
         # We can only batch files with the same tags and index types, so first find
@@ -564,16 +564,14 @@ class Database:
                 .limit(BATCH_SIZE)
             ).all()
 
-            return [f.path for f in files]
+            return files
 
-    def complete_indexing_batch(
-        self, ursadb_id: str, paths: list[str]
-    ) -> None:
+    def complete_indexing_batch(self, files: list[QueuedFile]) -> None:
+        ids = [f.id for f in files]
         with self.session() as session:
             session.execute(
                 delete(QueuedFile).where(
-                    QueuedFile.ursadb_id == ursadb_id,
-                    QueuedFile.path.in_(paths),  # type: ignore
+                    QueuedFile.id.in_(ids),  # type: ignore
                 )
             )
             session.commit()
