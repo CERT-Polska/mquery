@@ -21,15 +21,6 @@ def start_worker(args: argparse.Namespace, process_index: int) -> None:
         w.work()
 
 
-def start_indexer(args: argparse.Namespace) -> None:
-    setup_logging()
-    logging.info("Indexer [%s] running...", args.group_id)
-
-    with Connection(Redis(app_config.redis.host, app_config.redis.port)):
-        w = Worker([args.group_id + ":indexer"])
-        w.work()
-
-
 def main() -> None:
     """Spawns a new agent process. Use argv if you want to use a different
     group_id (it's `default` by default).
@@ -48,11 +39,6 @@ def main() -> None:
         help="Specifies the number of concurrent workers to use for yara matching.",
         default=1,
     )
-    parser.add_argument(
-        "--with-indexer",
-        action="store_true",
-        help="If specified, indexing worker will be created (not affected by scale).",
-    )
 
     args = parser.parse_args()
 
@@ -63,8 +49,6 @@ def main() -> None:
     children = [
         Process(target=start_worker, args=(args, i)) for i in range(args.scale)
     ]
-    if args.with_indexer:
-        children.append(Process(target=start_indexer, args=(args,)))
 
     for child in children:
         child.start()

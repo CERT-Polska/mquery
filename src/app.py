@@ -310,7 +310,7 @@ def backend_status_datasets() -> BackendStatusDatasetsSchema:
     for agent_spec in db.get_active_agents().values():
         try:
             ursa = UrsaDb(agent_spec.ursadb_url)
-            datasets.update(ursa.topology()["result"]["datasets"])
+            datasets.update(ursa.datasets())
         except Again:
             pass
 
@@ -613,17 +613,6 @@ def get_queue_status(ursadb_id: str) -> QueueStatusSchema:
 )
 def delete_queued_by_id(ursadb_id: str) -> StatusSchema:
     db.delete_queued_files(ursadb_id)
-    return StatusSchema(status="ok")
-
-
-@app.post(
-    "/api/queue/{ursadb_id}/index",
-    response_model=StatusSchema,
-    tags=["queue"],
-    dependencies=[Depends(can_manage_queues)],
-)
-def index_queue(ursadb_id: str) -> StatusSchema:
-    db.create_indexing_task(ursadb_id)
     return StatusSchema(status="ok")
 
 

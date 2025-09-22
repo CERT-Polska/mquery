@@ -7,10 +7,8 @@ LOG_FORMAT = "[%(asctime)s][%(levelname)s] %(message)s"
 LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
-def setup_logging() -> None:
-    logging.basicConfig(
-        level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_DATEFMT
-    )
+def setup_logging(level=logging.INFO) -> None:
+    logging.basicConfig(level=level, format=LOG_FORMAT, datefmt=LOG_DATEFMT)
 
 
 def mquery_version() -> str:

@@ -45,7 +45,7 @@ class UrsaDb:
         self.backend = backend
 
     def __execute(self, command: str, recv_timeout: int = 2000) -> Json:
-        logging.info("Ursadb command: %s", command)
+        logging.debug("Ursadb command: %s", command)
         context = zmq.Context()
         try:
             socket = context.socket(zmq.REQ)
@@ -105,7 +105,15 @@ class UrsaDb:
         return self.__execute("status;")
 
     def topology(self) -> Json:
-        return self.__execute("topology;")
+        result = self.__execute("topology;")
+
+        if "error" in result:
+            raise RuntimeError(result["error"])
+
+        return result["result"]
+
+    def datasets(self) -> Json:
+        return self.topology()["datasets"]
 
     def execute_command(self, command: str) -> Json:
         return self.__execute(command, -1)
