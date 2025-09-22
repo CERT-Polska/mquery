@@ -12,7 +12,6 @@ from .config import app_config
 from .plugins import PluginManager
 from .models.job import Job, JobStatus
 from .models.match import Match
-from .models.queuedfile import QueuedFile
 from .lib.yaraparse import parse_yara, combine_rules
 from .lib.ursadb import Json, UrsaDb
 from .metadata import Metadata
@@ -62,12 +61,7 @@ class Agent:
 
     def get_datasets(self) -> List[str]:
         """Returns a list of dataset IDs, or throws an exception on error."""
-        result = self.ursa.topology()
-
-        if "error" in result:
-            raise RuntimeError(result["error"])
-
-        return list(result["result"]["datasets"].keys())
+        return list(self.ursa.datasets().keys())
 
     def update_metadata(
         self,
@@ -339,56 +333,3 @@ def read_bytes_with_context(
     matching = data[offset : offset + length]
     after = data[offset + length : offset + length + context]
     return before, matching, after
-
-
-def __index_single_batch(
-    plugins: PluginManager, files_to_index: list[QueuedFile]
-) -> None:
-    ursa = UrsaDb(app_config.mquery.backend)
-    ursadb_batch = []
-
-    if not files_to_index:
-        logging.info("Nothing to index")
-        return
-
-    paths = [f.path for f in files_to_index]
-    representative = files_to_index[0]
-    index_types = representative.index_types
-    tags = representative.tags
-
-    logging.debug("Raw files to index %s", paths)
-    logging.info("Preprocessing batch of size: %s", len(paths))
-    for file_path in paths:
-        final_path = plugins.filter(file_path)
-        if final_path is None:
-            logging.debug("Filtering out file %s", file_path)
-            continue
-        ursadb_batch.append(final_path)
-
-    logging.debug("Final paths %s", ursadb_batch)
-    logging.info("Batch preprocessed, asking ursadb to index it.")
-
-    ursa.index(ursadb_batch, index_types=index_types, tags=tags)
-    plugins.cleanup()
-
-
-def index_pending_files() -> None:
-    db = Database(app_config.redis.host, app_config.redis.port)
-    plugins = PluginManager(app_config.mquery.plugins, db)
-
-    job = get_current_job()
-    assert (
-        job is not None
-    ), "index_pending_files called outside of a job context"
-
-    group_id = job.origin.replace(":indexer", "")
-    logging.info("Starting indexing job for group %s", group_id)
-
-    while True:
-        batch = db.get_indexing_batch(group_id)
-        if not batch:
-            logging.info("Indexing job done for group %s", group_id)
-            break
-
-        __index_single_batch(plugins, batch)
-        db.complete_indexing_batch(batch)

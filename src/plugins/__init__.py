@@ -48,7 +48,7 @@ class PluginManager:
             plugin_config = db.get_plugin_config(plugin_name)
             try:
                 active_plugins.append(plugin_class(db, plugin_config))
-                logging.info("Loaded plugin %s", plugin_name)
+                logging.debug("Loaded plugin %s", plugin_name)
             except Exception:
                 logging.exception("Failed to load %s plugin", plugin_name)
         self.active_plugins = active_plugins

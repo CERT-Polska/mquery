@@ -59,7 +59,7 @@ def find_new_files(
 
 
 def index_files(
-    proc_params: Tuple[str, List[str], List[str], Path, int]
+    proc_params: Tuple[str, List[str], List[str], Path, int],
 ) -> str:
     ursa_url, types, tags, batch, compact_threshold = proc_params
     ursa = UrsaDb(ursa_url)

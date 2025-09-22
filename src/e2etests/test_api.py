@@ -136,7 +136,7 @@ def test_query_with_taints(add_files_to_index):
     db = UrsaDb("tcp://ursadb:9281")
 
     random_taint = os.urandom(8).hex()
-    for dataset_id in db.topology()["result"]["datasets"].keys():
+    for dataset_id in db.datasets().keys():
         out = db.execute_command(
             f'dataset "{dataset_id}" taint "{random_taint}";'
         )

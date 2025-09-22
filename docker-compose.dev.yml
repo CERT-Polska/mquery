@@ -47,6 +47,31 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - .:/usr/src/app
+    depends_on:
+      dev-web:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ursadb:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    environment:
+      - "REDIS_HOST=redis"
+      - "MQUERY_BACKEND=tcp://ursadb:9281"
+      - "MQUERY_PLUGINS=${MQUERY_PLUGINS}"
+      - "DATABASE_URL=postgresql://postgres:password@postgres:5432/mquery"
+  dev-indexer:
+    build:
+      context: .
+      dockerfile: deploy/docker/dev.indexer.Dockerfile
+    links:
+    - redis
+    - ursadb
+    - postgres
+    volumes:
+    - "${SAMPLES_DIR}:/mnt/samples"
+    - .:/usr/src/app
     - "s3:/mnt/s3"
     depends_on:
       dev-web:

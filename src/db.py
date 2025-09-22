@@ -347,14 +347,6 @@ class Database:
             self.__schedule(agent, tasks.start_search, job)
         return job
 
-    def create_indexing_task(self, ursadb_id: str) -> None:
-        """Asks indexer for `ursadb_id` to index pending files."""
-        from . import tasks
-
-        Queue(f"{ursadb_id}:indexer", connection=self.redis).enqueue(
-            tasks.index_pending_files
-        )
-
     def get_job_matches(
         self, job_id: JobId, offset: int = 0, limit: Optional[int] = None
     ) -> MatchesSchema:
@@ -531,9 +523,9 @@ class Database:
             session.query(QueuedFile).filter_by(ursadb_id=ursadb_id).delete()
             session.commit()
 
-    def get_indexing_batch(self, ursadb_id: str) -> List[QueuedFile]:
-        BATCH_SIZE = 100
-
+    def get_pending_files(
+        self, ursadb_id: str, limit: int
+    ) -> List[QueuedFile]:
         # We can only batch files with the same tags and index types, so first find
         # the biggest group of files waiting to be indexed:
         group_subquery = (
@@ -548,7 +540,7 @@ class Database:
             .subquery()
         )
 
-        # Then return up to BATCH_SIZE files from that group.
+        # Then return files from that group.
         with self.session() as session:
             group = session.execute(select(group_subquery)).first()
             if not group:
@@ -561,12 +553,12 @@ class Database:
                     QueuedFile.index_types == group.index_types,
                     QueuedFile.tags == group.tags,
                 )
-                .limit(BATCH_SIZE)
+                .limit(limit)
             ).all()
 
             return files
 
-    def complete_indexing_batch(self, files: list[QueuedFile]) -> None:
+    def remove_from_pending(self, files: list[QueuedFile]) -> None:
         ids = [f.id for f in files]
         with self.session() as session:
             session.execute(

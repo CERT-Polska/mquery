@@ -19,6 +19,7 @@ setup(
     install_requires=open("requirements.txt").read().splitlines(),
     scripts=[
         "src/scripts/mquery-daemon",
+        "src/scripts/mquery-indexer",
     ],
     classifiers=[
         "Programming Language :: Python",

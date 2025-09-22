@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+import mquery.indexer
+
+
+mquery.indexer.main()
