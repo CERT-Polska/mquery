@@ -60,10 +60,10 @@ services:
     restart: always
     image: redis
   postgres:
-    image: postgres
+    image: postgres:${POSTGRES_IMG_TAG}
     restart: always
     volumes:
-      - ${POSTGRES_DIR}:/var/lib/postgresql/data
+      - ${POSTGRES_DIR}:${POSTGRES_DST_DIR}
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=mquery
