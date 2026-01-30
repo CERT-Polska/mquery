@@ -5,7 +5,7 @@ class BackendJobRow extends Component {
         let shortRequest = this.props.request;
         if (shortRequest.length > 200) {
             let prefix = shortRequest.substring(0, 140);
-            let suffix = shortRequest.substring(shortRequest.length - 60, 60);
+            let suffix = shortRequest.substring(shortRequest.length - 60);
             shortRequest = prefix + " (...) " + suffix;
         }
         return (

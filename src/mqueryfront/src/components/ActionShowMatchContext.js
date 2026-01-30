@@ -110,7 +110,7 @@ const ActionShowMatchContext = (props) => {
                         </td>
                         <td scope="row" className="text-monospace">
                             {ReactHtmlParser(
-                                cellHTML(foundSample, 24, base64ToHex)
+                                cellHTML(foundSample, 48, base64ToHex)
                             )}
                         </td>
                         <td scope="row" className="text-monospace">

@@ -1,0 +1,23 @@
+{
+    "indexer": {
+        "docker": {
+            "image": "mqueryci/mquery-indexer",
+            "dockerfile": "deploy/docker/indexer.Dockerfile",
+            "dir": "."
+        }
+    },
+    "daemon": {
+        "docker": {
+            "image": "mqueryci/mquery-daemon",
+            "dockerfile": "deploy/docker/daemon.Dockerfile",
+            "dir": "."
+        }
+    },
+    "web": {
+        "docker": {
+            "image": "mqueryci/mquery-web",
+            "dockerfile": "deploy/docker/web.Dockerfile",
+            "dir": "."
+        }
+    }
+}

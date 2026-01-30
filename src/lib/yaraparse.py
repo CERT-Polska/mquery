@@ -141,7 +141,6 @@ def ursify_hex(hex_str: str) -> UrsaExpression:
 
         # iterate over nibbles
         for i in range(0, len(part), 2):
-
             if part[i] == "?" or part[i + 1] == "?":
                 if last_end is not None:
                     output.append(bytes.fromhex(part[last_end:i]))
@@ -164,7 +163,7 @@ def ursify_nocase_bytes(raw: bytes) -> UrsaExpression:
             out.append(bytes([c]).hex())
         else:
             out.append(f"({lower.encode().hex()}|{upper.encode().hex()})")
-    return UrsaExpression(f"{{{ ' '.join(out) }}}", True)
+    return UrsaExpression(f"{{{' '.join(out)}}}", True)
 
 
 def encode_wide_bytes(raw: bytes) -> bytes:

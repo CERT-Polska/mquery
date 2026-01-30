@@ -88,31 +88,43 @@ class S3Plugin(MetadataPlugin):
             # Since we don't own it, we will not remove it.
             return target_file
 
-        logging.info(
+        logging.debug(
             "Downloading %s/%s to %s", self.bucket, object_name, target_file
         )
         try:
             response = self.minio.get_object(self.bucket, object_name)
         except S3Error as e:
-            # File is probably missing from minio. This is not recoverable.
+            # File is probably missing from s3. This is not recoverable.
             # To avoid infinite crashes, skip this file.
             logging.warning(
                 "Skipping %s/%s because %r", self.bucket, object_name, e
             )
-            return None
+            raise RuntimeError(
+                f"Failed to download {self.bucket}/{object_name}"
+            )
 
         try:
             self.tmpfiles.append(target_file)
             os.makedirs(os.path.dirname(target_file), exist_ok=True)
-            with open(target_file, "wb") as f_out:
-                shutil.copyfileobj(response, f_out)
+            try:
+                with open(target_file, "wb") as f_out:
+                    shutil.copyfileobj(response, f_out)
+            except Exception as e:
+                # Connection broken, happens sometimes.
+                # This is probably recoverable, but just skip this file.
+                logging.warning(
+                    "Skipping %s/%s because %r", self.bucket, object_name, e
+                )
+                raise RuntimeError(
+                    f"Connection or file write problem when downloading {self.bucket}/{object_name}"
+                ) from e
         finally:
             response.close()
             response.release_conn()
 
         return target_file
 
-    def clean(self) -> None:
+    def cleanup(self) -> None:
         for tmp in self.tmpfiles:
             os.remove(tmp)
         self.tmpfiles = []

@@ -31,7 +31,7 @@ def benchmark(socket, query):
         fileno = "[ERRORED]"
     else:
         fileno = len(json.loads(expected_resp)["result"]["files"])
-    print(f"{query:<60} average {total_ms/TRY_COUNT: 10.3f} files: {fileno}")
+    print(f"{query:<60} average {total_ms / TRY_COUNT: 10.3f} files: {fileno}")
 
 
 def nano(socket):
