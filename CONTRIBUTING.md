@@ -36,7 +36,7 @@ pull request, but you can also run the checks locally to speed-up review:
 - **Important:** we use [black](https://pypi.org/project/black/) for Python:
 
 ```bash
-$ pip3 install black==22.3.0
+$ pip3 install black==25.1.0
 $ black src/
 ```
 

@@ -3,6 +3,8 @@ import argparse
 import logging
 from multiprocessing import Pool
 from time import sleep
+from zmq.error import Again  # type: ignore
+from os import getpid
 
 from .db import Database
 from .plugins import PluginManager
@@ -20,6 +22,7 @@ def index_batch(
     job: tuple[list[QueuedFile], list[str], list[str]],
 ) -> list[QueuedFile]:
     batch, index_types, tags = job
+    pid = getpid()
     assert (
         batch
     ), "This function shouldn't be called without files, likely a bug."
@@ -29,26 +32,46 @@ def index_batch(
     db = Database(app_config.redis.host, app_config.redis.port)
     ursa = UrsaDb(app_config.mquery.backend)
     plugins = PluginManager(app_config.mquery.plugins, db)
+    db.engine.dispose()
 
-    current_datasets = len(ursa.datasets())
-    if current_datasets > COMPACT_THRESHOLD:
-        ursa.execute_command("compact smart;")
+    while True:
+        try:
+            while True:
+                current_datasets = len(ursa.datasets())
+                if current_datasets <= COMPACT_THRESHOLD:
+                    break
+                ursa.execute_command("compact smart;")
+            break
+        except Again:
+            logging.info("%s: (worker temporarily blocked)", pid)
+            sleep(15)
 
     ursadb_batch = []
     for file_path in paths:
         final_path = plugins.filter(file_path)
         if final_path is None:
-            logging.debug("Filtering out file %s", file_path)
+            logging.debug("%s: Filtering out file %s", pid, file_path)
             continue
         ursadb_batch.append(final_path)
 
-    logging.debug("Batch preprocessed, asking ursadb to index it.")
+    logging.debug("%s: Batch preprocessed, asking ursadb to index it.", pid)
 
-    ursa.index(ursadb_batch, index_types=index_types, tags=tags)
-    logging.debug("Ursadb indexing completed")
+    while True:
+        try:
+            ursa.index(
+                ursadb_batch,
+                index_types=index_types,
+                tags=tags,
+                verify_duplicates=False,
+            )
+            logging.debug("%s: Ursadb indexing completed", pid)
+            break
+        except Again:
+            logging.info("%s: (worker temporarily blocked)", pid)
+            sleep(15)
 
     plugins.cleanup()
-    logging.debug("Cleanup completed")
+    logging.debug("%s Cleanup completed", pid)
 
     return batch
 
@@ -84,7 +107,7 @@ def indexer_main(group_id: str, scale: int) -> None:
         next_batch = []
         for f in pending:
             next_batch.append(f)
-            if len(next_batch) > BATCH_SIZE:
+            if len(next_batch) >= BATCH_SIZE:
                 batches.append(next_batch)
                 next_batch = []
 
@@ -135,7 +158,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    setup_logging(logging.DEBUG)
+    setup_logging(logging.INFO)
     indexer_main(args.group_id, args.scale)
 
 

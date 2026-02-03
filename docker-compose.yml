@@ -60,7 +60,7 @@ services:
     restart: always
     image: redis
   postgres:
-    image: postgres
+    image: postgres:17
     restart: always
     volumes:
       - ${POSTGRES_DIR}:/var/lib/postgresql/data

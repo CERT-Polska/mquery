@@ -124,7 +124,10 @@ async def current_user(authorization: Optional[str] = Header(None)) -> User:
     public_key = serialization.load_der_public_key(base64.b64decode(secret))  # type: ignore
     try:
         token_json = jwt.decode(
-            token, public_key, algorithms=["RS256"], audience="account"  # type: ignore
+            token,
+            public_key,  # type: ignore
+            algorithms=["RS256"],
+            audience="account",
         )
     except jwt.InvalidTokenError:
         # Invalid token means invalid signature, issuer, or just expired.
@@ -138,12 +141,12 @@ async def add_headers(request: Request, call_next: Callable) -> Response:
     response = await call_next(request)
     response.headers["X-Frame-Options"] = "deny"
     response.headers["Access-Control-Allow-Origin"] = request.client.host  # type: ignore
-    response.headers[
-        "Access-Control-Allow-Headers"
-    ] = "cache-control,x-requested-with,content-type,authorization"
-    response.headers[
-        "Access-Control-Allow-Methods"
-    ] = "POST, PUT, GET, OPTIONS, DELETE"
+    response.headers["Access-Control-Allow-Headers"] = (
+        "cache-control,x-requested-with,content-type,authorization"
+    )
+    response.headers["Access-Control-Allow-Methods"] = (
+        "POST, PUT, GET, OPTIONS, DELETE"
+    )
     return response
 
 
@@ -625,7 +628,7 @@ def delete_queued_by_id(ursadb_id: str) -> StatusSchema:
 def server() -> ServerSchema:
     return ServerSchema(
         version=mquery_version(),
-        auth_enabled=str(db.config.auth_enabled).lower(),
+        auth_enabled=db.config.auth_enabled,
         openid_url=db.config.openid_url,
         openid_client_id=db.config.openid_client_id,
         about=app_config.mquery.about,

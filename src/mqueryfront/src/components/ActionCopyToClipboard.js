@@ -6,7 +6,7 @@ import { CopyToClipboard } from "react-copy-to-clipboard";
 const ActionCopyToClipboard = (props) => (
     <CopyToClipboard text={props.text} className="copyable-item">
         <span data-toggle="tooltip" title={props.tooltipMessage}>
-            <FontAwesomeIcon icon={faCopy} size="sm" />
+            <FontAwesomeIcon icon={faCopy} size="sm" className="icon-hover" />
         </span>
     </CopyToClipboard>
 );

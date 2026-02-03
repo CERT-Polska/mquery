@@ -47,8 +47,8 @@ class UrsaDb:
     def __execute(self, command: str, recv_timeout: int = 2000) -> Json:
         logging.debug("Ursadb command: %s", command)
         context = zmq.Context()
+        socket = context.socket(zmq.REQ)
         try:
-            socket = context.socket(zmq.REQ)
             socket.setsockopt(zmq.LINGER, 0)
             socket.setsockopt(zmq.RCVTIMEO, recv_timeout)
             socket.connect(self.backend)
@@ -119,7 +119,12 @@ class UrsaDb:
         return self.__execute(command, -1)
 
     def index(
-        self, paths: list[str], index_types: list[str], tags: list[str] = []
+        self,
+        paths: list[str],
+        *,
+        index_types: list[str],
+        tags: list[str] = [],
+        verify_duplicates=True,
     ):
         quoted_paths = [escape(path) for path in paths]
 
@@ -128,6 +133,7 @@ class UrsaDb:
         tags_specifier = (
             "with taints [" + ", ".join(escape(t) for t in tags) + "]"
         )
+        nocheck = "" if verify_duplicates else " nocheck"
 
         command = " ".join(
             [
@@ -135,6 +141,7 @@ class UrsaDb:
                 file_list,
                 with_specifier,
                 tags_specifier,
+                nocheck,
             ]
         )
         self.execute_command(command + ";")

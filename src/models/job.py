@@ -25,7 +25,9 @@ class JobView(SQLModel):
     id: str
     """Unique job public ID (this is not a database ID)."""
 
-    status: JobStatus = Field(sa_column=Column(postgresql.ENUM(JobStatus, name="jobstatus")))  # type: ignore
+    status: JobStatus = Field(
+        sa_column=Column(postgresql.ENUM(JobStatus, name="jobstatus"))
+    )  # type: ignore
 
     error: Optional[str]
     """For cancelled jobs, this will contain the stop reason."""
