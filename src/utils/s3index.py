@@ -24,6 +24,7 @@ def all_indexed_names(ursa: UrsaDb) -> Set[str]:
 def process_and_delete_batch(
     ursa: UrsaDb,
     batch: List[str],
+    workdir_batch: List[str],
     compact_threshold: int,
     types: List[str],
     tags: List[str],
@@ -47,7 +48,7 @@ def process_and_delete_batch(
     )
     if "error" in result:
         logging.error("Batch %s errored: %s", result["error"])
-    for bfile in batch:
+    for bfile in workdir_batch:
         os.unlink(bfile)
 
 
@@ -95,6 +96,11 @@ def main() -> None:
         type=int,
         default=40,
     )
+    parser.add_argument(
+        "--docker-mountpoint",
+        help="mountpoint for samples within ursadb/Mquery docker",
+        default=None,
+    )
 
     args = parser.parse_args()
     types = list(set(args.types))
@@ -134,6 +140,7 @@ def main() -> None:
         workdir.mkdir()
 
     batch = []
+    workdir_batch = []
     for s3_obj in client.list_objects(args.s3_bucket):
         if s3_obj.object_name in fileset:
             continue
@@ -143,20 +150,26 @@ def main() -> None:
             next_path = workdir / s3_obj.object_name
             with open(next_path, "wb") as f_out:
                 shutil.copyfileobj(f_in, f_out)
+
+            if args.docker_mountpoint != None:
+                next_path = f"{args.docker_mountpoint}/{s3_obj.object_name}"
+            workdir_batch.append(str(workdir / s3_obj.object_name))    
             batch.append(str(next_path))
+            
         finally:
             f_in.close()
             f_in.release_conn()
 
         if len(batch) == args.batch:
             process_and_delete_batch(
-                ursa, batch, compact_threshold, types, args.tags
+                ursa, batch, workdir_batch, compact_threshold, types, args.tags
             )
             batch = []
+            workdir_batch = []
 
     if len(batch):
         process_and_delete_batch(
-            ursa, batch, compact_threshold, types, args.tags
+            ursa, batch, workdir_batch, compact_threshold, types, args.tags
         )
 
     if list(workdir.iterdir()):
